@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outround</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f1;
+  --surface:#ffffff;
+  --ink:#111111;
+  --ink-2:#888880;
+  --ink-3:#c0bfb6;
+  --border:rgba(17,17,17,0.08);
+  --border-h:rgba(17,17,17,0.15);
+  --sidebar-w:52px;
+  --top:52px;
+  --f:'Bricolage Grotesque',sans-serif;
+}
+
+html,body{height:100%;font-family:var(--f);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden}
+
+/* Dot grid */
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(17,17,17,0.09) 1px,transparent 1px);background-size:26px 26px;pointer-events:none;z-index:0}
+
+/* Shell */
+.shell{position:relative;z-index:1;display:flex;height:100vh;overflow:hidden}
+
+/* Sidebar — icon only, always visible */
+.sidebar{
+  width:var(--sidebar-w);
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:12px 0;
+  flex-shrink:0;
+  z-index:50;
+  gap:2px;
+}
+
+.sb-icon{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.12s;
+  position:relative;color:var(--ink-3);
+  font-size:0.9rem;
+}
+.sb-icon:hover{background:var(--bg);color:var(--ink-2)}
+.sb-icon.active{background:var(--ink);color:white}
+.sb-icon.locked{opacity:0.28;cursor:not-allowed}
+.sb-icon.locked:hover{background:transparent;color:var(--ink-3)}
+
+/* Tooltip */
+.sb-icon::after{
+  content:attr(data-tip);
+  position:absolute;
+  left:calc(100% + 10px);
+  top:50%;transform:translateY(-50%);
+  background:var(--ink);color:white;
+  font-size:0.62rem;font-weight:700;letter-spacing:0.04em;
+  padding:4px 10px;border-radius:5px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity 0.15s;z-index:200;
+  font-family:var(--f);
+}
+.sb-icon:hover::after{opacity:1}
+.sb-icon.locked::after{content:attr(data-tip) ' — Soon'}
+
+.sb-divider{width:28px;height:1px;background:var(--border);margin:6px 0;flex-shrink:0}
+.sb-spacer{flex:1}
+
+/* Body */
+.body-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* Topbar */
+.topbar{
+  height:var(--top);
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 24px;gap:16px;
+  flex-shrink:0;z-index:40;
+}
+
+.logo{display:flex;align-items:center;gap:9px}
+.logo-mark{width:24px;height:24px;background:var(--ink);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark svg{width:11px;height:11px}
+.logo-text{font-size:0.82rem;font-weight:800;text-transform:uppercase;letter-spacing:-0.01em;color:var(--ink)}
+
+.top-spacer{flex:1}
+.ava{width:30px;height:30px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;color:white;cursor:pointer;flex-shrink:0}
+
+/* Main */
+.main{flex:1;overflow-y:auto;padding:32px 36px;position:relative}
+
+/* Start session button — top left of grid */
+.session-trigger{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--ink);color:white;
+  font-family:var(--f);font-size:0.82rem;font-weight:700;
+  border:none;border-radius:8px;padding:11px 20px;
+  cursor:pointer;transition:all 0.13s;letter-spacing:-0.01em;
+  margin-bottom:28px;
+}
+.session-trigger:hover{background:#222;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+.session-trigger:active{transform:translateY(0)}
+
+/* Grid layout */
+.grid{display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start}
+
+/* Empty state */
+.empty-state{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 40px;text-align:center;min-height:360px;
+}
+.empty-icon{width:44px;height:44px;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:1.1rem;color:var(--ink-3)}
+.empty-title{font-size:0.92rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:6px}
+.empty-sub{font-size:0.76rem;color:var(--ink-2);line-height:1.6;max-width:260px}
+
+/* Session panel */
+.session-panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;position:relative;
+}
+
+.panel-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;border-bottom:1px solid var(--border);
+  background:rgba(247,246,241,0.5);
+}
+.panel-title{font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+.panel-body{padding:22px}
+
+.live-badge{display:flex;align-items:center;gap:4px;font-size:0.57rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#16a34a;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.18);padding:3px 8px;border-radius:4px}
+.ld{width:4px;height:4px;border-radius:50%;background:#22c55e;animation:pu 1.8s ease-in-out infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:0.2}}
+
+.tag{font-size:0.57rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-3);border:1px solid var(--border);padding:3px 8px;border-radius:100px;background:var(--surface)}
+
+/* Scenario row in session */
+.scenario-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:14px}
+.pflag{width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.82rem;flex-shrink:0}
+.pname{font-size:0.86rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:2px}
+.prole{font-size:0.66rem;color:var(--ink-2)}
+.ptags{margin-left:auto;display:flex;gap:4px}
+
+/* Brief */
+.brief{font-size:0.78rem;color:var(--ink-2);line-height:1.72;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:14px;transition:opacity 1.8s ease,filter 1.8s ease}
+.brief strong{color:var(--ink);font-weight:600}
+
+.timer-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.timer-label{font-size:0.6rem;font-weight:600;color:var(--ink-3);display:flex;align-items:center;gap:5px}
+.blk{width:4px;height:4px;border-radius:50%;background:var(--ink);opacity:0.25;animation:blk 1.3s ease-in-out infinite}
+@keyframes blk{0%,100%{opacity:0.25}50%{opacity:0.06}}
+.cd{font-size:0.76rem;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.divider{height:1px;background:var(--border);margin:14px 0}
+
+/* Call */
+.wf{display:flex;align-items:center;justify-content:center;gap:2.5px;height:32px;margin-bottom:10px}
+.bar{width:2px;border-radius:2px;background:var(--ink);animation:wv 1s ease-in-out infinite;opacity:0.6}
+.bar:nth-child(1){animation-delay:.00s}.bar:nth-child(2){animation-delay:.07s}.bar:nth-child(3){animation-delay:.14s}
+.bar:nth-child(4){animation-delay:.21s}.bar:nth-child(5){animation-delay:.11s}.bar:nth-child(6){animation-delay:.04s}
+.bar:nth-child(7){animation-delay:.18s}.bar:nth-child(8){animation-delay:.25s}.bar:nth-child(9){animation-delay:.08s}
+.bar:nth-child(10){animation-delay:.15s}.bar:nth-child(11){animation-delay:.22s}.bar:nth-child(12){animation-delay:.03s}
+@keyframes wv{0%,100%{height:2px;opacity:0.12}50%{height:24px;opacity:0.9}}
+.wf.idle .bar{animation:none;height:2px;opacity:0.1}
+
+.cst{font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);text-align:center;margin-bottom:12px;min-height:13px}
+.tx{font-size:0.76rem;line-height:1.65;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;min-height:72px;max-height:170px;overflow-y:auto;display:none;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.tl{display:flex;gap:8px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(17,17,17,0.04)}
+.tl:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.tn{font-size:0.57rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);flex-shrink:0;padding-top:2px;min-width:52px}
+.tn.y{color:var(--ink)}
+.tt{color:var(--ink-2);font-size:0.76rem}
+
+/* Buttons */
+.call-btn{display:flex;align-items:center;justify-content:center;font-family:var(--f);font-size:0.8rem;font-weight:700;border-radius:8px;padding:12px 18px;width:100%;cursor:pointer;transition:all 0.13s;letter-spacing:-0.01em;border:none}
+.call-btn.dark{background:var(--ink);color:white}
+.call-btn.dark:hover{background:#222}
+.call-btn.light{background:transparent;color:var(--ink-2);border:1px solid var(--border);margin-top:7px}
+.call-btn.light:hover{color:var(--ink);border-color:var(--border-h);background:var(--bg)}
+
+/* Score */
+.score-wrap{text-align:center}
+.score-row{display:flex;align-items:flex-end;justify-content:center;gap:3px;margin-bottom:2px}
+.big-num{font-size:5rem;font-weight:800;line-height:1;color:var(--ink);letter-spacing:-0.06em;animation:pop .45s cubic-bezier(0.34,1.5,0.64,1)}
+@keyframes pop{from{transform:scale(0.72);opacity:0}to{transform:scale(1);opacity:1}}
+.score-den{font-size:0.6rem;font-weight:700;color:var(--ink-3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:18px}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:13px;text-align:left}
+.sc-cell{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 12px}
+.sc-lbl{font-size:0.57rem;font-weight:800;color:var(--ink-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px}
+.sc-val{font-size:1rem;font-weight:800;color:var(--ink);margin-bottom:6px;letter-spacing:-0.02em}
+.sc-bar{height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.sc-fill{height:100%;background:var(--ink);border-radius:2px;width:0%;transition:width .9s ease .3s}
+.rank-row{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 13px;margin-bottom:13px;text-align:left}
+.rank-badge{font-size:0.57rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);background:rgba(17,17,17,0.06);border:1px solid var(--border);padding:3px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.rank-text strong{display:block;font-size:0.77rem;font-weight:700;color:var(--ink);margin-bottom:1px;letter-spacing:-0.01em}
+.rank-text span{font-size:0.64rem;color:var(--ink-2)}
+
+/* Frost */
+.frost{position:absolute;inset:0;pointer-events:none;z-index:10;opacity:0;transition:opacity 1.5s ease;background:linear-gradient(150deg,rgba(174,207,255,0.25) 0%,rgba(200,228,255,0.12) 40%,transparent 100%)}
+.frost.on{opacity:1}
+svg.cr{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:11;opacity:0;transition:opacity 2s ease}
+svg.cr.on{opacity:1}
+
+/* Leaderboard panel */
+.lb-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.lb-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(17,17,17,0.04)}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{font-size:0.65rem;font-weight:800;color:var(--ink-3);width:14px;text-align:center;flex-shrink:0}
+.lb-rank.top{color:var(--ink)}
+.lb-av{width:28px;height:28px;border-radius:6px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.57rem;font-weight:800;color:var(--ink-2);flex-shrink:0}
+.lb-info{flex:1;min-width:0}
+.lb-name{font-size:0.78rem;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-role{font-size:0.61rem;color:var(--ink-3)}
+.lb-bar-w{width:36px;height:2px;background:var(--border);border-radius:2px;overflow:hidden;flex-shrink:0}
+.lb-bar-f{height:100%;background:var(--ink);border-radius:2px}
+.lb-sc{font-size:0.92rem;font-weight:800;color:var(--ink);flex-shrink:0;min-width:22px;text-align:right}
+
+/* Analysis */
+.analysis-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:20px}
+.a-tabs{display:flex;border-bottom:1px solid var(--border)}
+.atab{font-size:0.6rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-3);padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.12s}
+.atab:hover{color:var(--ink-2)}
+.atab.active{color:var(--ink);border-bottom-color:var(--ink)}
+.a-body{padding:20px}
+
+.hm-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.hm-title{font-size:0.66rem;font-weight:700;color:var(--ink)}
+.legend{display:flex;gap:10px}
+.leg{display:flex;align-items:center;gap:4px;font-size:0.57rem;color:var(--ink-3)}
+.leg-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+
+.t-line{display:flex;gap:12px;padding:8px 0 8px 10px;border-bottom:1px solid rgba(17,17,17,0.04);position:relative}
+.t-line:last-child{border-bottom:none}
+.sent-bar{position:absolute;left:0;top:0;bottom:0;width:2.5px;border-radius:0 2px 2px 0}
+.s-g{background:#22c55e}.s-a{background:#f59e0b}.s-r{background:#ef4444}.s-n{background:var(--border)}
+.t-spk{font-size:0.57rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);flex-shrink:0;width:56px;padding-top:2px}
+.t-spk.rep{color:var(--ink)}
+.t-txt{font-size:0.76rem;color:var(--ink-2);line-height:1.6;margin-bottom:3px}
+.t-time{font-size:0.57rem;font-weight:600;color:var(--ink-3)}
+.ann{display:inline-flex;align-items:center;font-size:0.59rem;font-weight:600;padding:2px 7px;border-radius:4px;margin-top:4px}
+.ann-ok{background:rgba(34,197,94,0.07);color:#16a34a;border:1px solid rgba(34,197,94,0.14)}
+.ann-warn{background:rgba(239,68,68,0.07);color:#dc2626;border:1px solid rgba(239,68,68,0.14)}
+.ann-info{background:rgba(17,17,17,0.05);color:var(--ink-2);border:1px solid var(--border)}
+
+.tl-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.tl-lbl{font-size:0.58rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+.tl-track{height:22px;background:var(--bg);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin-bottom:4px;position:relative}
+.tl-seg{position:absolute;top:0;bottom:0;border-radius:2px}
+.tl-ts{display:flex;justify-content:space-between;font-size:0.57rem;color:var(--ink-3);margin-bottom:8px}
+
+.c-item{padding:13px 0;border-bottom:1px solid rgba(17,17,17,0.05)}
+.c-item:last-child{border-bottom:none}
+.c-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.c-title{font-size:0.76rem;font-weight:700;color:var(--ink);letter-spacing:-0.01em}
+.c-score{font-size:0.64rem;font-weight:800;padding:2px 7px;border-radius:4px}
+.cs-bad{background:rgba(239,68,68,0.07);color:#dc2626;border:1px solid rgba(239,68,68,0.14)}
+.cs-mid{background:rgba(245,158,11,0.07);color:#d97706;border:1px solid rgba(245,158,11,0.14)}
+.cs-ok{background:rgba(34,197,94,0.07);color:#16a34a;border:1px solid rgba(34,197,94,0.14)}
+.c-body{font-size:0.73rem;color:var(--ink-2);line-height:1.66;margin-bottom:6px}
+.c-quote{font-size:0.69rem;color:var(--ink);background:var(--bg);border-left:2px solid var(--border);padding:5px 10px;margin-bottom:5px;font-style:italic;border-radius:0 4px 4px 0}
+.c-action{font-size:0.69rem;font-weight:600;color:var(--ink-2);display:flex;align-items:flex-start;gap:5px}
+.c-action::before{content:'→';flex-shrink:0;color:var(--ink-3)}
+
+.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.m-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px}
+.m-lbl{font-size:0.57rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.m-val{font-size:1.3rem;font-weight:800;color:var(--ink);letter-spacing:-0.03em;margin-bottom:3px}
+.m-note{font-size:0.63rem;line-height:1.5;color:var(--ink-2)}
+.m-note.ok{color:#16a34a}.m-note.warn{color:#dc2626}
+
+/* Onboarding overlay */
+.overlay{position:fixed;inset:0;background:rgba(247,246,241,0.95);backdrop-filter:blur(12px);z-index:500;display:flex;align-items:center;justify-content:center}
+.overlay::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(17,17,17,0.09) 1px,transparent 1px);background-size:26px 26px;pointer-events:none}
+.ob-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:40px;width:100%;max-width:420px;box-shadow:0 2px 4px rgba(0,0,0,0.04),0 20px 60px rgba(0,0,0,0.07);position:relative;z-index:1}
+.ob-logo{display:flex;align-items:center;gap:8px;margin-bottom:28px}
+.ob-lm{width:26px;height:26px;background:var(--ink);border-radius:5px;display:flex;align-items:center;justify-content:center}
+.ob-lt{font-size:0.84rem;font-weight:800;text-transform:uppercase;letter-spacing:-0.01em}
+.ob-prog{display:flex;gap:4px;margin-bottom:24px}
+.ob-pd{height:2px;flex:1;background:var(--border);border-radius:2px;transition:background .3s}
+.ob-pd.done{background:var(--ink)}
+.ob-ey{font-size:0.58rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+.ob-title{font-size:1.45rem;font-weight:800;color:var(--ink);letter-spacing:-0.03em;margin-bottom:7px;line-height:1.15}
+.ob-sub{font-size:0.8rem;color:var(--ink-2);line-height:1.62;margin-bottom:24px}
+.f-group{margin-bottom:12px}
+.f-label{font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-2);margin-bottom:5px}
+.f-input,.f-select{width:100%;font-family:var(--f);font-size:0.82rem;font-weight:500;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 12px;outline:none;transition:border-color .13s}
+.f-input:focus,.f-select:focus{border-color:var(--border-h)}
+.f-input::placeholder{color:var(--ink-3)}
+.f-select{appearance:none;cursor:pointer}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ob-btn{display:flex;align-items:center;justify-content:center;font-family:var(--f);font-size:0.82rem;font-weight:700;border-radius:7px;padding:12px 24px;width:100%;border:none;cursor:pointer;transition:all .13s;background:var(--ink);color:white;margin-top:6px}
+.ob-btn:hover{background:#222}
+.ob-skip{text-align:center;margin-top:10px;font-size:0.68rem;color:var(--ink-3);cursor:pointer}
+.ob-skip:hover{color:var(--ink-2)}
+
+/* Persona modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(247,246,241,0.92);backdrop-filter:blur(10px);z-index:400;display:none;align-items:center;justify-content:center}
+.modal-overlay::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(17,17,17,0.09) 1px,transparent 1px);background-size:26px 26px;pointer-events:none}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:36px;width:100%;max-width:560px;box-shadow:0 2px 4px rgba(0,0,0,0.04),0 20px 60px rgba(0,0,0,0.08);position:relative;z-index:1}
+.modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.modal-title{font-size:1.2rem;font-weight:800;color:var(--ink);letter-spacing:-0.03em}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;color:var(--ink-3);transition:all .12s;flex-shrink:0}
+.modal-close:hover{background:var(--bg);color:var(--ink)}
+.modal-sub{font-size:0.76rem;color:var(--ink-2);margin-bottom:24px}
+
+/* Persona grid */
+.persona-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.persona-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .13s;position:relative}
+.persona-card:hover:not(.locked-p){border-color:var(--border-h);background:rgba(247,246,241,0.8)}
+.persona-card.selected{background:var(--ink);border-color:var(--ink)}
+.persona-card.selected .p-name,.persona-card.selected .p-role,.persona-card.selected .p-country{color:white}
+.persona-card.selected .p-flag-wrap{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.1)}
+.persona-card.locked-p{opacity:0.38;cursor:not-allowed}
+
+.p-flag-wrap{width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.p-info{flex:1;min-width:0}
+.p-name{font-size:0.86rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:2px}
+.p-role{font-size:0.68rem;color:var(--ink-2)}
+.p-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.p-country{font-size:0.62rem;font-weight:700;color:var(--ink-3);letter-spacing:0.04em}
+.p-lock{font-size:0.7rem;color:var(--ink-3)}
+.p-soon{font-size:0.56rem;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;background:rgba(17,17,17,0.06);color:var(--ink-3);border:1px solid var(--border);padding:2px 6px;border-radius:3px}
+
+/* CRM sync button */
+.crm-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:var(--f);font-size:0.76rem;font-weight:700;color:var(--ink-3);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 16px;cursor:not-allowed;opacity:0.5;margin-bottom:16px;letter-spacing:-0.01em}
+.crm-lock{font-size:0.72rem}
+
+.modal-start{display:flex;align-items:center;justify-content:center;font-family:var(--f);font-size:0.82rem;font-weight:700;background:var(--ink);color:white;border:none;border-radius:8px;padding:13px 24px;width:100%;cursor:pointer;transition:all .13s;letter-spacing:-0.01em}
+.modal-start:hover{background:#222}
+.modal-start:disabled{opacity:0.35;cursor:not-allowed}
+
+/* States */
+#vb{display:block}#vc{display:none}#vs{display:none}
+</style>
+</head>
+<body>
+
+<!-- Onboarding -->
+<div class="overlay" id="overlay">
+  <div class="ob-card">
+    <div class="ob-logo">
+      <div class="ob-lm"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="6" y1="3" x2="6" y2="6"/><line x1="6" y1="6" x2="8" y2="8"/></svg></div>
+      <div class="ob-lt">Outround</div>
+    </div>
+    <div class="ob-prog"><div class="ob-pd done"></div><div class="ob-pd done"></div></div>
+    <div class="ob-ey">Quick setup</div>
+    <div class="ob-title">Welcome. Let's get you ready.</div>
+    <div class="ob-sub">Two things and you are in. No credit card, no commitment.</div>
+    <div class="f-row">
+      <div class="f-group"><div class="f-label">First name</div><input class="f-input" type="text" placeholder="Liam" id="fn"></div>
+      <div class="f-group"><div class="f-label">Last name</div><input class="f-input" type="text" placeholder="G." id="ln"></div>
+    </div>
+    <div class="f-group"><div class="f-label">Work email</div><input class="f-input" type="email" placeholder="liam@company.com"></div>
+    <div class="f-group"><div class="f-label">Your role</div>
+      <select class="f-select">
+        <option>Sales Development Rep</option>
+        <option>Account Executive</option>
+        <option>VP Sales</option>
+        <option>Founder / CEO</option>
+        <option>Sales Manager</option>
+        <option>Head of Enablement</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <button class="ob-btn" onclick="launch()">Start practicing</button>
+    <div class="ob-skip" onclick="launch()">Skip — try the demo</div>
+  </div>
+</div>
+
+<!-- Persona modal -->
+<div class="modal-overlay" id="personaModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Choose your persona</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-sub">Select who you are calling. More personas unlock over time.</div>
+
+    <div class="persona-grid">
+      <div class="persona-card selected" id="pc1" onclick="selectPersona(this)">
+        <div class="p-flag-wrap">🇳🇱</div>
+        <div class="p-info">
+          <div class="p-name">Hendrik van der Berg</div>
+          <div class="p-role">CFO — Vandermeer Logistics</div>
+        </div>
+        <div class="p-right">
+          <div class="p-country">Netherlands</div>
+        </div>
+      </div>
+      <div class="persona-card locked-p">
+        <div class="p-flag-wrap">🇩🇪</div>
+        <div class="p-info">
+          <div class="p-name">Klaus Hartmann</div>
+          <div class="p-role">VP Procurement — Hartmann GmbH</div>
+        </div>
+        <div class="p-right">
+          <div class="p-soon">Soon</div>
+        </div>
+      </div>
+      <div class="persona-card locked-p">
+        <div class="p-flag-wrap">🇬🇧</div>
+        <div class="p-info">
+          <div class="p-name">Sarah Whitfield</div>
+          <div class="p-role">Head of Finance — Whitfield & Co</div>
+        </div>
+        <div class="p-right">
+          <div class="p-soon">Soon</div>
+        </div>
+      </div>
+      <div class="persona-card locked-p">
+        <div class="p-flag-wrap">🇫🇷</div>
+        <div class="p-info">
+          <div class="p-name">Claire Beaumont</div>
+          <div class="p-role">Directrice Générale — Beaumont SAS</div>
+        </div>
+        <div class="p-right">
+          <div class="p-soon">Soon</div>
+        </div>
+      </div>
+      <div class="persona-card locked-p">
+        <div class="p-flag-wrap">🇸🇪</div>
+        <div class="p-info">
+          <div class="p-name">Erik Lindqvist</div>
+          <div class="p-role">CTO — Lindqvist Tech AB</div>
+        </div>
+        <div class="p-right">
+          <div class="p-soon">Soon</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="crm-btn" disabled>
+      <span class="crm-lock">🔒</span> Sync with your CRM
+    </button>
+
+    <button class="modal-start" onclick="beginSession()">Start session with Hendrik</button>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="shell">
+
+  <!-- Sidebar — icons only -->
+  <aside class="sidebar">
+    <div class="sb-icon active" data-tip="Practice">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="8" cy="8" r="6"/>
+        <line x1="8" y1="5" x2="8" y2="8"/>
+        <line x1="8" y1="8" x2="10.5" y2="10.5"/>
+      </svg>
+    </div>
+    <div class="sb-icon" data-tip="Sessions">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <rect x="2" y="3" width="12" height="10" rx="2"/>
+        <line x1="5" y1="7" x2="11" y2="7"/>
+        <line x1="5" y1="10" x2="9" y2="10"/>
+      </svg>
+    </div>
+    <div class="sb-icon" data-tip="Leaderboard">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <rect x="2" y="9" width="3" height="5" rx="1"/>
+        <rect x="6.5" y="5" width="3" height="9" rx="1"/>
+        <rect x="11" y="7" width="3" height="7" rx="1"/>
+      </svg>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-icon locked" data-tip="Meeting Bot">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-3 2v-2H4a2 2 0 0 1-2-2V4z"/>
+      </svg>
+    </div>
+    <div class="sb-icon locked" data-tip="Analytics">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <polyline points="2,12 6,7 9,9 14,4"/>
+      </svg>
+    </div>
+    <div class="sb-icon locked" data-tip="Team">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="8" cy="5" r="2.5"/>
+        <path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/>
+      </svg>
+    </div>
+    <div class="sb-spacer"></div>
+    <div class="sb-icon locked" data-tip="Settings">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="8" cy="8" r="2"/>
+        <path d="M8 2v1M8 13v1M2 8h1M13 8h1M3.5 3.5l.7.7M11.8 11.8l.7.7M3.5 12.5l.7-.7M11.8 4.2l.7-.7"/>
+      </svg>
+    </div>
+  </aside>
+
+  <!-- Body -->
+  <div class="body-wrap">
+    <header class="topbar">
+      <div class="logo">
+        <div class="logo-mark">
+          <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="6" cy="6" r="4"/>
+            <line x1="6" y1="3" x2="6" y2="6"/>
+            <line x1="6" y1="6" x2="8" y2="8"/>
+          </svg>
+        </div>
+        <div class="logo-text">Outround</div>
+      </div>
+      <div class="top-spacer"></div>
+      <div class="ava" id="userAva">LG</div>
+    </header>
+
+    <div class="main">
+
+      <!-- Start session CTA -->
+      <button class="session-trigger" onclick="openModal()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+        Start session
+      </button>
+
+      <div class="grid">
+
+        <!-- Left: session or empty -->
+        <div id="leftCol">
+
+          <!-- Empty state -->
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">○</div>
+            <div class="empty-title">No active session</div>
+            <div class="empty-sub">Start a session to practice your cold call against an AI persona. Your brief appears, then disappears. The clock is ticking.</div>
+          </div>
+
+          <!-- Session panel (hidden until started) -->
+          <div class="session-panel" id="sessionPanel" style="display:none">
+            <div class="frost" id="frost"></div>
+            <svg class="cr" id="cr" viewBox="0 0 700 500" preserveAspectRatio="none">
+              <g stroke="rgba(150,200,240,0.3)" stroke-width="0.6" fill="none">
+                <line x1="0" y1="0" x2="88" y2="110" style="stroke-dasharray:142;stroke-dashoffset:142;transition:stroke-dashoffset 2s ease"/>
+                <line x1="0" y1="0" x2="128" y2="46" style="stroke-dasharray:136;stroke-dashoffset:136;transition:stroke-dashoffset 2.2s ease"/>
+                <line x1="700" y1="0" x2="594" y2="113" style="stroke-dasharray:150;stroke-dashoffset:150;transition:stroke-dashoffset 2.1s ease"/>
+                <line x1="0" y1="500" x2="106" y2="376" style="stroke-dasharray:168;stroke-dashoffset:168;transition:stroke-dashoffset 2.3s ease"/>
+                <line x1="700" y1="500" x2="586" y2="370" style="stroke-dasharray:176;stroke-dashoffset:176;transition:stroke-dashoffset 2.1s ease"/>
+              </g>
+            </svg>
+
+            <div class="panel-hdr">
+              <div class="panel-title">
+                <div class="live-badge" id="liveBadge"><div class="ld"></div>Ready</div>
+                Session
+              </div>
+              <div style="display:flex;gap:5px">
+                <div class="tag">Cold call</div>
+                <div class="tag">EN / NL</div>
+              </div>
+            </div>
+
+            <div class="panel-body">
+
+              <!-- Brief -->
+              <div id="vb">
+                <div class="scenario-row">
+                  <div class="pflag">🇳🇱</div>
+                  <div>
+                    <div class="pname">Hendrik van der Berg</div>
+                    <div class="prole">CFO — Vandermeer Logistics — Amsterdam</div>
+                  </div>
+                  <div class="ptags">
+                    <div class="tag">Skeptical</div>
+                    <div class="tag">Time-poor</div>
+                  </div>
+                </div>
+                <div class="brief" id="brief">You are selling <strong>B2B spend analytics software</strong>. Hendrik's company grew 40% last year and is still reconciling expenses in spreadsheets. He is time-poor and skeptical of vendors. You have <strong>one shot</strong> to earn the next conversation.</div>
+                <div class="timer-row">
+                  <div class="timer-label"><div class="blk"></div>Brief expires in</div>
+                  <div class="cd" id="cd">0:30</div>
+                </div>
+                <div class="divider"></div>
+                <button class="call-btn dark" onclick="startCall()">Start call</button>
+              </div>
+
+              <!-- Call -->
+              <div id="vc">
+                <div class="wf" id="wf">
+                  <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                  <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                  <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                  <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                </div>
+                <div class="cst" id="cst">Connecting</div>
+                <div class="tx" id="tx"></div>
+                <button class="call-btn dark" id="eb" onclick="endCall()" style="display:none">End call — get score</button>
+              </div>
+
+              <!-- Score -->
+              <div id="vs">
+                <div class="score-wrap">
+                  <div class="score-row">
+                    <div class="big-num" id="bn">0</div>
+                    <div style="font-size:1rem;font-weight:800;color:var(--ink-3);padding-bottom:8px">/100</div>
+                  </div>
+                  <div class="score-den">Performance score</div>
+                  <div class="score-grid">
+                    <div class="sc-cell"><div class="sc-lbl">Opening hook</div><div class="sc-val" id="v1">—</div><div class="sc-bar"><div class="sc-fill" id="f1"></div></div></div>
+                    <div class="sc-cell"><div class="sc-lbl">Objection handling</div><div class="sc-val" id="v2">—</div><div class="sc-bar"><div class="sc-fill" id="f2"></div></div></div>
+                    <div class="sc-cell"><div class="sc-lbl">Talk ratio</div><div class="sc-val" id="v3">—</div><div class="sc-bar"><div class="sc-fill" id="f3"></div></div></div>
+                    <div class="sc-cell"><div class="sc-lbl">Clear ask</div><div class="sc-val" id="v4">—</div><div class="sc-bar"><div class="sc-fill" id="f4"></div></div></div>
+                  </div>
+                  <div class="rank-row">
+                    <div class="rank-badge">#12 this week</div>
+                    <div class="rank-text"><strong>Beat 74 to crack the top 10</strong><span>247 reps have run this scenario</span></div>
+                  </div>
+                  <button class="call-btn dark" style="margin-bottom:7px" onclick="showAnalysis()">View full analysis</button>
+                  <button class="call-btn light" onclick="share()">Share on LinkedIn</button>
+                  <button class="call-btn light" onclick="newSession()">Go again</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Analysis -->
+          <div class="analysis-panel" id="ap" style="display:none">
+            <div class="a-tabs">
+              <div class="atab active" onclick="switchTab(this,'at1')">Transcript</div>
+              <div class="atab" onclick="switchTab(this,'at2')">Coaching</div>
+              <div class="atab" onclick="switchTab(this,'at3')">Metrics</div>
+            </div>
+            <div class="a-body" id="at1">
+              <div class="hm-hdr">
+                <div class="hm-title">Annotated transcript</div>
+                <div class="legend">
+                  <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>Positive</div>
+                  <div class="leg"><div class="leg-dot" style="background:#f59e0b"></div>Neutral</div>
+                  <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Disengaged</div>
+                </div>
+              </div>
+              <div class="t-line" style="padding-left:12px"><div class="sent-bar s-n"></div><div class="t-spk">Hendrik</div><div><div class="t-txt">Ja, Van der Berg.</div><div class="t-time">0:01</div></div></div>
+              <div class="t-line" style="padding-left:12px"><div class="sent-bar s-g"></div><div class="t-spk rep">You</div><div><div class="t-txt">Hendrik — quick call, I will be straight. We work with logistics companies your size still reconciling spend in spreadsheets. Saw Vandermeer had a big growth year — is that still how you are handling it?</div><div class="t-time">0:04</div><div class="ann ann-ok">Strong opener — specific, no pitch yet</div></div></div>
+              <div class="t-line" style="padding-left:12px"><div class="sent-bar s-a"></div><div class="t-spk">Hendrik</div><div><div class="t-txt">We have a system. It works fine.</div><div class="t-time">0:09</div><div class="ann ann-info">Classic brush-off — do not fold</div></div></div>
+              <div class="t-line" style="padding-left:12px"><div class="sent-bar s-g"></div><div class="t-spk rep">You</div><div><div class="t-txt">Totally fair. What does month-end close look like right now — two days, three?</div><div class="t-time">0:12</div><div class="ann ann-ok">Good — turned objection into a diagnostic question</div></div></div>
+              <div class="t-line" style="padding-left:12px"><div class="sent-bar s-g"></div><div class="t-spk">Hendrik</div><div><div class="t-txt">...Four, sometimes five. But that is normal for our size.</div><div class="t-time">0:15</div><div class="ann ann-ok">Prospect opened up — buying signal</div></div></div>
+              <div class="t-line" style="padding-left:12px"><div class="sent-bar s-a"></div><div class="t-spk rep">You</div><div><div class="t-txt">Companies your size on our platform are closing in under a day. Would 20 minutes next week be worth it if I can show you the number?</div><div class="t-time">0:19</div><div class="ann ann-info">Ask came slightly early — value not yet anchored</div></div></div>
+              <div class="t-line" style="padding-left:12px"><div class="sent-bar s-a"></div><div class="t-spk">Hendrik</div><div><div class="t-txt">Send me something first. If it is relevant, we will talk.</div><div class="t-time">0:24</div><div class="ann ann-warn">Soft decline — prospect not convinced yet</div></div></div>
+              <div class="t-line" style="padding-left:12px"><div class="sent-bar s-g"></div><div class="t-spk rep">You</div><div><div class="t-txt">Will do — best email for you?</div><div class="t-time">0:27</div><div class="ann ann-ok">Clean close — moved it forward</div></div></div>
+              <div class="tl-section">
+                <div class="tl-lbl">Talk distribution</div>
+                <div class="tl-track">
+                  <div class="tl-seg" style="left:0%;width:14%;background:#111;opacity:0.7"></div>
+                  <div class="tl-seg" style="left:15%;width:8%;background:#ccc"></div>
+                  <div class="tl-seg" style="left:24%;width:12%;background:#111;opacity:0.7"></div>
+                  <div class="tl-seg" style="left:37%;width:10%;background:#ccc"></div>
+                  <div class="tl-seg" style="left:48%;width:16%;background:#111;opacity:0.7"></div>
+                  <div class="tl-seg" style="left:65%;width:20%;background:#ccc"></div>
+                  <div class="tl-seg" style="left:86%;width:10%;background:#111;opacity:0.7"></div>
+                </div>
+                <div class="tl-ts"><span>0:00</span><span>0:28</span></div>
+                <div class="tl-lbl" style="margin-top:12px">Prospect sentiment</div>
+                <div class="tl-track">
+                  <div class="tl-seg" style="left:0%;width:20%;background:#f59e0b"></div>
+                  <div class="tl-seg" style="left:21%;width:46%;background:#22c55e"></div>
+                  <div class="tl-seg" style="left:68%;width:32%;background:#f59e0b"></div>
+                </div>
+                <div class="tl-ts"><span>0:00</span><span>0:28</span></div>
+              </div>
+            </div>
+            <div class="a-body" id="at2" style="display:none">
+              <div class="c-item"><div class="c-hdr"><div class="c-title">Opening — no context before the question</div><div class="c-score cs-mid">60 / 100</div></div><div class="c-body">You jumped straight to the question without anchoring why you were calling. Hendrik did not know who you were for the first four seconds.</div><div class="c-quote">"Hendrik — quick call, I will be straight. We work with logistics companies..."</div><div class="c-action">Open with a named trigger first. "Saw your team grew 40% last year" before the spreadsheet question gives him a reason to listen.</div></div>
+              <div class="c-item"><div class="c-hdr"><div class="c-title">Objection handling — good recovery</div><div class="c-score cs-ok">78 / 100</div></div><div class="c-body">When Hendrik said "we have a system, it works fine" you did not fold. You turned it into a diagnostic question. He opened up and gave you the number.</div><div class="c-quote">"Totally fair. What does month-end close look like right now — two days, three?"</div><div class="c-action">The follow-up to "four, five days" was too fast. A two-second pause would have let the number land.</div></div>
+              <div class="c-item"><div class="c-hdr"><div class="c-title">The ask came before the value was real</div><div class="c-score cs-bad">44 / 100</div></div><div class="c-body">You asked for 20 minutes before Hendrik had a reason to believe you had anything worth 20 minutes. The claim landed flat because it felt like a script.</div><div class="c-quote">"Would 20 minutes next week be worth it if I can show you the number?"</div><div class="c-action">Reflect his words back first. "Four to five days — that is probably three people's time at month end. We get companies your size to under a day. Worth 20 minutes to see how?"</div></div>
+              <div class="c-item"><div class="c-hdr"><div class="c-title">Close — clean but left open</div><div class="c-score cs-mid">65 / 100</div></div><div class="c-body">Asking for his email after he said "send me something" was right. But you did not confirm what you were sending or plant the next step.</div><div class="c-quote">"Will do — best email for you?"</div><div class="c-action">Add one line: "I will send you a before/after from a logistics company your size. Would Thursday work for a quick call if it resonates?"</div></div>
+            </div>
+            <div class="a-body" id="at3" style="display:none">
+              <div class="m-grid">
+                <div class="m-card"><div class="m-lbl">Speaking pace</div><div class="m-val">176 wpm</div><div class="m-note ok">Within optimal 140–190 wpm</div></div>
+                <div class="m-card"><div class="m-lbl">Talk ratio</div><div class="m-val">58 / 42</div><div class="m-note warn">Slightly high — aim for 50/50</div></div>
+                <div class="m-card"><div class="m-lbl">Filler words</div><div class="m-val">3</div><div class="m-note ok">Well below average</div></div>
+                <div class="m-card"><div class="m-lbl">Longest monologue</div><div class="m-val">0:19</div><div class="m-note warn">Break up longer turns</div></div>
+                <div class="m-card"><div class="m-lbl">Response latency</div><div class="m-val">1.4s</div><div class="m-note ok">Not filling silence prematurely</div></div>
+                <div class="m-card"><div class="m-lbl">Duration</div><div class="m-val">0:28</div><div class="m-note" style="color:var(--ink-3)">Benchmark: 1–3 min</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: leaderboard -->
+        <div class="lb-panel">
+          <div class="panel-hdr">
+            <div class="panel-title">Leaderboard</div>
+            <div class="tag" style="background:rgba(34,197,94,0.07);color:#16a34a;border-color:rgba(34,197,94,0.18)">This week</div>
+          </div>
+          <div class="panel-body" style="padding:12px 18px">
+            <div class="lb-row"><div class="lb-rank top">1</div><div class="lb-av">SR</div><div class="lb-info"><div class="lb-name">Sophie R.</div><div class="lb-role">VP Sales · Berlin</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:91%"></div></div><div class="lb-sc">91</div></div>
+            <div class="lb-row"><div class="lb-rank top">2</div><div class="lb-av">MT</div><div class="lb-info"><div class="lb-name">Marcus T.</div><div class="lb-role">AE · Amsterdam</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:88%"></div></div><div class="lb-sc">88</div></div>
+            <div class="lb-row"><div class="lb-rank top">3</div><div class="lb-av">LK</div><div class="lb-info"><div class="lb-name">Lena K.</div><div class="lb-role">SDR · Munich</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:85%"></div></div><div class="lb-sc">85</div></div>
+            <div class="lb-row"><div class="lb-rank">4</div><div class="lb-av" id="ulbav" style="background:var(--ink);color:white">LG</div><div class="lb-info"><div class="lb-name" id="ulbn">You</div><div class="lb-role">Cold Call · Amsterdam</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:79%"></div></div><div class="lb-sc" style="color:var(--ink)">79</div></div>
+            <div class="lb-row"><div class="lb-rank">5</div><div class="lb-av">AM</div><div class="lb-info"><div class="lb-name">Ana M.</div><div class="lb-role">Head of Sales · Madrid</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:74%"></div></div><div class="lb-sc">74</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Onboarding
+function launch(){
+  const f=document.getElementById('fn').value||'L',l=document.getElementById('ln').value||'G';
+  const ini=(f[0]+(l[0]||'')).toUpperCase();
+  document.getElementById('userAva').textContent=ini;
+  document.getElementById('ulbav').textContent=ini;
+  document.getElementById('ulbn').textContent=f+' (you)';
+  document.getElementById('overlay').style.display='none';
+}
+
+// Persona modal
+function openModal(){document.getElementById('personaModal').classList.add('open')}
+function closeModal(){document.getElementById('personaModal').classList.remove('open')}
+
+function selectPersona(el){
+  if(el.classList.contains('locked-p'))return;
+  document.querySelectorAll('.persona-card:not(.locked-p)').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function beginSession(){
+  closeModal();
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('sessionPanel').style.display='block';
+  startCountdown();
+}
+
+// Countdown
+let secs=30,cdt;
+function startCountdown(){
+  clearInterval(cdt);secs=30;
+  cdt=setInterval(()=>{
+    secs--;
+    document.getElementById('cd').textContent=`0:${secs.toString().padStart(2,'0')}`;
+    if(secs<=0){clearInterval(cdt);fadeBrief();}
+  },1000);
+}
+
+function fadeBrief(){
+  const b=document.getElementById('brief');
+  b.style.opacity='0.03';b.style.filter='blur(5px)';
+}
+
+// Frost
+let fv=0,fi;
+function setF(t){
+  clearInterval(fi);const s=(t-fv)/15;
+  fi=setInterval(()=>{
+    fv+=s;if((s>0&&fv>=t)||(s<0&&fv<=t)){fv=t;clearInterval(fi);}
+    const f=document.getElementById('frost'),c=document.getElementById('cr');
+    f.style.opacity=Math.max(0,fv);
+    if(fv>0.05){f.classList.add('on');c.classList.add('on');}else{f.classList.remove('on');c.classList.remove('on');}
+    c.querySelectorAll('line').forEach(el=>{const l=parseFloat(el.style.strokeDasharray);el.style.strokeDashoffset=Math.max(0,l*(1-fv*1.5)).toString();});
+  },100);
+}
+
+// Call script
+const scr=[
+  {ms:1200,w:'h',t:"Ja, Van der Berg."},
+  {ms:3800,w:'y',t:"Hendrik — quick call, I will be straight. We work with logistics companies your size still reconciling spend in spreadsheets. Saw Vandermeer had a big growth year — is that still how you are handling it?"},
+  {ms:9000,w:'h',t:"We have a system. It works fine."},
+  {ms:12000,w:'y',t:"Totally fair. What does month-end close look like right now — two days, three?"},
+  {ms:15500,w:'h',t:"...Four, sometimes five. But that is normal for our size."},
+  {ms:19000,w:'y',t:"Companies your size on our platform are closing in under a day. Would 20 minutes next week be worth it if I can show you the number?"},
+  {ms:24500,w:'h',t:"Send me something first. If it is relevant, we will talk."},
+  {ms:27500,w:'y',t:"Will do — best email for you?"},
+];
+const fs=[0,0.13,0.24,0.07,0.15,0.04,0.19,0.05,0.02];
+let ts=[];
+
+function startCall(){
+  clearInterval(cdt);
+  document.getElementById('vb').style.display='none';
+  document.getElementById('vc').style.display='block';
+  document.getElementById('liveBadge').innerHTML='<div class="ld"></div>In progress';
+  setTimeout(()=>{document.getElementById('tx').style.display='block';document.getElementById('eb').style.display='flex';},2000);
+  scr.forEach((l,i)=>{
+    const t=setTimeout(()=>{
+      addLine(l.w,l.t);
+      document.getElementById('cst').textContent=l.w==='h'?'Hendrik speaking':'Your turn';
+      if(fs[i]!==undefined)setF(fs[i]);
+    },l.ms);ts.push(t);
+  });
+  ts.push(setTimeout(()=>{
+    document.getElementById('cst').textContent='Call ended — 0:28';
+    document.getElementById('wf').classList.add('idle');
+    document.getElementById('liveBadge').textContent='Complete';
+  },29000));
+}
+
+function addLine(w,t){
+  const b=document.getElementById('tx'),d=document.createElement('div');
+  d.className='tl';
+  d.innerHTML=`<span class="tn ${w==='y'?'y':''}">${w==='h'?'Hendrik':'You'}</span><span class="tt">${t}</span>`;
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+
+function endCall(){
+  ts.forEach(clearTimeout);setF(0);
+  document.getElementById('vc').style.display='none';
+  document.getElementById('vs').style.display='block';
+  document.getElementById('liveBadge').textContent='Report';
+  let n=0;const el=document.getElementById('bn');
+  const iv=setInterval(()=>{n=Math.min(n+2,67);el.textContent=n;if(n>=67)clearInterval(iv);},20);
+  setTimeout(()=>{setSub('v1','f1',72);setSub('v2','f2',58);setSub('v3','f3',80);setSub('v4','f4',60);},400);
+}
+
+function setSub(vi,fi,v){
+  document.getElementById(vi).textContent=v;
+  setTimeout(()=>{document.getElementById(fi).style.width=v+'%';},50);
+}
+
+function showAnalysis(){
+  document.getElementById('ap').style.display='block';
+  setTimeout(()=>document.getElementById('ap').scrollIntoView({behavior:'smooth'}),80);
+}
+
+function switchTab(el,id){
+  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  document.querySelectorAll('.a-body').forEach(b=>b.style.display='none');
+  document.getElementById(id).style.display='block';
+}
+
+function share(){
+  const t=encodeURIComponent("I scored 67/100 selling to an AI Dutch CFO on Outround.\n\nThink you can beat it?\n\noutround.io");
+  window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${t}`,'_blank');
+}
+
+function newSession(){
+  ts.forEach(clearTimeout);fv=0;
+  document.getElementById('frost').style.opacity=0;
+  document.getElementById('frost').classList.remove('on');
+  document.getElementById('cr').classList.remove('on');
+  document.getElementById('vs').style.display='none';
+  document.getElementById('vc').style.display='none';
+  document.getElementById('ap').style.display='none';
+  document.getElementById('tx').innerHTML='';
+  document.getElementById('wf').classList.remove('idle');
+  document.getElementById('cst').textContent='Connecting';
+  document.getElementById('eb').style.display='none';
+  document.getElementById('liveBadge').innerHTML='<div class="ld"></div>Ready';
+  document.getElementById('vb').style.display='block';
+  const b=document.getElementById('brief');b.style.opacity='1';b.style.filter='none';
+  startCountdown();
+}
+</script>
+</body>
+</html>
