@@ -5,7 +5,7 @@ const router = express.Router();
 const db = require('../db/client');
 const elevenlabs = require('../services/elevenlabs');
 const claude = require('../services/claude');
-const { calculateMetricsFromTranscript } = require('../services/assemblyai');
+const { calculateMetricsFromTranscript } = require('../services/metrics');
 
 // ---------------------------------------------------------------------------
 // POST /api/session/start

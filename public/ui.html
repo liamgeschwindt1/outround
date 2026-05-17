@@ -338,6 +338,50 @@ svg.cr.on{opacity:1}
 
 /* States */
 #vb{display:block}#vc{display:none}#vs{display:none}
+
+/* Debug log widget */
+#dbg-widget{
+  position:fixed;bottom:18px;right:18px;width:340px;
+  background:var(--ink);color:#e5e5e0;
+  border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,0.22);
+  z-index:9999;font-family:var(--f);font-size:0.67rem;
+  display:flex;flex-direction:column;max-height:320px;
+  transition:max-height .2s ease,opacity .2s ease;
+}
+#dbg-widget.collapsed{max-height:36px;overflow:hidden}
+#dbg-hdr{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 10px;flex-shrink:0;cursor:pointer;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  user-select:none;
+}
+#dbg-hdr:hover{background:rgba(255,255,255,0.04);border-radius:10px 10px 0 0}
+.dbg-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;flex-shrink:0;animation:pu 2s ease-in-out infinite}
+#dbg-title{font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.55);flex:1}
+#dbg-count{font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.35);min-width:16px;text-align:right}
+.dbg-btn{
+  background:rgba(255,255,255,0.08);border:none;border-radius:4px;
+  color:rgba(255,255,255,0.5);font-family:var(--f);font-size:0.58rem;font-weight:700;
+  padding:3px 7px;cursor:pointer;transition:all .12s;letter-spacing:0.04em;flex-shrink:0;
+}
+.dbg-btn:hover{background:rgba(255,255,255,0.15);color:white}
+#dbg-body{
+  overflow-y:auto;flex:1;padding:6px 10px 8px;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.1) transparent;
+}
+.dbg-entry{
+  display:flex;gap:6px;padding:3px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);line-height:1.5;
+}
+.dbg-entry:last-child{border-bottom:none}
+.dbg-ts{color:rgba(255,255,255,0.25);flex-shrink:0;font-variant-numeric:tabular-nums;width:56px}
+.dbg-msg{color:rgba(255,255,255,0.75);word-break:break-word}
+.dbg-msg.err{color:#f87171}
+.dbg-msg.ok{color:#86efac}
+.dbg-msg.info{color:rgba(255,255,255,0.75)}
+.dbg-msg.send{color:#93c5fd}
+.dbg-msg.recv{color:#c4b5fd}
+.dbg-empty{color:rgba(255,255,255,0.2);font-style:italic;padding:8px 0}
 </style>
 </head>
 <body>
@@ -705,6 +749,21 @@ svg.cr.on{opacity:1}
   </div>
 </div>
 
+<!-- Debug log widget -->
+<div id="dbg-widget">
+  <div id="dbg-hdr" onclick="dbgToggle()">
+    <div class="dbg-dot"></div>
+    <div id="dbg-title">Debug Log</div>
+    <div id="dbg-count">0</div>
+    <button class="dbg-btn" onclick="event.stopPropagation();dbgCopy(this)">Copy</button>
+    <button class="dbg-btn" onclick="event.stopPropagation();dbgClear()">Clear</button>
+    <button class="dbg-btn" id="dbg-tog" style="width:22px;padding:3px 0;text-align:center">−</button>
+  </div>
+  <div id="dbg-body">
+    <div class="dbg-empty" id="dbg-empty">No logs yet.</div>
+  </div>
+</div>
+
 <script>
 // ---------------------------------------------------------------------------
 // State
@@ -719,8 +778,75 @@ const _s = {
 };
 
 // ---------------------------------------------------------------------------
-// Utilities
+// Debug logger
 // ---------------------------------------------------------------------------
+let _dbgLogs = [];
+let _dbgCollapsed = false;
+
+function uiLog(msg, type) {
+  // type: 'info' | 'ok' | 'err' | 'send' | 'recv'
+  const t = type || 'info';
+  const now = new Date();
+  const ts = now.toTimeString().slice(0, 8);
+  _dbgLogs.push({ ts, msg, t });
+
+  const empty = document.getElementById('dbg-empty');
+  if (empty) empty.remove();
+
+  const body = document.getElementById('dbg-body');
+  const el = document.createElement('div');
+  el.className = 'dbg-entry';
+  el.innerHTML = '<span class="dbg-ts">' + ts + '</span>'
+    + '<span class="dbg-msg ' + t + '">' + escHtml(String(msg)) + '</span>';
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+
+  const cnt = document.getElementById('dbg-count');
+  if (cnt) cnt.textContent = _dbgLogs.length;
+
+  // Mirror to console
+  if (t === 'err') console.error('[DBG]', msg);
+  else console.log('[DBG]', msg);
+}
+
+function dbgToggle() {
+  _dbgCollapsed = !_dbgCollapsed;
+  const w = document.getElementById('dbg-widget');
+  const tog = document.getElementById('dbg-tog');
+  w.classList.toggle('collapsed', _dbgCollapsed);
+  if (tog) tog.textContent = _dbgCollapsed ? '+' : '−';
+}
+
+function dbgCopy(btn) {
+  const text = _dbgLogs.map(l => l.ts + '  ' + l.msg).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1200);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1200);
+  });
+}
+
+function dbgClear() {
+  _dbgLogs = [];
+  const body = document.getElementById('dbg-body');
+  body.innerHTML = '<div class="dbg-empty" id="dbg-empty">No logs yet.</div>';
+  const cnt = document.getElementById('dbg-count');
+  if (cnt) cnt.textContent = '0';
+}
+
+
 function escHtml(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
@@ -746,6 +872,7 @@ function launch() {
   const role = document.querySelector('.f-select').value || 'Account Executive';
 
   _s.user = { name: f + ' ' + l, email, role };
+  uiLog('Onboarding complete — user: ' + _s.user.name + ', role: ' + role, 'ok');
 
   const ini = (f[0] + (l[0] || '')).toUpperCase();
   document.getElementById('userAva').textContent = ini;
@@ -770,6 +897,7 @@ function selectPersona(el) {
 
 async function beginSession() {
   closeModal();
+  uiLog('POST /api/session/start — persona: hendrik', 'send');
   try {
     const res = await fetch('/api/session/start', {
       method: 'POST',
@@ -784,8 +912,12 @@ async function beginSession() {
     if (res.ok) {
       const data = await res.json();
       _s.sessionId = data.session_id;
+      uiLog('Session created — id: ' + data.session_id, 'ok');
+    } else {
+      uiLog('Session create failed — HTTP ' + res.status, 'err');
     }
   } catch (err) {
+    uiLog('Session create error: ' + err.message, 'err');
     console.error('Failed to create session:', err);
   }
   document.getElementById('emptyState').style.display = 'none';
@@ -844,45 +976,67 @@ async function startCall() {
   document.getElementById('cst').textContent = 'Connecting…';
 
   _s.callStart = Date.now();
+  uiLog('startCall() — session: ' + (_s.sessionId || 'none'));
 
   try {
     // Get signed URL from backend
+    uiLog('GET /api/session/' + _s.sessionId + '/voice-token', 'send');
     const tokenRes = await fetch('/api/session/' + _s.sessionId + '/voice-token');
-    if (!tokenRes.ok) throw new Error('Voice token request failed: ' + tokenRes.status);
+    uiLog('Voice token response — HTTP ' + tokenRes.status, tokenRes.ok ? 'ok' : 'err');
+    if (!tokenRes.ok) {
+      const body = await tokenRes.text();
+      uiLog('Voice token error body: ' + body, 'err');
+      throw new Error('Voice token request failed: ' + tokenRes.status);
+    }
     const { signed_url } = await tokenRes.json();
+    uiLog('Signed URL received — length: ' + signed_url.length, 'ok');
 
     // Load ElevenLabs client and open session
+    uiLog('Loading @11labs/client from CDN…');
     const { Conversation } = await import('https://cdn.jsdelivr.net/npm/@11labs/client/+esm');
+    uiLog('@11labs/client loaded', 'ok');
 
+    uiLog('Conversation.startSession() called', 'send');
     _s.conversation = await Conversation.startSession({
       signedUrl: signed_url,
       onConnect: () => {
+        uiLog('ElevenLabs connected', 'ok');
         document.getElementById('liveBadge').innerHTML = '<div class="ld"></div>In progress';
         document.getElementById('cst').textContent = 'Connected — start talking';
         document.getElementById('tx').style.display = 'block';
         document.getElementById('eb').style.display = 'flex';
       },
       onDisconnect: () => {
+        uiLog('ElevenLabs disconnected');
         document.getElementById('cst').textContent = 'Call ended';
         document.getElementById('wf').classList.add('idle');
       },
       onMessage: (msg) => {
         if (msg.type === 'agent_response' && msg.agent_response_event?.agent_response) {
-          addLine('h', msg.agent_response_event.agent_response);
+          const text = msg.agent_response_event.agent_response;
+          uiLog('Agent: ' + text.slice(0, 80) + (text.length > 80 ? '…' : ''), 'recv');
+          addLine('h', text);
           document.getElementById('cst').textContent = 'Hendrik speaking';
           setF(0.13);
         } else if (msg.type === 'user_transcript' && msg.user_transcription_event?.user_transcript) {
-          addLine('y', msg.user_transcription_event.user_transcript);
+          const text = msg.user_transcription_event.user_transcript;
+          uiLog('User transcript: ' + text.slice(0, 80) + (text.length > 80 ? '…' : ''), 'send');
+          addLine('y', text);
           document.getElementById('cst').textContent = 'Your turn';
           setF(0.04);
+        } else {
+          uiLog('ElevenLabs msg type: ' + msg.type);
         }
       },
       onError: (err) => {
+        uiLog('ElevenLabs error: ' + (err?.message || JSON.stringify(err)), 'err');
         console.error('ElevenLabs error:', err);
         document.getElementById('cst').textContent = 'Connection error — check console';
       },
     });
+    uiLog('Conversation session started — id: ' + (_s.conversation?.getId?.() || 'unknown'), 'ok');
   } catch (err) {
+    uiLog('startCall failed: ' + err.message, 'err');
     console.error('startCall error:', err);
     document.getElementById('cst').textContent = 'Failed to connect: ' + err.message;
     document.getElementById('liveBadge').innerHTML = '<div class="ld"></div>Error';
@@ -894,13 +1048,17 @@ async function startCall() {
 // ---------------------------------------------------------------------------
 async function endCall() {
   _s.callDuration = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
+  uiLog('endCall() — duration: ' + _s.callDuration + 's');
 
   let conversationId = null;
   if (_s.conversation) {
     try {
       conversationId = _s.conversation.getId ? _s.conversation.getId() : null;
+      uiLog('ElevenLabs conversation id: ' + (conversationId || 'none'));
       await _s.conversation.endSession();
+      uiLog('ElevenLabs session ended', 'ok');
     } catch (err) {
+      uiLog('Error ending ElevenLabs session: ' + err.message, 'err');
       console.error('Error ending ElevenLabs session:', err);
     }
   }
@@ -914,7 +1072,8 @@ async function endCall() {
   document.querySelectorAll('#vs .call-btn').forEach(b => b.disabled = true);
 
   try {
-    await fetch('/api/session/' + _s.sessionId + '/end', {
+    uiLog('POST /api/session/' + _s.sessionId + '/end', 'send');
+    const endRes = await fetch('/api/session/' + _s.sessionId + '/end', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -922,25 +1081,33 @@ async function endCall() {
         duration_seconds: _s.callDuration,
       }),
     });
+    uiLog('Session end response — HTTP ' + endRes.status, endRes.ok ? 'ok' : 'err');
     pollForResults();
   } catch (err) {
+    uiLog('Failed to end session: ' + err.message, 'err');
     console.error('Failed to end session:', err);
     document.getElementById('liveBadge').textContent = 'Error';
   }
 }
 
 async function pollForResults() {
+  uiLog('Polling for results…');
+  let attempts = 0;
   const check = async () => {
+    attempts++;
     try {
       const res = await fetch('/api/session/' + _s.sessionId + '/status');
       const data = await res.json();
+      uiLog('Poll #' + attempts + ' — status: ' + data.status, data.status === 'complete' ? 'ok' : 'info');
       if (data.status === 'complete') {
+        uiLog('Analysis complete — score: ' + data.score, 'ok');
         _s.analysis = data;
         renderScore(data);
       } else {
         setTimeout(check, 2000);
       }
-    } catch {
+    } catch (err) {
+      uiLog('Poll error (attempt ' + attempts + '): ' + err.message, 'err');
       setTimeout(check, 3000);
     }
   };
@@ -1108,11 +1275,14 @@ function card(label, val, noteClass, noteText, noteStyle) {
 // Leaderboard
 // ---------------------------------------------------------------------------
 async function loadLeaderboard() {
+  uiLog('GET /api/leaderboard', 'send');
   try {
     const res = await fetch('/api/leaderboard');
     const { entries } = await res.json();
+    uiLog('Leaderboard loaded — ' + (entries ? entries.length : 0) + ' entries', 'ok');
     if (entries && entries.length > 0) renderLeaderboard(entries);
   } catch (err) {
+    uiLog('Leaderboard load failed: ' + err.message, 'err');
     console.error('Leaderboard load failed:', err);
   }
 }
@@ -1160,6 +1330,7 @@ function share() {
 }
 
 function newSession() {
+  uiLog('New session — resetting state');
   fv = 0;
   _s.conversation = null;
   _s.sessionId = null;

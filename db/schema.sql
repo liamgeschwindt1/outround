@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS sessions (
   score_breakdown JSONB,
   coaching_feedback JSONB,
   elevenlabs_conversation_id TEXT,
-  assemblyai_transcript_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
