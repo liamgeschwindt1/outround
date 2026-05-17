@@ -206,6 +206,22 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .rank-badge{font-size:0.57rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);background:rgba(17,17,17,0.06);border:1px solid var(--border);padding:3px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0}
 .rank-text strong{display:block;font-size:0.77rem;font-weight:700;color:var(--ink);margin-bottom:1px;letter-spacing:-0.01em}
 .rank-text span{font-size:0.64rem;color:var(--ink-2)}
+/* Score loading state */
+.score-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 20px;gap:14px;min-height:380px}
+.sl-ring{width:38px;height:38px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--ink);animation:sl-spin 0.85s linear infinite;flex-shrink:0}
+@keyframes sl-spin{to{transform:rotate(360deg)}}
+.sl-label{font-size:0.52rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3)}
+.sl-title{font-size:0.97rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;text-align:center;margin-bottom:4px}
+.sl-steps{display:flex;flex-direction:column;gap:10px;width:100%;padding:0 6px}
+.sl-step{display:flex;align-items:center;gap:10px;font-size:0.69rem;color:var(--ink-3);transition:color 0.3s}
+.sl-step.active-step{color:var(--ink);font-weight:600}
+.sl-step.done-step{color:var(--ink-3)}
+.sl-step-dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background 0.3s}
+.sl-step-dot.done{background:#22c55e}
+.sl-step-dot.active{background:var(--ink);animation:dot-blink 0.9s ease-in-out infinite}
+@keyframes dot-blink{0%,100%{opacity:0.3}50%{opacity:1}}
+@keyframes score-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.score-reveal{animation:score-reveal 0.4s ease forwards}
 /* Coaching tab */
 .focus-callout{background:rgba(17,17,17,0.04);border-left:2.5px solid var(--ink);border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:16px}
 .focus-lbl{font-size:0.55rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:3px}
@@ -685,7 +701,19 @@ svg.cr.on{opacity:1}
 
               <!-- Score -->
               <div id="vs">
-                <div class="score-wrap">
+                <div id="scoreLoading" class="score-loading" style="display:none">
+                  <div class="sl-ring"></div>
+                  <div class="sl-label">Analysing</div>
+                  <div class="sl-title">Grading your call</div>
+                  <div class="sl-steps">
+                    <div class="sl-step" id="slStep0"><div class="sl-step-dot" id="slDot0"></div>Reviewing transcript</div>
+                    <div class="sl-step" id="slStep1"><div class="sl-step-dot" id="slDot1"></div>Scoring opening &amp; hook</div>
+                    <div class="sl-step" id="slStep2"><div class="sl-step-dot" id="slDot2"></div>Grading objection handling</div>
+                    <div class="sl-step" id="slStep3"><div class="sl-step-dot" id="slDot3"></div>Checking talk ratio</div>
+                    <div class="sl-step" id="slStep4"><div class="sl-step-dot" id="slDot4"></div>Writing coaching notes</div>
+                  </div>
+                </div>
+                <div id="scoreContent" class="score-wrap" style="display:none">
                   <div class="score-row">
                     <div class="big-num" id="bn">0</div>
                     <div style="font-size:1rem;font-weight:800;color:var(--ink-3);padding-bottom:8px">/100</div>
@@ -1160,7 +1188,10 @@ async function endCall() {
   setF(0);
   document.getElementById('vc').style.display = 'none';
   document.getElementById('vs').style.display = 'block';
-  document.getElementById('liveBadge').textContent = 'Analysing…';
+  document.getElementById('scoreLoading').style.display = 'flex';
+  document.getElementById('scoreContent').style.display = 'none';
+  startGradingAnimation();
+  document.getElementById('liveBadge').innerHTML = '<div class="ld"></div>Analysing…';
   document.getElementById('bn').textContent = '—';
   // Disable result buttons until analysis is ready
   document.querySelectorAll('#vs .call-btn').forEach(b => b.disabled = true);
@@ -1237,7 +1268,53 @@ async function pollForResults() {
 // ---------------------------------------------------------------------------
 // Render score panel
 // ---------------------------------------------------------------------------
+let _gradingInterval = null;
+let _gradingStep = 0;
+const _GRADING_STEPS = 5;
+
+function startGradingAnimation() {
+  _gradingStep = 0;
+  for (let i = 0; i < _GRADING_STEPS; i++) {
+    const dot = document.getElementById('slDot' + i);
+    const step = document.getElementById('slStep' + i);
+    if (dot) dot.className = 'sl-step-dot';
+    if (step) step.className = 'sl-step';
+  }
+  const d0 = document.getElementById('slDot0');
+  const s0 = document.getElementById('slStep0');
+  if (d0) d0.className = 'sl-step-dot active';
+  if (s0) s0.className = 'sl-step active-step';
+  _gradingInterval = setInterval(() => {
+    if (_gradingStep < _GRADING_STEPS - 1) {
+      const cd = document.getElementById('slDot' + _gradingStep);
+      const cs = document.getElementById('slStep' + _gradingStep);
+      if (cd) cd.className = 'sl-step-dot done';
+      if (cs) cs.className = 'sl-step done-step';
+      _gradingStep++;
+      const nd = document.getElementById('slDot' + _gradingStep);
+      const ns = document.getElementById('slStep' + _gradingStep);
+      if (nd) nd.className = 'sl-step-dot active';
+      if (ns) ns.className = 'sl-step active-step';
+    }
+  }, 3500);
+}
+
+function stopGradingAnimation() {
+  if (_gradingInterval) { clearInterval(_gradingInterval); _gradingInterval = null; }
+  for (let i = 0; i < _GRADING_STEPS; i++) {
+    const dot = document.getElementById('slDot' + i);
+    const step = document.getElementById('slStep' + i);
+    if (dot) dot.className = 'sl-step-dot done';
+    if (step) step.className = 'sl-step done-step';
+  }
+}
+
 function renderScore(data) {
+  stopGradingAnimation();
+  document.getElementById('scoreLoading').style.display = 'none';
+  const sc = document.getElementById('scoreContent');
+  sc.style.display = 'block';
+  sc.classList.add('score-reveal');
   document.getElementById('liveBadge').textContent = 'Report';
   document.querySelectorAll('#vs .call-btn').forEach(b => b.disabled = false);
 
