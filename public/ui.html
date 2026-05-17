@@ -250,6 +250,31 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .an-finish-btn{background:var(--ink);color:white;font-family:var(--f);font-size:0.72rem;font-weight:700;border:none;border-radius:7px;padding:7px 16px;cursor:pointer;letter-spacing:-0.01em;transition:all 0.12s;flex-shrink:0}
 .an-finish-btn:hover{background:#222}
 
+/* ===== MODE SELECT + CHARACTER SELECT ===== */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.mode-card{border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;user-select:none}
+.mode-card:hover:not(.mode-locked){border-color:var(--border-h);background:rgba(17,17,17,0.02)}
+.mode-card.mode-active{border-color:var(--ink);background:var(--ink);cursor:default}
+.mode-card.mode-active .mode-name,.mode-card.mode-active .mode-desc{color:rgba(255,255,255,0.9)}
+.mode-card.mode-active .mode-desc{color:rgba(255,255,255,0.5)}
+.mode-card.mode-locked{opacity:0.35;cursor:not-allowed}
+.mode-icon{font-size:1.2rem;margin-bottom:8px}
+.mode-name{font-size:0.82rem;font-weight:700;letter-spacing:-0.01em;margin-bottom:3px;color:var(--ink)}
+.mode-desc{font-size:0.62rem;color:var(--ink-2);line-height:1.5}
+.mode-lock{position:absolute;top:8px;right:8px;font-size:0.52rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);background:var(--bg);border:1px solid var(--border);padding:2px 6px;border-radius:4px}
+.char-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.char-card{border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;user-select:none}
+.char-card:hover:not(.char-locked){border-color:var(--border-h);background:rgba(17,17,17,0.02)}
+.char-card.char-locked{cursor:not-allowed}
+.char-flag{font-size:1.3rem;margin-bottom:8px}
+.char-name{font-size:0.78rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:2px}
+.char-role{font-size:0.6rem;color:var(--ink-2);margin-bottom:7px}
+.char-lock-cover{position:absolute;inset:0;background:rgba(247,246,241,0.72);display:flex;align-items:center;justify-content:center;border-radius:10px}
+.char-lock-lbl{font-size:0.55rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);background:var(--bg);border:1px solid var(--border);padding:3px 9px;border-radius:4px}
+/* ===== HANG-UP BANNER ===== */
+.hangup-banner{background:var(--ink);color:white;text-align:center;font-size:0.92rem;font-weight:700;padding:18px 24px;letter-spacing:-0.02em;border-radius:10px;animation:hb-in .28s ease;margin-bottom:4px}
+@keyframes hb-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
 /* ===== DEBUG WIDGET ===== */
 #dbg-widget{
   position:fixed;bottom:18px;right:18px;width:340px;
@@ -461,6 +486,7 @@ const _s = {
   onboardingDone: false,
   history: [],
   _finishLb: null,
+  _callEnding: false,
 };
 
 // ---------------------------------------------------------------------------
@@ -538,9 +564,9 @@ function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ---------------------------------------------------------------------------
 // Progress dots
-// Session steps: persona=0, brief=1, call=2, loading=3, finish=4 (total 5)
+// Session steps: mode=0, character=1, persona=2, brief=3, call=4, loading=5, finish=6 (total 7)
 // ---------------------------------------------------------------------------
-const STEP_DOT_IDX = { persona: 0, brief: 1, call: 2, loading: 3, finish: 4 };
+const STEP_DOT_IDX = { mode: 0, character: 1, persona: 2, brief: 3, call: 4, loading: 5, finish: 6 };
 
 function renderDots(activeIdx, total) {
   const el = document.getElementById('progressDots');
@@ -580,7 +606,7 @@ async function goToStep(step) {
   if (!isOpen) {
     renderStep(step, wrap);
     if (step === 'onboarding') renderOnboardingDots();
-    else renderDots(STEP_DOT_IDX[step] ?? 0, 5);
+    else renderDots(STEP_DOT_IDX[step] ?? 0, 7);
     overlay.classList.add('open');
     _currentStep = step;
     return;
@@ -590,7 +616,7 @@ async function goToStep(step) {
   await delay(200);
   renderStep(step, wrap);
   if (step === 'onboarding') renderOnboardingDots();
-  else renderDots(STEP_DOT_IDX[step] ?? 0, 5);
+  else renderDots(STEP_DOT_IDX[step] ?? 0, 7);
   wrap.classList.remove('fading');
   _currentStep = step;
 }
@@ -601,6 +627,8 @@ async function goToStep(step) {
 function renderStep(step, wrap) {
   const templates = {
     onboarding: renderOnboardingStep,
+    mode: renderModeStep,
+    character: renderCharacterStep,
     persona: renderPersonaStep,
     brief: renderBriefStep,
     call: renderCallStep,
@@ -628,6 +656,76 @@ function renderOnboardingStep() {
     </div>
     <button class="ob-btn" onclick="completeOnboarding()">Start practicing</button>
     <div class="ob-skip" onclick="skipOnboarding()">Skip — try the demo</div>
+  </div>`;
+}
+
+function renderModeStep() {
+  return `<div class="card-step">
+    <div class="step-eyebrow">Practice mode</div>
+    <div class="ob-title" style="margin-bottom:4px;font-size:1.2rem">How do you want to drill?</div>
+    <div class="ob-sub" style="margin-bottom:16px">Only Cold Call is live right now. More modes dropping soon.</div>
+    <div class="mode-grid">
+      <div class="mode-card mode-active">
+        <div class="mode-icon">📞</div>
+        <div class="mode-name">Cold Call</div>
+        <div class="mode-desc">Live AI conversation, 3–5 min</div>
+      </div>
+      <div class="mode-card mode-locked">
+        <div class="mode-lock">Soon</div>
+        <div class="mode-icon">✉️</div>
+        <div class="mode-name">Email</div>
+        <div class="mode-desc">Write a cold email sequence</div>
+      </div>
+      <div class="mode-card mode-locked">
+        <div class="mode-lock">Soon</div>
+        <div class="mode-icon">💼</div>
+        <div class="mode-name">LinkedIn DM</div>
+        <div class="mode-desc">Craft the perfect opener</div>
+      </div>
+      <div class="mode-card mode-locked">
+        <div class="mode-lock">Soon</div>
+        <div class="mode-icon">🔍</div>
+        <div class="mode-name">Discovery</div>
+        <div class="mode-desc">Full discovery call</div>
+      </div>
+    </div>
+    <button class="ob-btn" onclick="goToStep('character')">Continue with Cold Call</button>
+  </div>`;
+}
+
+function renderCharacterStep() {
+  return `<div class="card-step">
+    <div class="step-eyebrow">Your prospect</div>
+    <div class="ob-title" style="margin-bottom:16px;font-size:1.2rem">Who are you pitching?</div>
+    <div class="char-grid">
+      <div class="char-card" onclick="goToStep('persona')">
+        <div class="char-flag">🇳🇱</div>
+        <div class="char-name">Hendrik van der Berg</div>
+        <div class="char-role">CFO · Vandermeer Logistics</div>
+        <div class="char-tags"><div class="tag">Skeptical</div><div class="tag">Hard</div></div>
+      </div>
+      <div class="char-card char-locked">
+        <div class="char-flag">🇬🇧</div>
+        <div class="char-name">Sarah Whitmore</div>
+        <div class="char-role">VP Ops · Kellerton Group</div>
+        <div class="char-tags"><div class="tag">Formal</div></div>
+        <div class="char-lock-cover"><div class="char-lock-lbl">Coming soon</div></div>
+      </div>
+      <div class="char-card char-locked">
+        <div class="char-flag">🇺🇸</div>
+        <div class="char-name">Marcus Webb</div>
+        <div class="char-role">Head of Sales · Arion Co.</div>
+        <div class="char-tags"><div class="tag">Aggressive</div></div>
+        <div class="char-lock-cover"><div class="char-lock-lbl">Coming soon</div></div>
+      </div>
+      <div class="char-card char-locked">
+        <div class="char-flag">🇩🇪</div>
+        <div class="char-name">Petra Hoffman</div>
+        <div class="char-role">CTO · Neumann Systems</div>
+        <div class="char-tags"><div class="tag">Technical</div></div>
+        <div class="char-lock-cover"><div class="char-lock-lbl">Coming soon</div></div>
+      </div>
+    </div>
   </div>`;
 }
 
@@ -752,7 +850,7 @@ function buildFinishLbRows(lbEntries, userScore) {
 // Onboarding
 // ---------------------------------------------------------------------------
 function openSession() {
-  goToStep(_s.onboardingDone ? 'persona' : 'onboarding');
+  goToStep(_s.onboardingDone ? 'mode' : 'onboarding');
 }
 
 function completeOnboarding() {
@@ -764,12 +862,12 @@ function completeOnboarding() {
   _s.onboardingDone = true;
   updateUserUI();
   loadLeaderboard();
-  goToStep('persona');
+  goToStep('mode');
 }
 
 function skipOnboarding() {
   _s.onboardingDone = true;
-  goToStep('persona');
+  goToStep('mode');
 }
 
 function updateUserUI() {
@@ -851,11 +949,29 @@ async function startCall() {
         }, 1000);
       },
       onDisconnect: () => {
-        uiLog('ElevenLabs disconnected', 'info');
-        const cst = document.getElementById('cst'); if (cst) cst.textContent = 'Call ended';
-        const wf = document.getElementById('wf'); if (wf) wf.classList.add('idle');
-        const ring = document.getElementById('cvRing'); if (ring) ring.classList.remove('on');
+        uiLog('ElevenLabs disconnected — callEnding=' + _s._callEnding, 'info');
         if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
+        if (!_s._callEnding) {
+          // Hendrik hung up — reflect it in the UI then auto-transition
+          _s._callEnding = true;
+          _s.callDuration = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
+          uiLog('Hendrik hung up (' + _s.callDuration + 's)', 'info');
+          const wf = document.getElementById('wf'); if (wf) wf.classList.add('idle');
+          const ring = document.getElementById('cvRing'); if (ring) ring.classList.remove('on');
+          const eb = document.getElementById('eb'); if (eb) eb.style.display = 'none';
+          const cst = document.getElementById('cst'); if (cst) cst.textContent = '';
+          const cvTimer = document.getElementById('cvTimer'); if (cvTimer) cvTimer.textContent = '';
+          const callStep = document.querySelector('.call-step');
+          if (callStep) {
+            const banner = document.createElement('div');
+            banner.className = 'hangup-banner';
+            banner.textContent = 'Hendrik just hung up.';
+            callStep.insertBefore(banner, callStep.firstChild);
+          }
+          let convId = null;
+          try { convId = _s.conversation?.getId ? _s.conversation.getId() : null; } catch {}
+          setTimeout(() => _finishCall(convId), 2000);
+        }
       },
       onMessage: (msg) => {
         if (!msg) return;
@@ -883,6 +999,8 @@ async function startCall() {
 // End call → loading
 // ---------------------------------------------------------------------------
 async function endCall() {
+  if (_s._callEnding) return; // already ending (e.g. Hendrik hung up)
+  _s._callEnding = true;
   if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
   _s.callDuration = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
   let conversationId = null;
@@ -890,15 +1008,19 @@ async function endCall() {
     try {
       conversationId = _s.conversation.getId ? _s.conversation.getId() : null;
       await _s.conversation.endSession();
-    } catch (err) { console.error('ElevenLabs end:', err); }
+    } catch (err) { uiLog('ElevenLabs end: ' + err.message, 'err'); }
   }
+  await _finishCall(conversationId);
+}
+
+async function _finishCall(conversationId) {
   await goToStep('loading');
   startGradingAnimation();
   uiLog('Ending session (duration: ' + _s.callDuration + 's)', 'send');
   try {
     const r = await fetch('/api/session/' + _s.sessionId + '/end', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ elevenlabs_conversation_id: conversationId, duration_seconds: _s.callDuration }),
+      body: JSON.stringify({ elevenlabs_conversation_id: conversationId || null, duration_seconds: _s.callDuration }),
     });
     if (r.ok) { uiLog('Session ended, polling for results…', 'ok'); pollForResults(); }
     else { uiLog('End session failed: HTTP ' + r.status, 'err'); }
@@ -1148,10 +1270,10 @@ async function dismissFinish() {
 
 async function goAgain() {
   _s.sessionId = null; _s.conversation = null; _s.analysis = null;
-  _s.callStart = null; _s.callDuration = 0; _s.muted = false;
+  _s.callStart = null; _s.callDuration = 0; _s.muted = false; _s._callEnding = false;
   if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
   clearInterval(_briefInterval);
-  goToStep('persona');
+  goToStep('mode');
 }
 
 // ---------------------------------------------------------------------------
@@ -1159,7 +1281,11 @@ async function goAgain() {
 // ---------------------------------------------------------------------------
 function shareLI() {
   const score = _s.analysis?.score || '?';
-  window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(`I scored ${score}/100 selling to an AI Dutch CFO on Outround.\n\nThink you can beat it?\n\noutround.io`), '_blank');
+  const verdict = _s.analysis?.headline || _s.analysis?.call_verdict ? null : null;
+  const raw = _s.analysis?.headline || '';
+  const verdictLine = raw ? `"${raw}"\n\n` : '';
+  const text = `Just practised a cold call on Outround against an AI Dutch CFO.\n\n${verdictLine}Scored ${score}/100.\n\nTry to beat it → outround.io`;
+  window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(text), '_blank');
 }
 
 // ---------------------------------------------------------------------------
