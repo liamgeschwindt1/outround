@@ -30,14 +30,25 @@ async function getConversationToken(personaId) {
 
 /**
  * Fetch the transcript and metadata for a completed conversation.
+ * Polls until ElevenLabs marks the conversation as "done" (max ~90 s).
  * @param {string} conversationId
  * @returns {Promise<{transcript: Array, durationSeconds: number}>}
  */
 async function getConversationTranscript(conversationId) {
   const client = getClient();
-  const conversation = await client.conversationalAi.getConversation(
-    conversationId
-  );
+
+  // ElevenLabs processes conversations asynchronously; poll until done.
+  const MAX_ATTEMPTS = 18;  // 18 × 5 s = 90 s ceiling
+  const POLL_INTERVAL_MS = 5000;
+
+  let conversation;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    conversation = await client.conversationalAi.getConversation(conversationId);
+    if (conversation.status === 'done' || conversation.status === 'failed') break;
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise((res) => setTimeout(res, POLL_INTERVAL_MS));
+    }
+  }
 
   const transcript = (conversation.transcript || []).map((t) => ({
     speaker: t.role === 'agent' ? 'hendrik' : 'rep',
@@ -46,8 +57,7 @@ async function getConversationTranscript(conversationId) {
     end_ms: 0,
   }));
 
-  const durationSeconds =
-    conversation.metadata?.call_duration_secs || 0;
+  const durationSeconds = conversation.metadata?.call_duration_secs || 0;
 
   return { transcript, durationSeconds };
 }
