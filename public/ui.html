@@ -1057,19 +1057,30 @@ async function startCall() {
         if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
       },
       onMessage: (msg) => {
-        if (!msg || !msg.type) return; // ignore empty/typeless internal events
-        if (msg.type === 'agent_response' && msg.agent_response_event?.agent_response) {
-          const text = msg.agent_response_event.agent_response;
-          addLine('h', text);
+        if (!msg) return;
+        // @11labs/client passes processed messages: {source:'ai'|'user', message:string}
+        // Fall back to raw WS format: {type:'agent_response'|'user_transcript', ...}
+        let agentText = null, userText = null;
+        if (msg.source === 'ai' && msg.message) {
+          agentText = msg.message;
+        } else if (msg.source === 'user' && msg.message) {
+          userText = msg.message;
+        } else if (msg.type === 'agent_response' && msg.agent_response_event?.agent_response) {
+          agentText = msg.agent_response_event.agent_response;
+        } else if (msg.type === 'user_transcript' && msg.user_transcription_event?.user_transcript) {
+          userText = msg.user_transcription_event.user_transcript;
+        } else {
+          uiLog('ElevenLabs msg: ' + JSON.stringify(msg).slice(0, 120));
+          return;
+        }
+        if (agentText) {
+          addLine('h', agentText);
           document.getElementById('cst').textContent = 'Hendrik speaking';
           setF(0.13);
-        } else if (msg.type === 'user_transcript' && msg.user_transcription_event?.user_transcript) {
-          const text = msg.user_transcription_event.user_transcript;
-          addLine('y', text);
+        } else if (userText) {
+          addLine('y', userText);
           document.getElementById('cst').textContent = 'Your turn';
           setF(0.04);
-        } else {
-          uiLog('ElevenLabs msg type: ' + msg.type);
         }
       },
       onError: (err) => {
