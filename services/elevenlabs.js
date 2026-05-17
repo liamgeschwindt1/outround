@@ -21,7 +21,7 @@ async function getConversationToken(personaId) {
   }
 
   const client = getClient();
-  const response = await client.conversationalAi.conversations.getSignedUrl({
+  const response = await client.conversationalAi.getSignedUrl({
     agent_id: agentId,
   });
 
@@ -35,7 +35,7 @@ async function getConversationToken(personaId) {
  */
 async function getConversationTranscript(conversationId) {
   const client = getClient();
-  const conversation = await client.conversationalAi.conversations.getConversationById(
+  const conversation = await client.conversationalAi.getConversation(
     conversationId
   );
 
