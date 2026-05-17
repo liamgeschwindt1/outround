@@ -20,9 +20,14 @@ async function gradeSession(transcript, audioMetrics, persona) {
     .map((t) => `[${t.speaker.toUpperCase()}] ${t.text}`)
     .join('\n');
 
+  // Build a name-normalisation note if the persona declares a canonical name
+  const nameNote = persona.canonical_name
+    ? `PROSPECT NAME NOTE: The prospect's canonical first name is "${persona.canonical_name}". STT transcription may produce variants such as ${(persona.phonetic_variants || [persona.canonical_name]).map(v => `"${v}"`).join(', ')}. Treat all phonetic variants as the same name. Never penalise the rep for a transcription spelling error on a proper noun — evaluate name usage on intent and consistency, not spelling.\n\n`
+    : '';
+
   const prompt = `You are the grading engine for Outround, a cold-call practice platform. You are a brutal, commercially-minded coach who has reviewed thousands of cold calls. You have no patience for vague feedback or participation trophies.
 
-You are grading a cold call practice session. The rep was calling ${persona.name}, ${persona.title} at ${persona.company} in ${persona.location}. Persona traits: ${persona.traits.join(', ')}.
+${nameNote}You are grading a cold call practice session. The rep was calling ${persona.name}, ${persona.title} at ${persona.company} in ${persona.location}. Persona traits: ${persona.traits.join(', ')}.
 
 THE TRANSCRIPT:
 ${transcriptText}
