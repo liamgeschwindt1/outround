@@ -95,15 +95,23 @@ Return valid JSON only. No preamble, no markdown fences:
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 2000,
+    max_tokens: 4096,
     messages: [{ role: 'user', content: prompt }],
   });
 
   const raw = response.content[0].text.trim();
 
   // Strip any accidental markdown fences
-  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '');
-  return JSON.parse(cleaned);
+  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (parseErr) {
+    console.error('Claude JSON parse failed. stop_reason:', response.stop_reason,
+      '| tokens used:', response.usage?.output_tokens,
+      '| raw (first 500):', raw.slice(0, 500));
+    throw new Error('Claude returned unparseable response: ' + parseErr.message);
+  }
 }
 
 module.exports = { gradeSession };
