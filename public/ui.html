@@ -1012,6 +1012,7 @@ async function startCall() {
         document.getElementById('wf').classList.add('idle');
       },
       onMessage: (msg) => {
+        if (!msg || !msg.type) return; // ignore empty/typeless internal events
         if (msg.type === 'agent_response' && msg.agent_response_event?.agent_response) {
           const text = msg.agent_response_event.agent_response;
           uiLog('Agent: ' + text.slice(0, 80) + (text.length > 80 ? '…' : ''), 'recv');
@@ -1093,18 +1094,44 @@ async function endCall() {
 async function pollForResults() {
   uiLog('Polling for results…');
   let attempts = 0;
+  const MAX_ATTEMPTS = 45; // ~90 seconds before giving up
   const check = async () => {
     attempts++;
+    if (attempts > MAX_ATTEMPTS) {
+      uiLog('Polling timed out — analysis took too long', 'err');
+      document.getElementById('liveBadge').textContent = 'Timed out';
+      document.querySelectorAll('#vs .call-btn').forEach(b => b.disabled = false);
+      return;
+    }
     try {
       const res = await fetch('/api/session/' + _s.sessionId + '/status');
       const data = await res.json();
+
+      if (!res.ok || data.error) {
+        uiLog('Poll #' + attempts + ' — error: ' + (data.error || 'HTTP ' + res.status), 'err');
+        // Retry up to 5 times on transient errors (DB startup lag, etc.)
+        if (attempts <= 5) { setTimeout(check, 3000); return; }
+        uiLog('Stopping poll — session unavailable', 'err');
+        document.getElementById('liveBadge').textContent = 'Error';
+        document.getElementById('bn').textContent = '—';
+        document.querySelectorAll('#vs .call-btn').forEach(b => b.disabled = false);
+        return;
+      }
+
       uiLog('Poll #' + attempts + ' — status: ' + data.status, data.status === 'complete' ? 'ok' : 'info');
       if (data.status === 'complete') {
         uiLog('Analysis complete — score: ' + data.score, 'ok');
         _s.analysis = data;
         renderScore(data);
-      } else {
+      } else if (data.status === 'processing') {
         setTimeout(check, 2000);
+      } else {
+        uiLog('Unexpected poll response: ' + JSON.stringify(data), 'err');
+        if (attempts <= 5) setTimeout(check, 3000);
+        else {
+          document.getElementById('liveBadge').textContent = 'Error';
+          document.querySelectorAll('#vs .call-btn').forEach(b => b.disabled = false);
+        }
       }
     } catch (err) {
       uiLog('Poll error (attempt ' + attempts + '): ' + err.message, 'err');

@@ -14,7 +14,7 @@ async function gradeSession(transcript, audioMetrics, persona) {
     throw new Error('ANTHROPIC_KEY not configured');
   }
 
-  const client = new Anthropic.default({ apiKey: process.env.ANTHROPIC_KEY });
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_KEY });
 
   const transcriptText = transcript
     .map((t) => `[${t.speaker.toUpperCase()}] ${t.text}`)

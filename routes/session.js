@@ -153,6 +153,18 @@ router.get('/:id/status', async (req, res) => {
 async function processSession(sessionId, { elevenlabs_conversation_id, duration_seconds }) {
   const durationSecs = duration_seconds || 0;
 
+  // Guard: verify the session actually exists in DB before doing expensive work
+  try {
+    const check = await db.query('SELECT id FROM sessions WHERE id = $1', [sessionId]);
+    if (check.rows.length === 0) {
+      console.error('processSession: session not found in DB, skipping —', sessionId);
+      return;
+    }
+  } catch (err) {
+    console.error('processSession: DB check failed —', err.message);
+    return;
+  }
+
   // 1. Fetch transcript from ElevenLabs
   let transcript = [];
   if (elevenlabs_conversation_id) {
@@ -179,19 +191,23 @@ async function processSession(sessionId, { elevenlabs_conversation_id, duration_
   } catch (err) {
     console.error('Claude grading error:', err.message);
     // Store a minimal result so the UI doesn't poll forever
-    await db.query(
-      `UPDATE sessions SET score = 0, score_breakdown = $1, coaching_feedback = $2,
+    try {
+      await db.query(
+        `UPDATE sessions SET score = 0, score_breakdown = $1, coaching_feedback = $2,
        transcript = $3, audio_metrics = $4 WHERE id = $5`,
-      [
-        JSON.stringify({ opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 }),
-        JSON.stringify([{ title: 'Analysis unavailable', score: 0, score_label: 'bad',
-          body: 'Could not complete analysis. Please try again.',
-          quote: '', action: '' }]),
-        JSON.stringify(transcript),
-        JSON.stringify(audioMetrics),
-        sessionId,
-      ]
-    );
+        [
+          JSON.stringify({ opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 }),
+          JSON.stringify([{ title: 'Analysis unavailable', score: 0, score_label: 'bad',
+            body: 'Could not complete analysis. Please try again.',
+            quote: '', action: '' }]),
+          JSON.stringify(transcript),
+          JSON.stringify(audioMetrics),
+          sessionId,
+        ]
+      );
+    } catch (dbErr) {
+      console.error('processSession: failed to store fallback score —', dbErr.message);
+    }
     return;
   }
 
