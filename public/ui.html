@@ -1017,6 +1017,10 @@ function setF(t) {
 // Call — ElevenLabs websocket
 // ---------------------------------------------------------------------------
 async function startCall() {
+  if (!_s.sessionId) {
+    uiLog('startCall blocked — no session ID. Try refreshing.', 'err');
+    return;
+  }
   clearInterval(cdt);
   document.getElementById('vb').style.display = 'none';
   document.getElementById('vc').style.display = 'block';
@@ -1462,7 +1466,7 @@ function share() {
   window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + t, '_blank');
 }
 
-function newSession() {
+async function newSession() {
   uiLog('New session — resetting state');
   fv = 0;
   _s.conversation = null;
@@ -1491,6 +1495,31 @@ function newSession() {
   const b = document.getElementById('brief');
   b.style.opacity = '1';
   b.style.filter = 'none';
+
+  // Create a new session before countdown starts
+  try {
+    uiLog('POST /api/session/start — persona: hendrik', 'send');
+    const res = await fetch('/api/session/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_name: _s.user?.name || null,
+        user_email: _s.user?.email || null,
+        user_role: _s.user?.role || null,
+        persona_id: 'hendrik',
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      _s.sessionId = data.session_id;
+      uiLog('Session created — id: ' + data.session_id, 'ok');
+    } else {
+      uiLog('Session create failed — HTTP ' + res.status, 'err');
+    }
+  } catch (err) {
+    uiLog('Session create error: ' + err.message, 'err');
+  }
+
   startCountdown();
 }
 </script>
