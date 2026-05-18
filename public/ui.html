@@ -953,13 +953,24 @@ function playSound(src) {
   try { const a = new Audio(src); a.play().catch(() => {}); return a; } catch { return null; }
 }
 
+function playSoundAndWait(src) {
+  return new Promise((resolve) => {
+    try {
+      const a = new Audio(src);
+      a.addEventListener('ended', resolve);
+      a.addEventListener('error', resolve); // don't block if file missing
+      a.play().catch(resolve);              // don't block if autoplay denied
+    } catch { resolve(); }
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Call — ElevenLabs websocket
 // ---------------------------------------------------------------------------
 async function initiateCall() {
   if (!_s.sessionId) { uiLog('No session ID — cannot start call', 'err'); return; }
-  playSound('/start_call.mp3');
   await goToStep('call');
+  await playSoundAndWait('/start_call.mp3');
   await startCall();
 }
 
