@@ -653,10 +653,7 @@ function renderOnboardingStep() {
     </div>
     <div class="f-group"><div class="f-label">Work email</div><input class="f-input" type="email" placeholder="you@company.com" id="ob-email"></div>
     <div class="f-group"><div class="f-label">Your role</div>
-      <select class="f-select" id="ob-role">
-        <option>Sales Development Rep</option><option>Account Executive</option><option>VP Sales</option>
-        <option>Founder / CEO</option><option>Sales Manager</option><option>Head of Enablement</option><option>Other</option>
-      </select>
+      <input class="f-input" type="text" placeholder="e.g. Account Executive" id="ob-role">
     </div>
     <button class="ob-btn" onclick="completeOnboarding()">Start practicing</button>
     <div class="ob-skip" onclick="skipOnboarding()">Skip — try the demo</div>
@@ -667,65 +664,78 @@ function renderModeStep() {
   return `<div class="card-step">
     <div class="step-eyebrow">Practice mode</div>
     <div class="ob-title" style="margin-bottom:4px;font-size:1.2rem">How do you want to drill?</div>
-    <div class="ob-sub" style="margin-bottom:16px">Only Cold Call is live right now. More modes dropping soon.</div>
+    <div class="ob-sub" style="margin-bottom:16px">Cold Calls is live now. More modes dropping soon.</div>
     <div class="mode-grid">
       <div class="mode-card mode-active">
         <div class="mode-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.36 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
-        <div class="mode-name">Cold Call</div>
-        <div class="mode-desc">Live AI conversation, 3–5 min</div>
+        <div class="mode-name">Cold Calls</div>
+        <div class="mode-desc">Live AI conversation, 3–5 min. SDR &amp; AE world.</div>
       </div>
       <div class="mode-card mode-locked">
         <div class="mode-lock">Soon</div>
-        <div class="mode-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg></div>
-        <div class="mode-name">Email</div>
-        <div class="mode-desc">Write a cold email sequence</div>
+        <div class="mode-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8,21 12,17 16,21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+        <div class="mode-name">Presentations</div>
+        <div class="mode-desc">Founders, execs, board updates &amp; investor pitches.</div>
       </div>
       <div class="mode-card mode-locked">
         <div class="mode-lock">Soon</div>
-        <div class="mode-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-        <div class="mode-name">LinkedIn DM</div>
-        <div class="mode-desc">Craft the perfect opener</div>
+        <div class="mode-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="mode-name">Difficult Conversations</div>
+        <div class="mode-desc">Performance reviews, salary negotiations, conflict resolution.</div>
       </div>
       <div class="mode-card mode-locked">
         <div class="mode-lock">Soon</div>
-        <div class="mode-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-        <div class="mode-name">Discovery</div>
-        <div class="mode-desc">Full discovery call</div>
+        <div class="mode-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div class="mode-name">Media &amp; PR</div>
+        <div class="mode-desc">CEOs &amp; execs preparing for hostile press interviews.</div>
       </div>
     </div>
-    <button class="ob-btn" onclick="goToStep('character')">Continue with Cold Call</button>
+    <button class="ob-btn" onclick="goToStep('character')">Continue with Cold Calls</button>
   </div>`;
 }
 
 function renderCharacterStep() {
-  const personSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
   return `<div class="card-step">
     <div class="step-eyebrow">Your prospect</div>
     <div class="ob-title" style="margin-bottom:16px;font-size:1.2rem">Who are you pitching?</div>
     <div class="char-grid">
       <div class="char-card" onclick="goToStep('persona')">
-        <div class="char-flag">${personSvg}</div>
-        <div class="char-name">Hendrik van der Berg</div>
+        <div class="char-flag" style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:1px solid var(--border);flex-shrink:0;margin-bottom:8px">
+          <img src="/hendrik.jpg" alt="Hendrik van der Berg" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-size:1.4rem\'>🇳🇱</span>'">
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
+          <span style="font-size:0.9rem">🇳🇱</span>
+          <div class="char-name" style="margin-bottom:0">Hendrik van der Berg</div>
+        </div>
         <div class="char-role">CFO · Vandermeer Logistics</div>
         <div class="char-tags"><div class="tag">Skeptical</div><div class="tag">Hard</div></div>
       </div>
       <div class="char-card char-locked">
-        <div class="char-flag">${personSvg}</div>
-        <div class="char-name">Sarah Whitmore</div>
+        <div class="char-flag" style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:1px solid var(--border);flex-shrink:0;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem">🇬🇧</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
+          <span style="font-size:0.9rem">🇬🇧</span>
+          <div class="char-name" style="margin-bottom:0">Sarah Whitmore</div>
+        </div>
         <div class="char-role">VP Ops · Kellerton Group</div>
         <div class="char-tags"><div class="tag">Formal</div></div>
         <div class="char-lock-cover"><div class="char-lock-lbl">Coming soon</div></div>
       </div>
       <div class="char-card char-locked">
-        <div class="char-flag">${personSvg}</div>
-        <div class="char-name">Marcus Webb</div>
+        <div class="char-flag" style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:1px solid var(--border);flex-shrink:0;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem">🇺🇸</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
+          <span style="font-size:0.9rem">🇺🇸</span>
+          <div class="char-name" style="margin-bottom:0">Marcus Webb</div>
+        </div>
         <div class="char-role">Head of Sales · Arion Co.</div>
         <div class="char-tags"><div class="tag">Aggressive</div></div>
         <div class="char-lock-cover"><div class="char-lock-lbl">Coming soon</div></div>
       </div>
       <div class="char-card char-locked">
-        <div class="char-flag">${personSvg}</div>
-        <div class="char-name">Petra Hoffman</div>
+        <div class="char-flag" style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:1px solid var(--border);flex-shrink:0;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem">🇩🇪</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
+          <span style="font-size:0.9rem">🇩🇪</span>
+          <div class="char-name" style="margin-bottom:0">Petra Hoffman</div>
+        </div>
         <div class="char-role">CTO · Neumann Systems</div>
         <div class="char-tags"><div class="tag">Technical</div></div>
         <div class="char-lock-cover"><div class="char-lock-lbl">Coming soon</div></div>
@@ -738,9 +748,11 @@ function renderPersonaStep() {
   return `<div class="card-step">
     <div class="step-eyebrow">Your prospect</div>
     <div class="persona-showcase">
-      <div class="persona-avatar" style="color:var(--ink-2)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+      <div class="persona-avatar" style="overflow:hidden;padding:0;border:1px solid var(--border)">
+        <img src="/hendrik.jpg" alt="Hendrik van der Berg" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-size:1.4rem\'>🇳🇱</span>';this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.justifyContent='center'">
+      </div>
       <div>
-        <div class="persona-name">Hendrik van der Berg</div>
+        <div class="persona-name" style="display:flex;align-items:center;gap:7px"><span>🇳🇱</span> Hendrik van der Berg</div>
         <div class="persona-role">CFO — Vandermeer Logistics — Amsterdam</div>
         <div class="persona-tags">
           <div class="tag">B2B Enterprise</div><div class="tag">Skeptical</div><div class="tag">Hard</div>
@@ -757,9 +769,9 @@ function renderBriefStep() {
   return `<div class="card-step">
     <div class="step-eyebrow">Your brief</div>
     <div class="brief-scenario">
-      <div class="brief-flag"><img src="/hendrik.jpg" alt="Hendrik van der Berg" style="width:100%;height:100%;object-fit:cover"/></div>
+      <div class="brief-flag" style="overflow:hidden;padding:0"><img src="/hendrik.jpg" alt="Hendrik van der Berg" style="width:100%;height:100%;object-fit:cover"/></div>
       <div>
-        <div class="brief-p-name">Hendrik van der Berg</div>
+        <div class="brief-p-name" style="display:flex;align-items:center;gap:6px"><span>🇳🇱</span> Hendrik van der Berg</div>
         <div class="brief-p-role">CFO — Vandermeer Logistics</div>
       </div>
       <div class="brief-tags"><div class="tag">Skeptical</div><div class="tag">Time-poor</div></div>
@@ -781,7 +793,7 @@ function renderCallStep() {
   return `<div class="call-step">
     <div class="cv-avatar"><img src="/hendrik.jpg" alt="Hendrik van der Berg" style="width:100%;height:100%;object-fit:cover"/><div class="cv-ring" id="cvRing"></div></div>
     <div class="cv-name">Hendrik van der Berg</div>
-    <div class="cv-role">CFO — Vandermeer Logistics</div>
+    <div class="cv-role"><span style="margin-right:4px">🇳🇱</span>CFO — Vandermeer Logistics</div>
     <div class="wf idle" id="wf">
       <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
       <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
