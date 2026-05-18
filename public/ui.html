@@ -947,10 +947,18 @@ function startBrief() {
 }
 
 // ---------------------------------------------------------------------------
+// Audio helpers
+// ---------------------------------------------------------------------------
+function playSound(src) {
+  try { const a = new Audio(src); a.play().catch(() => {}); return a; } catch { return null; }
+}
+
+// ---------------------------------------------------------------------------
 // Call — ElevenLabs websocket
 // ---------------------------------------------------------------------------
 async function initiateCall() {
   if (!_s.sessionId) { uiLog('No session ID — cannot start call', 'err'); return; }
+  playSound('/start_call.mp3');
   await goToStep('call');
   await startCall();
 }
@@ -999,6 +1007,7 @@ async function startCall() {
           }
           let convId = null;
           try { convId = _s.conversation?.getId ? _s.conversation.getId() : null; } catch {}
+          playSound('/end_call.mp3');
           setTimeout(() => _finishCall(convId), 2000);
         }
       },
@@ -1281,7 +1290,7 @@ function renderHistory() {
   empty.style.display = 'none';
   list.style.display = 'flex';
   list.innerHTML = _s.history.map(h => `<div class="hist-item">
-    <div class="hist-flag" style="color:var(--ink-2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+    <div class="hist-flag" style="overflow:hidden;padding:0"><img src="/hendrik.jpg" alt="${escHtml(h.name)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.parentElement.innerHTML='<svg width=\\'18\\'height=\\'18\\'viewBox=\\'0 0 24 24\\'fill=\\'none\\'stroke=\\'currentColor\\'stroke-width=\\'1.6\\'stroke-linecap=\\'round\\'><circle cx=\\'12\\'cy=\\'8\\'r=\\'4\\'/><path d=\\'M4 20c0-4 3.6-7 8-7s8 3 8 7\\'/></svg>';this.parentElement.style.cssText='display:flex;align-items:center;justify-content:center;color:var(--ink-2)'"/></div>
     <div class="hist-info"><div class="hist-name">${escHtml(h.name)}</div><div class="hist-meta">${escHtml(h.role)} · ${h.duration}</div></div>
     <div class="hist-score">${h.score}</div>
     <div class="hist-date">${h.date}</div>
