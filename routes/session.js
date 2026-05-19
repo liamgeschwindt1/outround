@@ -138,7 +138,13 @@ router.get('/:id/status', async (req, res) => {
     );
     if (result.rows.length > 0) {
       const row = result.rows[0];
-      if (row.score === null) return res.json({ status: 'processing' });
+      if (row.score === null) {
+        return res.json({
+          status: 'processing',
+          transcript: row.transcript || [],
+          audio_metrics: row.audio_metrics || {},
+        });
+      }
       const breakdown = row.score_breakdown || {};
       return res.json({
         status: 'complete',
@@ -210,6 +216,28 @@ async function processSession(sessionId, { elevenlabs_conversation_id, duration_
 
   // 2. Calculate audio metrics
   const audioMetrics = calculateMetricsFromTranscript(transcript, actualDuration);
+
+  // Surface transcript and deterministic metrics before grading completes so the UI can render early.
+  if (!useMemOnly) {
+    try {
+      await db.query(
+        `UPDATE sessions SET transcript = $1, audio_metrics = $2 WHERE id = $3`,
+        [JSON.stringify(transcript), JSON.stringify(audioMetrics), sessionId]
+      );
+    } catch (err) {
+      console.error('DB error saving partial analysis:', err.message);
+    }
+  }
+
+  if (memSession) {
+    memStore.set(sessionId, {
+      ...memSession,
+      status: 'processing',
+      transcript,
+      audio_metrics: audioMetrics,
+      duration_seconds: actualDuration,
+    });
+  }
 
   // 3. Grade with Claude
   let grading;
