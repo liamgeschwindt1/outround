@@ -946,12 +946,11 @@ function renderTooShortStep() {
 
 function renderLoadingStep() {
   return `<div class="loading-step-v2">
-    <div class="lsv2-left">
+    <div class="lsv2-left" style="border-right:none;flex:1;padding:40px 32px">
       <div class="lsv2-eyebrow">Analysis in progress</div>
       <div class="lsv2-sparkle">✦</div>
       <div class="lsv2-cycle" id="loadCycleText">Reading between the lines...</div>
     </div>
-    <div class="lsv2-right" id="surveyPanel"></div>
   </div>`;
 }
 
@@ -1233,14 +1232,9 @@ async function _finishCall(conversationId) {
     await goToStep('tooshort');
     return;
   }
-  // Show loading + survey screen, stays open until analysis is ready
+  // Show loading screen, stays open until basic analysis is ready
   await goToStep('loading');
-  // Widen card for two-column layout
-  const _lc = document.getElementById('focusCard');
-  if (_lc) _lc.classList.add('loading-wide');
-  // Start cycling text and survey in parallel with analysis
   _startLoadingCycle();
-  startSurvey();
 
   // Fetch analysis in background (survey runs in parallel — doesn't block)
   uiLog('Ending session (duration: ' + _s.callDuration + 's)', 'send');
@@ -1749,13 +1743,14 @@ const _SURVEY_FLOW = {
   q4: { q: 'How often are you in high-stakes calls?', opts: ['Daily', 'Weekly', 'A few times a month'], next: () => null },
 };
 
-function startSurvey() {
+function startSurvey(targetId) {
   window._surveyAnswers = {};
+  window._surveyTargetId = targetId || 'surveyPanel';
   _renderSurveyQ('q1');
 }
 
 function _renderSurveyQ(qId) {
-  const panel = document.getElementById('surveyPanel');
+  const panel = document.getElementById(window._surveyTargetId || 'surveyPanel');
   if (!panel) return;
   const q = _SURVEY_FLOW[qId];
   if (!q) { _finishSurvey(); return; }
@@ -1815,8 +1810,6 @@ function openResultsPage(data) {
   const page = document.getElementById('resultsPage');
   if (page) page.classList.add('open');
   renderResultsPage(data);
-  // Pre-populate analysis page in background for when user clicks Deep Analysis
-  renderAnalysisPage(data);
 }
 
 function renderResultsPage(data) {
@@ -1906,13 +1899,124 @@ function showToast(msg) {
 // ---------------------------------------------------------------------------
 // Deep Analysis — Screen 3
 // ---------------------------------------------------------------------------
+let _deepCycleInterval = null;
+const _DEEP_CYCLE_TEXTS = [
+  'Annotating your transcript...',
+  'Finding the moments that mattered...',
+  'Building your coaching report...',
+  'Reviewing every turn...',
+];
+
 function openDeepAnalysis() {
   const rp = document.getElementById('resultsPage');
   if (rp) rp.classList.remove('open');
   const ap = document.getElementById('analysisPage');
   if (ap) ap.classList.add('open');
   _currentStep = 'analysis';
-  renderDeepAnalysisPage(_s.analysis);
+
+  const basicData = _s.analysis || {};
+  const score = basicData.score || 0;
+
+  // Render topbar immediately
+  const tb = document.getElementById('anTopbar');
+  if (tb) {
+    tb.innerHTML = `
+      <button class="an-back-btn" onclick="closeDeepAnalysis()" title="Back to results">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,2 4,7 9,12"/></svg>
+      </button>
+      <div class="logo" style="margin-left:6px">
+        <div class="logo-mark"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="6" y1="3" x2="6" y2="6"/><line x1="6" y1="6" x2="8" y2="8"/></svg></div>
+        <div class="logo-text">Outround</div>
+      </div>
+      <div class="top-spacer"></div>
+      <div class="an-score-chip">${score}/100</div>
+      <button class="an-topbar-icon active" id="btnTranscript" onclick="showDeepView('transcript')" title="Transcript">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="9" y2="12"/></svg>
+      </button>
+      <button class="an-topbar-icon" id="btnGraph" onclick="showDeepView('graph')" title="Performance graph">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="9" width="3" height="5" rx="1"/><rect x="6" y="5" width="3" height="9" rx="1"/><rect x="11" y="7" width="3" height="7" rx="1"/></svg>
+      </button>`;
+  }
+
+  // 2-column layout (no middle)
+  const layout = document.querySelector('.an-layout');
+  if (layout) layout.classList.add('no-middle');
+
+  // Right panel: immediate score/breakdown from basic result
+  renderDeepRightPanel(basicData);
+
+  // Left panel: loading state + survey
+  const anLeft = document.getElementById('anLeft');
+  if (anLeft) {
+    anLeft.innerHTML = `
+      <div class="lsv2-eyebrow" style="margin-bottom:18px">Deep analysis in progress</div>
+      <div class="lsv2-sparkle" style="font-size:2.2rem;margin-bottom:12px">\u2726</div>
+      <div class="lsv2-cycle" id="deepCycleText" style="margin-bottom:32px">Annotating your transcript...</div>
+      <div id="deepSurveyPanel"></div>`;
+  }
+
+  // Cycle loading texts
+  let _dci = 0;
+  _deepCycleInterval = setInterval(() => {
+    const el = document.getElementById('deepCycleText');
+    if (!el) return;
+    el.classList.add('fade');
+    setTimeout(() => {
+      _dci = (_dci + 1) % _DEEP_CYCLE_TEXTS.length;
+      el.textContent = _DEEP_CYCLE_TEXTS[_dci];
+      el.classList.remove('fade');
+    }, 350);
+  }, 3000);
+
+  // Start survey in deep panel
+  startSurvey('deepSurveyPanel');
+
+  // Trigger deep analysis
+  fetch('/api/session/' + _s.sessionId + '/deep-analysis', { method: 'POST' })
+    .then(() => _pollDeepAnalysis())
+    .catch((err) => { uiLog('Deep analysis trigger error: ' + err.message, 'err'); });
+}
+
+function _pollDeepAnalysis() {
+  let attempts = 0;
+  const check = async () => {
+    attempts++;
+    if (attempts > 60) return; // 2 min max
+    try {
+      const res = await fetch('/api/session/' + _s.sessionId + '/deep-status');
+      const data = await res.json();
+      uiLog('Deep status: ' + data.status, 'info');
+      if (data.status === 'complete') {
+        _onDeepAnalysisReady(data);
+        return;
+      }
+      if (data.status !== 'error') setTimeout(check, 2000);
+    } catch { setTimeout(check, 2000); }
+  };
+  check();
+}
+
+function _onDeepAnalysisReady(deepData) {
+  // Stop loading cycle
+  if (_deepCycleInterval) { clearInterval(_deepCycleInterval); _deepCycleInterval = null; }
+
+  // Merge deep data with basic result for full view
+  const merged = {
+    ..._s.analysis,
+    transcript: deepData.annotated_transcript || (_s.analysis?.transcript || []),
+    coaching_feedback: deepData.coaching_feedback || [],
+    sentiment_timeline: deepData.sentiment_timeline || [],
+  };
+  _s._deepData = merged;
+
+  // Re-render topbar with view toggle active state preserved
+  const btnT = document.getElementById('btnTranscript');
+  if (btnT) btnT.classList.add('active');
+  const btnG = document.getElementById('btnGraph');
+  if (btnG) btnG.classList.remove('active');
+
+  renderDeepTranscript(merged.transcript, merged.sentiment_timeline);
+  uiLog('Deep analysis ready — ' + (merged.transcript?.length || 0) + ' turns', 'ok');
 }
 
 function closeDeepAnalysis() {
@@ -1984,9 +2088,10 @@ function showDeepView(mode) {
   const btnG = document.getElementById('btnGraph');
   if (btnT) btnT.classList.toggle('active', mode === 'transcript');
   if (btnG) btnG.classList.toggle('active', mode === 'graph');
-  const data = _s._deepData || _s.analysis;
+  const data = _s._deepData;
+  if (!data) return; // Still loading — view will auto-render when ready
   if (mode === 'transcript') {
-    renderDeepTranscript(data?.transcript || [], data?.sentiment_timeline || []);
+    renderDeepTranscript(data.transcript || [], data.sentiment_timeline || []);
   } else {
     renderDeepGraphView(data);
   }

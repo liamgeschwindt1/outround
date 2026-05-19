@@ -11,6 +11,10 @@ const { calculateMetricsFromTranscript } = require('../services/metrics');
 // In-memory session store — transparent fallback when DB is unavailable
 const memStore = new Map();
 
+// Ensure deep analysis columns exist on the sessions table (safe to run repeatedly)
+db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS deep_analysis JSONB`).catch(() => {});
+db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS deep_analysis_status TEXT`).catch(() => {});
+
 // ---------------------------------------------------------------------------
 // POST /api/session/start
 // ---------------------------------------------------------------------------
@@ -135,7 +139,7 @@ router.get('/:id/status', async (req, res) => {
   // Try DB first
   try {
     const result = await db.query(
-      `SELECT score, score_breakdown, coaching_feedback, transcript, audio_metrics
+      `SELECT score, score_breakdown, transcript, audio_metrics
        FROM sessions WHERE id = $1`,
       [id]
     );
@@ -162,10 +166,8 @@ router.get('/:id/status', async (req, res) => {
         call_verdict: breakdown.call_verdict || null,
         call_momentum: breakdown.call_momentum || null,
         next_session_focus: breakdown.next_session_focus || null,
-        coaching_feedback: row.coaching_feedback || [],
         transcript: row.transcript || [],
         audio_metrics: row.audio_metrics || {},
-        sentiment_timeline: breakdown.sentiment_timeline || [],
       });
     }
   } catch (err) {
@@ -242,21 +244,18 @@ async function processSession(sessionId, { elevenlabs_conversation_id, duration_
     });
   }
 
-  // 3. Grade with Claude
+  // 3. Fast-grade with Claude (score/headline/verdict/focus only — no per-turn annotations)
   let grading;
   try {
     const persona = require(`../personas/${personaId}.json`);
-    grading = await claude.gradeSession(transcript, audioMetrics, persona);
+    grading = await claude.gradeSessionFast(transcript, audioMetrics, persona);
   } catch (err) {
-    console.error('Claude grading error:', err.message);
+    console.error('Claude fast grading error:', err.message);
     grading = {
       overall_score: 0,
       score_breakdown: { opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 },
       headline: 'Analysis failed — check server logs',
       call_verdict: null, call_momentum: null, next_session_focus: null,
-      coaching_feedback: [{ title: 'Analysis unavailable', score: 0, score_label: 'bad',
-        body: 'Could not complete analysis: ' + err.message, quote: '', action: '', category: null }],
-      sentiment_timeline: [],
     };
   }
 
@@ -274,19 +273,17 @@ async function storeResults(sessionId, useMemOnly, grading, transcript, audioMet
     call_verdict: grading.call_verdict || null,
     call_momentum: grading.call_momentum || null,
     next_session_focus: grading.next_session_focus || null,
-    sentiment_timeline: grading.sentiment_timeline || [],
   };
 
   let savedToDb = false;
   if (!useMemOnly) {
     try {
       await db.query(
-        `UPDATE sessions SET score = $1, score_breakdown = $2, coaching_feedback = $3,
-         transcript = $4, audio_metrics = $5 WHERE id = $6`,
+        `UPDATE sessions SET score = $1, score_breakdown = $2,
+         transcript = $3, audio_metrics = $4 WHERE id = $5`,
         [
           grading.overall_score,
           JSON.stringify(scoreBreakdown),
-          JSON.stringify(grading.coaching_feedback),
           JSON.stringify(transcript),
           JSON.stringify(audioMetrics),
           sessionId,
@@ -315,14 +312,120 @@ async function storeResults(sessionId, useMemOnly, grading, transcript, audioMet
       call_verdict: grading.call_verdict || null,
       call_momentum: grading.call_momentum || null,
       next_session_focus: grading.next_session_focus || null,
-      coaching_feedback: grading.coaching_feedback || [],
       transcript,
       audio_metrics: audioMetrics,
-      sentiment_timeline: grading.sentiment_timeline || [],
     },
   });
 
   console.log(`Session ${sessionId} — score: ${grading.overall_score}, verdict: ${grading.call_verdict || 'n/a'} (${savedToDb ? 'DB+mem' : 'mem only'})`);
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/session/:id/deep-analysis  — trigger on-demand deep annotation
+// ---------------------------------------------------------------------------
+router.post('/:id/deep-analysis', async (req, res) => {
+  const { id } = req.params;
+  const mem = memStore.get(id);
+
+  // Must have basic analysis done first
+  if (!mem || mem.status !== 'complete') {
+    return res.status(400).json({ error: 'Basic analysis not yet complete' });
+  }
+  if (mem.deep_status === 'complete') {
+    return res.json({ status: 'complete', ...mem.deep_result });
+  }
+  if (mem.deep_status === 'processing') {
+    return res.json({ status: 'processing' });
+  }
+
+  // Mark as processing
+  memStore.set(id, { ...mem, deep_status: 'processing' });
+  res.json({ status: 'processing', message: 'Deep analysis started' });
+
+  // Run in background
+  processDeepSession(id).catch((err) =>
+    console.error('Deep analysis error for session', id, err.message)
+  );
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/session/:id/deep-status
+// ---------------------------------------------------------------------------
+router.get('/:id/deep-status', async (req, res) => {
+  const { id } = req.params;
+
+  // Try DB first
+  try {
+    const result = await db.query(
+      `SELECT deep_analysis, deep_analysis_status FROM sessions WHERE id = $1`,
+      [id]
+    );
+    if (result.rows.length > 0) {
+      const row = result.rows[0];
+      if (row.deep_analysis_status === 'complete' && row.deep_analysis) {
+        return res.json({ status: 'complete', ...row.deep_analysis });
+      }
+      if (row.deep_analysis_status === 'processing') {
+        return res.json({ status: 'processing' });
+      }
+    }
+  } catch {
+    // Fall through to memStore
+  }
+
+  const mem = memStore.get(id);
+  if (!mem) return res.status(404).json({ error: 'Session not found' });
+  if (mem.deep_status === 'complete' && mem.deep_result) return res.json({ status: 'complete', ...mem.deep_result });
+  if (mem.deep_status === 'processing') return res.json({ status: 'processing' });
+  return res.json({ status: 'pending' });
+});
+
+// ---------------------------------------------------------------------------
+// Background: deep analysis — annotates transcript, detailed coaching
+// ---------------------------------------------------------------------------
+async function processDeepSession(sessionId) {
+  const mem = memStore.get(sessionId);
+  if (!mem) throw new Error('Session not in memStore');
+
+  const personaId = mem.persona_id || 'hendrik';
+  const persona = require(`../personas/${personaId}.json`);
+  const transcript = mem.result?.transcript || [];
+  const audioMetrics = mem.result?.audio_metrics || {};
+  const basicResult = mem.result || {};
+
+  let deepResult;
+  try {
+    deepResult = await claude.gradeSessionDeep(transcript, audioMetrics, persona, basicResult);
+  } catch (err) {
+    console.error('Deep grading error:', err.message);
+    memStore.set(sessionId, { ...memStore.get(sessionId), deep_status: 'error', deep_error: err.message });
+    // Also update DB
+    try {
+      await db.query(
+        `UPDATE sessions SET deep_analysis_status = 'error' WHERE id = $1`, [sessionId]
+      );
+    } catch { /* ignore DB errors */ }
+    return;
+  }
+
+  // Store in memStore
+  memStore.set(sessionId, {
+    ...memStore.get(sessionId),
+    deep_status: 'complete',
+    deep_result: deepResult,
+  });
+
+  // Persist to DB
+  try {
+    await db.query(
+      `UPDATE sessions SET deep_analysis = $1, deep_analysis_status = 'complete' WHERE id = $2`,
+      [JSON.stringify(deepResult), sessionId]
+    );
+  } catch (err) {
+    console.error('DB error saving deep analysis:', err.message);
+  }
+
+  console.log(`Deep analysis complete for session ${sessionId} — ${(deepResult.annotated_transcript || []).length} turns annotated`);
 }
 
 module.exports = router;
