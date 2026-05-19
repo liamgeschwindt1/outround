@@ -362,6 +362,83 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .dbg-msg.send{color:#93c5fd}
 .dbg-msg.recv{color:#c4b5fd}
 .dbg-empty{color:rgba(255,255,255,0.2);font-style:italic;padding:8px 0}
+
+/* ===== LOADING STEP v2 — two-column (loading + survey) ===== */
+.focus-card.loading-wide{width:700px}
+.loading-step-v2{display:flex;min-height:360px}
+.lsv2-left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 22px;border-right:1px solid var(--border);text-align:center}
+.lsv2-right{flex:1.1;padding:26px 22px;display:flex;flex-direction:column;justify-content:center}
+.lsv2-eyebrow{font-size:0.52rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:18px}
+.lsv2-sparkle{font-size:2.8rem;color:var(--ink);margin-bottom:16px;line-height:1;display:inline-block;animation:sparkle-pulse 2.6s ease-in-out infinite}
+@keyframes sparkle-pulse{0%,100%{transform:scale(1) rotate(0deg);opacity:0.85}50%{transform:scale(1.14) rotate(12deg);opacity:1}}
+.lsv2-cycle{font-size:0.74rem;font-weight:500;color:var(--ink-2);min-height:1.3em;transition:opacity 0.35s ease;line-height:1.5}
+.lsv2-cycle.fade{opacity:0}
+.survey-q{animation:sq-in 0.3s cubic-bezier(0.25,0.46,0.45,0.94)}
+@keyframes sq-in{from{transform:translateX(26px);opacity:0}to{transform:translateX(0);opacity:1}}
+.survey-eyebrow{font-size:0.5rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:9px}
+.survey-question{font-size:0.86rem;font-weight:700;letter-spacing:-0.02em;color:var(--ink);margin-bottom:13px;line-height:1.35}
+.survey-options{display:flex;flex-direction:column;gap:5px}
+.survey-opt{font-family:var(--f);font-size:0.74rem;font-weight:600;color:var(--ink-2);background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px 12px;cursor:pointer;text-align:left;transition:all 0.1s}
+.survey-opt:hover{border-color:var(--border-h);color:var(--ink);background:rgba(17,17,17,0.02)}
+.survey-opt.selected{background:var(--ink);color:white;border-color:var(--ink)}
+.survey-skip-link{font-size:0.61rem;color:var(--ink-3);cursor:pointer;text-align:right;margin-top:10px;display:block}
+.survey-skip-link:hover{color:var(--ink-2)}
+.survey-done{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:160px;gap:8px;opacity:0;animation:sfd-in 0.4s ease forwards}
+@keyframes sfd-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.survey-done-icon{font-size:1.5rem;line-height:1}
+.survey-done-text{font-size:0.74rem;font-weight:600;color:var(--ink-2)}
+
+/* ===== RESULTS PAGE — Screen 2 ===== */
+.results-page{position:fixed;inset:0;z-index:210;background:var(--bg);display:none;align-items:flex-start;justify-content:center;overflow-y:auto}
+.results-page.open{display:flex}
+.results-page::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(17,17,17,0.09) 1px,transparent 1px);background-size:26px 26px;pointer-events:none;z-index:0}
+.results-inner{position:relative;z-index:1;width:100%;max-width:560px;padding:56px 24px 48px;display:flex;flex-direction:column;align-items:center}
+.res-score-num{font-size:6rem;font-weight:800;line-height:1;letter-spacing:-0.06em;animation:pop 0.48s cubic-bezier(0.34,1.5,0.64,1)}
+.res-score-den{font-size:0.6rem;font-weight:700;color:var(--ink-3);letter-spacing:0.14em;text-transform:uppercase;margin-top:2px;margin-bottom:12px}
+.res-badges{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
+.res-headline{font-size:1rem;font-weight:700;letter-spacing:-0.025em;color:var(--ink);text-align:center;line-height:1.45;margin-bottom:22px;max-width:460px}
+.res-subcards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;margin-bottom:18px}
+.res-subcard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 10px;text-align:center}
+.res-subcard-label{font-size:0.5rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.res-subcard-val{font-size:1.2rem;font-weight:800;letter-spacing:-0.03em;color:var(--ink);margin-bottom:5px}
+.res-subcard-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.res-subcard-fill{height:100%;background:var(--ink);border-radius:2px;width:0;transition:width 0.9s ease 0.3s}
+.res-focus-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;width:100%;margin-bottom:18px}
+.res-focus-lbl{font-size:0.5rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.res-focus-txt{font-size:0.79rem;font-weight:600;color:var(--ink-2);line-height:1.58}
+.res-share-row{display:flex;gap:7px;margin-bottom:16px}
+.share-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.12s;flex-shrink:0}
+.share-btn:hover{border-color:var(--border-h);color:var(--ink);background:rgba(17,17,17,0.03)}
+.res-actions{display:flex;flex-direction:column;gap:8px;width:100%}
+.res-btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--f);font-size:0.83rem;font-weight:700;background:var(--ink);color:white;border:none;border-radius:8px;padding:13px 24px;cursor:pointer;transition:all 0.13s;letter-spacing:-0.01em;width:100%}
+.res-btn-primary:hover{background:#222}
+.res-btn-secondary{display:flex;align-items:center;justify-content:center;font-family:var(--f);font-size:0.83rem;font-weight:700;background:transparent;color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:13px 24px;cursor:pointer;transition:all 0.13s;letter-spacing:-0.01em;width:100%}
+.res-btn-secondary:hover{border-color:var(--border-h);background:rgba(17,17,17,0.03)}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ink);color:white;font-family:var(--f);font-size:0.72rem;font-weight:600;padding:8px 18px;border-radius:7px;opacity:0;pointer-events:none;transition:all 0.22s ease;z-index:9999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== DEEP ANALYSIS — 2-column, traffic lights, coach notes ===== */
+.an-layout.no-middle .an-middle{display:none}
+.an-layout.no-middle .an-left{flex:1.7;border-right:1px solid var(--border)}
+.an-back-btn{width:32px;height:32px;border-radius:7px;border:1px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-2);transition:all 0.12s;flex-shrink:0}
+.an-back-btn:hover{border-color:var(--border-h);color:var(--ink);background:var(--bg)}
+.an-topbar-icon{width:32px;height:32px;border-radius:7px;border:1px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-2);transition:all 0.12s;flex-shrink:0}
+.an-topbar-icon:hover{border-color:var(--border-h);color:var(--ink);background:var(--bg)}
+.an-topbar-icon.active{background:var(--ink);color:white;border-color:var(--ink)}
+.an-score-chip{font-size:0.78rem;font-weight:800;letter-spacing:-0.02em;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 11px;flex-shrink:0}
+.t-line.tl-good{border-left:3px solid #22c55e;padding-left:10px}
+.t-line.tl-ok{border-left:3px solid #f59e0b;padding-left:10px}
+.t-line.tl-poor{border-left:3px solid #ef4444;padding-left:10px}
+.t-line.tl-neutral{border-left:3px solid transparent;padding-left:10px}
+.t-line.tl-hendrik{border-left:3px solid rgba(17,17,17,0.07);padding-left:10px}
+.cn-block{margin-top:8px;padding:9px 12px;background:rgba(17,17,17,0.025);border-left:2px solid var(--ink-3);border-radius:0 5px 5px 0}
+.cn-block-lbl{font-size:0.47rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:3px}
+.cn-block-txt{font-size:0.69rem;color:var(--ink-2);line-height:1.55}
+.graph-view{padding:2px 0}
+.graph-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.graph-chart-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 14px}
 </style>
 </head>
 <body>
@@ -493,7 +570,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     </aside>
 
     <div class="an-body">
-      <header class="an-topbar">
+      <header class="an-topbar" id="anTopbar">
         <div class="logo">
           <div class="logo-mark">
             <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="6" y1="3" x2="6" y2="6"/><line x1="6" y1="6" x2="8" y2="8"/></svg>
@@ -512,6 +589,14 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     </div>
   </div>
 </div>
+
+<!-- ===== RESULTS PAGE — Screen 2 ===== -->
+<div class="results-page" id="resultsPage">
+  <div class="results-inner" id="resultsInner"></div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toastEl"></div>
 
 <script>
 'use strict';
@@ -860,9 +945,13 @@ function renderTooShortStep() {
 }
 
 function renderLoadingStep() {
-  return `<div class="loading-step">
-    <div class="load-title">Hendrik just hung up.</div>
-    <div class="load-sub" id="loadSub" style="opacity:0;transition:opacity 0.3s ease">Pulling up your analysis...</div>
+  return `<div class="loading-step-v2">
+    <div class="lsv2-left">
+      <div class="lsv2-eyebrow">Analysis in progress</div>
+      <div class="lsv2-sparkle">✦</div>
+      <div class="lsv2-cycle" id="loadCycleText">Reading between the lines...</div>
+    </div>
+    <div class="lsv2-right" id="surveyPanel"></div>
   </div>`;
 }
 
@@ -1144,22 +1233,16 @@ async function _finishCall(conversationId) {
     await goToStep('tooshort');
     return;
   }
-  // Show "Hendrik just hung up." for 2 seconds, then transition to analysis view
+  // Show loading + survey screen, stays open until analysis is ready
   await goToStep('loading');
-  await delay(2000);
-  
-  // Transition to analysis view immediately (don't wait for API)
-  const overlay = document.getElementById('focusOverlay');
-  const analysisPage = document.getElementById('analysisPage');
-  overlay.classList.remove('open');
-  await delay(210);
-  analysisPage.classList.add('open');
-  
-  // Show transcript immediately with loading state for metrics/score
-  renderAnalysisPageLoading(_s.sessionId);
-  _currentStep = 'analysis';
-  
-  // Fetch analysis in background
+  // Widen card for two-column layout
+  const _lc = document.getElementById('focusCard');
+  if (_lc) _lc.classList.add('loading-wide');
+  // Start cycling text and survey in parallel with analysis
+  _startLoadingCycle();
+  startSurvey();
+
+  // Fetch analysis in background (survey runs in parallel — doesn't block)
   uiLog('Ending session (duration: ' + _s.callDuration + 's)', 'send');
   try {
     const r = await fetch('/api/session/' + _s.sessionId + '/end', {
@@ -1175,6 +1258,7 @@ async function _finishCall(conversationId) {
 // Poll for results and lens cycling
 // ---------------------------------------------------------------------------
 let _lensInterval = null;
+let _loadCycleInterval = null;
 
 async function pollForResults() {
   let attempts = 0;
@@ -1186,11 +1270,10 @@ async function pollForResults() {
       const data = await res.json();
       uiLog('Poll status: ' + data.status + (data.score ? ' score=' + data.score : ''), 'recv');
       if (data.status === 'complete') {
-        // Analysis complete! Stop lens cycling and reveal real data
+        // Analysis complete — open Results page (Screen 2)
         if (_lensInterval) clearInterval(_lensInterval);
         _s.analysis = data;
-        renderTranscriptOnly(data.transcript || [], data.sentiment_timeline || []);
-        populateAnalysisResults(data);
+        openResultsPage(data);
         uiLog('Analysis complete: score=' + data.score, 'ok');
       } else if (data.status === 'processing') {
         setTimeout(check, 2000);
@@ -1582,6 +1665,17 @@ async function goAgain() {
   _s.callStart = null; _s.callDuration = 0; _s.muted = false; _s._callEnding = false;
   if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
   clearInterval(_briefInterval);
+  // Close full-page screens if open
+  const rp = document.getElementById('resultsPage'); if (rp) rp.classList.remove('open');
+  const ap = document.getElementById('analysisPage');
+  if (ap) {
+    ap.classList.remove('open');
+    // Reset layout and topbar for next time
+    const layout = ap.querySelector('.an-layout');
+    if (layout) layout.classList.remove('no-middle');
+    const tb = document.getElementById('anTopbar');
+    if (tb) _resetAnTopbar(tb);
+  }
   goToStep('mode');
 }
 
@@ -1615,6 +1709,417 @@ function renderLeaderboard(entries) {
     const ini = (e.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
     return `<div class="lb-row"><div class="lb-rank${rank <= 3 ? ' top' : ''}">${rank}</div><div class="lb-av">${escHtml(ini)}</div><div class="lb-info"><div class="lb-name">${escHtml(e.name)}</div><div class="lb-role">${escHtml(e.role || '')}${e.location ? ' · ' + escHtml(e.location) : ''}</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:${e.score}%"></div></div><div class="lb-sc">${e.score}</div></div>`;
   }).join('');
+}
+
+// ---------------------------------------------------------------------------
+// Loading cycle text
+// ---------------------------------------------------------------------------
+const _LOAD_CYCLE_TEXTS = [
+  'Reading between the lines...',
+  'Finding the moment it turned...',
+  'Scoring your opening...',
+  'Building your coaching report...',
+];
+
+function _startLoadingCycle() {
+  if (_loadCycleInterval) { clearInterval(_loadCycleInterval); _loadCycleInterval = null; }
+  let idx = 0;
+  const set = () => {
+    const el = document.getElementById('loadCycleText');
+    if (!el) { clearInterval(_loadCycleInterval); return; }
+    el.classList.add('fade');
+    setTimeout(() => {
+      idx = (idx + 1) % _LOAD_CYCLE_TEXTS.length;
+      const el2 = document.getElementById('loadCycleText');
+      if (el2) { el2.textContent = _LOAD_CYCLE_TEXTS[idx]; el2.classList.remove('fade'); }
+    }, 360);
+  };
+  _loadCycleInterval = setInterval(set, 3000);
+}
+
+// ---------------------------------------------------------------------------
+// Survey — decision tree, runs in parallel with analysis
+// ---------------------------------------------------------------------------
+const _SURVEY_FLOW = {
+  q1: { q: 'How did that round feel?', opts: ['Tough', 'Decent', 'Strong'], next: (a) => a === 'Tough' ? 'q2a' : a === 'Decent' ? 'q2b' : 'q2c' },
+  q2a: { q: 'What caught you off guard?', opts: ['The opener', 'First objection', 'Ran out of things to say'], next: () => 'q3' },
+  q2b: { q: 'What would have helped most?', opts: ['Better opening line', 'Handling objections', 'Knowing when to close'], next: () => 'q3' },
+  q2c: { q: 'Do you prep like this before every call?', opts: ['Yes always', 'Sometimes', 'This was my first time'], next: () => 'q3' },
+  q3: { q: "What's your role?", opts: ['SDR', 'AE', 'Founder', 'Other'], next: () => 'q4' },
+  q4: { q: 'How often are you in high-stakes calls?', opts: ['Daily', 'Weekly', 'A few times a month'], next: () => null },
+};
+
+function startSurvey() {
+  window._surveyAnswers = {};
+  _renderSurveyQ('q1');
+}
+
+function _renderSurveyQ(qId) {
+  const panel = document.getElementById('surveyPanel');
+  if (!panel) return;
+  const q = _SURVEY_FLOW[qId];
+  if (!q) { _finishSurvey(); return; }
+  panel.innerHTML = `<div class="survey-q">
+    <div class="survey-eyebrow">Quick question</div>
+    <div class="survey-question">${escHtml(q.q)}</div>
+    <div class="survey-options">${q.opts.map(o =>
+      `<button class="survey-opt" onclick="_pickSurveyOpt('${qId}','${escHtml(o).replace(/'/g,"\\'")}',this)">${escHtml(o)}</button>`
+    ).join('')}</div>
+    <span class="survey-skip-link" onclick="_skipSurvey()">Skip</span>
+  </div>`;
+}
+
+function _pickSurveyOpt(qId, value, btn) {
+  btn.closest('.survey-options').querySelectorAll('.survey-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  window._surveyAnswers[qId] = value;
+  setTimeout(() => {
+    const nextId = _SURVEY_FLOW[qId]?.next(value);
+    if (nextId) _renderSurveyQ(nextId);
+    else _finishSurvey();
+  }, 400);
+}
+
+function _skipSurvey() {
+  _postSurvey();
+  const panel = document.getElementById('surveyPanel');
+  if (panel) panel.innerHTML = `<div class="survey-done"><div class="survey-done-icon">→</div><div class="survey-done-text">Skipped. Results incoming.</div></div>`;
+}
+
+function _finishSurvey() {
+  _postSurvey();
+  const panel = document.getElementById('surveyPanel');
+  if (panel) panel.innerHTML = `<div class="survey-done"><div class="survey-done-icon">✦</div><div class="survey-done-text">Thanks — that helps.</div></div>`;
+}
+
+function _postSurvey() {
+  if (!_s.sessionId) return;
+  fetch('/api/survey', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: _s.sessionId, answers: window._surveyAnswers || {} }),
+  }).catch(() => {});
+}
+
+// ---------------------------------------------------------------------------
+// Results page — Screen 2
+// ---------------------------------------------------------------------------
+function openResultsPage(data) {
+  // Stop loading cycle
+  if (_loadCycleInterval) { clearInterval(_loadCycleInterval); _loadCycleInterval = null; }
+  // Close loading overlay
+  const overlay = document.getElementById('focusOverlay');
+  if (overlay) overlay.classList.remove('open');
+  const card = document.getElementById('focusCard');
+  if (card) card.classList.remove('loading-wide');
+  // Open results
+  const page = document.getElementById('resultsPage');
+  if (page) page.classList.add('open');
+  renderResultsPage(data);
+  // Pre-populate analysis page in background for when user clicks Deep Analysis
+  renderAnalysisPage(data);
+}
+
+function renderResultsPage(data) {
+  const el = document.getElementById('resultsInner');
+  if (!el) return;
+  const score = data.score || 0;
+  const bd = data.score_breakdown || {};
+  const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step' };
+  const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
+  const shareText = encodeURIComponent(`I scored ${score}/100 on a cold call against an AI Dutch CFO. Think you can beat it? → outround.io`);
+
+  el.innerHTML = `
+    <div class="res-score-num">${score}</div>
+    <div class="res-score-den">/100</div>
+    <div class="res-badges">
+      ${data.call_verdict ? `<div class="verdict-badge ${escHtml(data.call_verdict)}">${escHtml(vMap[data.call_verdict] || data.call_verdict)}</div>` : ''}
+      ${data.call_momentum ? `<div class="momentum-badge">${escHtml(mMap[data.call_momentum] || data.call_momentum)}</div>` : ''}
+    </div>
+    ${data.headline ? `<div class="res-headline">${escHtml(data.headline)}</div>` : ''}
+    <div class="res-subcards">
+      <div class="res-subcard"><div class="res-subcard-label">Opening</div><div class="res-subcard-val" id="rsc1">—</div><div class="res-subcard-bar"><div class="res-subcard-fill" id="rsf1"></div></div></div>
+      <div class="res-subcard"><div class="res-subcard-label">Objections</div><div class="res-subcard-val" id="rsc2">—</div><div class="res-subcard-bar"><div class="res-subcard-fill" id="rsf2"></div></div></div>
+      <div class="res-subcard"><div class="res-subcard-label">Talk ratio</div><div class="res-subcard-val" id="rsc3">—</div><div class="res-subcard-bar"><div class="res-subcard-fill" id="rsf3"></div></div></div>
+      <div class="res-subcard"><div class="res-subcard-label">Clear ask</div><div class="res-subcard-val" id="rsc4">—</div><div class="res-subcard-bar"><div class="res-subcard-fill" id="rsf4"></div></div></div>
+    </div>
+    ${data.next_session_focus ? `<div class="res-focus-block"><div class="res-focus-lbl">Next focus</div><div class="res-focus-txt">${escHtml(data.next_session_focus)}</div></div>` : ''}
+    <div class="res-share-row">
+      <button class="share-btn" title="Share on LinkedIn" onclick="shareResults('linkedin')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+      </button>
+      <button class="share-btn" title="Share on WhatsApp" onclick="shareResults('whatsapp')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </button>
+      <button class="share-btn" title="Copy for Slack" onclick="shareResults('slack')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+      </button>
+      <button class="share-btn" title="Copy link" onclick="shareResults('copy')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </button>
+      <button class="share-btn" title="Share on X / Twitter" onclick="shareResults('twitter')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </button>
+    </div>
+    <div class="res-actions">
+      <button class="res-btn-primary" onclick="openDeepAnalysis()">✦ Deep analysis</button>
+      <button class="res-btn-secondary" onclick="goAgain()">Go again</button>
+    </div>
+  `;
+
+  // Animate sub-scores
+  setTimeout(() => {
+    [['rsc1','rsf1',bd.opening||0],['rsc2','rsf2',bd.objections||0],['rsc3','rsf3',bd.talk_ratio||0],['rsc4','rsf4',bd.clear_ask||0]].forEach(([vi,fi,v],i) => {
+      setTimeout(() => {
+        const vel = document.getElementById(vi); const fel = document.getElementById(fi);
+        if (vel) vel.textContent = v;
+        if (fel) fel.style.width = v + '%';
+      }, i * 150);
+    });
+  }, 300);
+}
+
+function shareResults(platform) {
+  const score = _s.analysis?.score || '?';
+  const text = `I scored ${score}/100 on a cold call against an AI Dutch CFO. Think you can beat it? → outround.io`;
+  const enc = encodeURIComponent(text);
+  switch (platform) {
+    case 'linkedin': window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + enc, '_blank'); break;
+    case 'whatsapp': window.open('https://wa.me/?text=' + enc, '_blank'); break;
+    case 'twitter':  window.open('https://twitter.com/intent/tweet?text=' + enc, '_blank'); break;
+    case 'slack':
+      navigator.clipboard.writeText(text).then(() => showToast('Copied for Slack')).catch(() => showToast('Copied for Slack'));
+      break;
+    case 'copy':
+      navigator.clipboard.writeText('outround.io').then(() => showToast('Link copied')).catch(() => showToast('Link copied'));
+      break;
+  }
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toastEl');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ---------------------------------------------------------------------------
+// Deep Analysis — Screen 3
+// ---------------------------------------------------------------------------
+function openDeepAnalysis() {
+  const rp = document.getElementById('resultsPage');
+  if (rp) rp.classList.remove('open');
+  const ap = document.getElementById('analysisPage');
+  if (ap) ap.classList.add('open');
+  _currentStep = 'analysis';
+  renderDeepAnalysisPage(_s.analysis);
+}
+
+function closeDeepAnalysis() {
+  const ap = document.getElementById('analysisPage');
+  if (ap) ap.classList.remove('open');
+  // Reset layout
+  const layout = document.querySelector('.an-layout');
+  if (layout) layout.classList.remove('no-middle');
+  // Reset topbar
+  const tb = document.getElementById('anTopbar');
+  if (tb) _resetAnTopbar(tb);
+  // Return to results
+  const rp = document.getElementById('resultsPage');
+  if (rp) rp.classList.add('open');
+  _currentStep = 'results';
+}
+
+function _resetAnTopbar(tb) {
+  tb.innerHTML = `<div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="6" y1="3" x2="6" y2="6"/><line x1="6" y1="6" x2="8" y2="8"/></svg></div>
+    <div class="logo-text">Outround</div>
+  </div>
+  <div class="top-spacer"></div>
+  <button class="an-finish-btn" onclick="finishAnalysis()">Finish</button>`;
+}
+
+function renderDeepAnalysisPage(data) {
+  if (!data) return;
+  const score = data.score || 0;
+
+  // Update topbar
+  const tb = document.getElementById('anTopbar');
+  if (tb) {
+    tb.innerHTML = `
+      <button class="an-back-btn" onclick="closeDeepAnalysis()" title="Back to results">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,2 4,7 9,12"/></svg>
+      </button>
+      <div class="logo" style="margin-left:6px">
+        <div class="logo-mark"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="6" y1="3" x2="6" y2="6"/><line x1="6" y1="6" x2="8" y2="8"/></svg></div>
+        <div class="logo-text">Outround</div>
+      </div>
+      <div class="top-spacer"></div>
+      <div class="an-score-chip">${score}/100</div>
+      <button class="an-topbar-icon active" id="btnTranscript" onclick="showDeepView('transcript')" title="Transcript">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="9" y2="12"/></svg>
+      </button>
+      <button class="an-topbar-icon" id="btnGraph" onclick="showDeepView('graph')" title="Performance graph">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="9" width="3" height="5" rx="1"/><rect x="6" y="5" width="3" height="9" rx="1"/><rect x="11" y="7" width="3" height="7" rx="1"/></svg>
+      </button>`;
+  }
+
+  // 2-column layout (no middle)
+  const layout = document.querySelector('.an-layout');
+  if (layout) layout.classList.add('no-middle');
+
+  // Render panels
+  renderDeepTranscript(data.transcript || [], data.sentiment_timeline || []);
+  renderDeepRightPanel(data);
+
+  // Store for view toggling
+  _s._deepData = data;
+}
+
+let _deepViewMode = 'transcript';
+
+function showDeepView(mode) {
+  _deepViewMode = mode;
+  const btnT = document.getElementById('btnTranscript');
+  const btnG = document.getElementById('btnGraph');
+  if (btnT) btnT.classList.toggle('active', mode === 'transcript');
+  if (btnG) btnG.classList.toggle('active', mode === 'graph');
+  const data = _s._deepData || _s.analysis;
+  if (mode === 'transcript') {
+    renderDeepTranscript(data?.transcript || [], data?.sentiment_timeline || []);
+  } else {
+    renderDeepGraphView(data);
+  }
+}
+
+function renderDeepTranscript(transcript, timeline) {
+  const el = document.getElementById('anLeft');
+  if (!el) return;
+  if (!transcript || transcript.length === 0) {
+    el.innerHTML = '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
+    return;
+  }
+
+  let html = '<div class="an-section-label" style="margin-bottom:16px">Annotated transcript</div>';
+  transcript.forEach((t) => {
+    const isRep = t.speaker === 'rep';
+    let tlClass = isRep
+      ? (t.quality === 'good' ? 'tl-good' : t.quality === 'poor' ? 'tl-poor' : t.quality === 'ok' ? 'tl-ok' : 'tl-neutral')
+      : 'tl-hendrik';
+
+    const coachText = isRep && t.coaching
+      ? (typeof t.coaching === 'string' ? t.coaching : (t.coaching.body || t.coaching.title || ''))
+      : '';
+
+    html += `<div class="t-line ${tlClass}">
+      <div class="t-spk${isRep ? ' rep' : ''}">${isRep ? 'You' : 'Hendrik'}</div>
+      <div class="t-content">
+        <div class="t-txt${isRep ? ' rep' : ''}">${escHtml(t.text)}</div>
+        ${t.start_ms ? `<div class="t-time">${fmtMs(t.start_ms)}</div>` : ''}
+        ${coachText ? `<div class="cn-block"><div class="cn-block-lbl">Coach note</div><div class="cn-block-txt">${escHtml(coachText)}</div></div>` : ''}
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function renderDeepRightPanel(data) {
+  const el = document.getElementById('anRight');
+  if (!el) return;
+  const score = data.score || 0;
+  const bd = data.score_breakdown || {};
+  const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step' };
+  const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
+
+  el.innerHTML = `
+    <div class="an-right-section" style="text-align:center">
+      <div style="font-size:2.6rem;font-weight:800;letter-spacing:-0.05em;line-height:1;margin-bottom:4px">${score}</div>
+      <div style="font-size:0.58rem;font-weight:700;color:var(--ink-3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px">/100</div>
+      <div class="verdict-row">
+        ${data.call_verdict ? `<div class="verdict-badge ${escHtml(data.call_verdict)}">${escHtml(vMap[data.call_verdict] || data.call_verdict)}</div>` : ''}
+        ${data.call_momentum ? `<div class="momentum-badge">${escHtml(mMap[data.call_momentum] || data.call_momentum)}</div>` : ''}
+      </div>
+    </div>
+    <div class="an-right-section">
+      <div class="an-section-label">Sub-scores</div>
+      <div class="subscores">
+        <div class="sc-row"><div class="sc-label">Opening</div><div class="sc-bar"><div class="sc-fill" style="width:${bd.opening||0}%"></div></div><div class="sc-val">${bd.opening||0}</div></div>
+        <div class="sc-row"><div class="sc-label">Objections</div><div class="sc-bar"><div class="sc-fill" style="width:${bd.objections||0}%"></div></div><div class="sc-val">${bd.objections||0}</div></div>
+        <div class="sc-row"><div class="sc-label">Talk ratio</div><div class="sc-bar"><div class="sc-fill" style="width:${bd.talk_ratio||0}%"></div></div><div class="sc-val">${bd.talk_ratio||0}</div></div>
+        <div class="sc-row"><div class="sc-label">Clear ask</div><div class="sc-bar"><div class="sc-fill" style="width:${bd.clear_ask||0}%"></div></div><div class="sc-val">${bd.clear_ask||0}</div></div>
+      </div>
+    </div>
+    ${data.next_session_focus ? `<div class="an-right-section"><div class="an-section-label">Next focus</div><div style="font-size:0.74rem;color:var(--ink-2);line-height:1.6">${escHtml(data.next_session_focus)}</div></div>` : ''}
+  `;
+}
+
+function renderDeepGraphView(data) {
+  const el = document.getElementById('anLeft');
+  if (!el) return;
+  if (!data) { el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3)">No data.</div>'; return; }
+
+  const am = data.audio_metrics || {};
+  const bd = data.score_breakdown || {};
+  const wpm = am.wpm || '—';
+  const filler = am.filler_words !== undefined ? am.filler_words : '—';
+  const talkRep = am.talk_ratio?.rep !== undefined ? am.talk_ratio.rep : '—';
+  const mono = am.longest_monologue_seconds ? fmtSecs(am.longest_monologue_seconds) : '—';
+
+  // Build score history from stored history + current
+  const hist = _s.history.slice().reverse();
+  const rounds = hist.map((h, i) => ({ label: 'R' + (i + 1), score: h.score }));
+  rounds.push({ label: 'R' + (rounds.length + 1), score: data.score || 0 });
+
+  el.innerHTML = `<div class="graph-view">
+    <div class="an-section-label" style="margin-bottom:14px">Performance metrics</div>
+    <div class="graph-stat-row">
+      <div class="m-card"><div class="m-lbl">Pace</div><div class="m-val">${typeof wpm === 'number' ? wpm : '—'}<span style="font-size:0.68rem;color:var(--ink-3)"> wpm</span></div></div>
+      <div class="m-card"><div class="m-lbl">Filler words</div><div class="m-val">${filler}</div></div>
+      <div class="m-card"><div class="m-lbl">Talk ratio</div><div class="m-val">${talkRep}<span style="font-size:0.68rem;color:var(--ink-3)">%</span></div></div>
+      <div class="m-card"><div class="m-lbl">Monologue</div><div class="m-val" style="font-size:0.95rem">${mono}</div></div>
+    </div>
+    <div class="graph-chart-box">
+      <div class="an-section-label" style="margin-bottom:12px">Score history</div>
+      <div style="position:relative;height:220px"><canvas id="deepScoreChart"></canvas></div>
+    </div>
+  </div>`;
+
+  const renderChart = () => {
+    const ctx = document.getElementById('deepScoreChart');
+    if (!ctx) return;
+    const labels = rounds.map(r => r.label);
+    const lastIdx = rounds.length - 1;
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Overall', data: rounds.map(r => r.score), borderColor: '#111', backgroundColor: 'rgba(17,17,17,0.05)', tension: 0.35, pointRadius: 4, pointBackgroundColor: '#111' },
+          { label: 'Opening',    data: rounds.map((_, i) => i === lastIdx ? (bd.opening||null)    : null), borderColor: '#3b82f6', backgroundColor: 'transparent', tension: 0.35, pointRadius: 4, spanGaps: false },
+          { label: 'Objections', data: rounds.map((_, i) => i === lastIdx ? (bd.objections||null) : null), borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.35, pointRadius: 4, spanGaps: false },
+          { label: 'Clear ask',  data: rounds.map((_, i) => i === lastIdx ? (bd.clear_ask||null)  : null), borderColor: '#22c55e', backgroundColor: 'transparent', tension: 0.35, pointRadius: 4, spanGaps: false },
+          { label: 'Talk ratio', data: rounds.map((_, i) => i === lastIdx ? (bd.talk_ratio||null) : null), borderColor: '#a855f7', backgroundColor: 'transparent', tension: 0.35, pointRadius: 4, spanGaps: false },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          y: { min: 0, max: 100, grid: { color: 'rgba(17,17,17,0.06)' }, ticks: { font: { family: 'Bricolage Grotesque', size: 10 } } },
+          x: { grid: { display: false }, ticks: { font: { family: 'Bricolage Grotesque', size: 10 } } },
+        },
+        plugins: { legend: { position: 'top', labels: { font: { family: 'Bricolage Grotesque', size: 10 }, boxWidth: 10, padding: 12 } } },
+      },
+    });
+  };
+
+  if (typeof Chart !== 'undefined') {
+    renderChart();
+  } else {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+    s.onload = renderChart;
+    document.head.appendChild(s);
+  }
 }
 
 // ---------------------------------------------------------------------------
