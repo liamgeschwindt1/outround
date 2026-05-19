@@ -1154,6 +1154,7 @@ async function pollForResults() {
         // Analysis complete! Stop lens cycling and reveal real data
         if (_lensInterval) clearInterval(_lensInterval);
         _s.analysis = data;
+        renderTranscriptOnly(data.transcript || [], data.sentiment_timeline || []);
         populateAnalysisResults(data);
         uiLog('Analysis complete: score=' + data.score, 'ok');
       } else if (data.status === 'processing') {
@@ -1196,14 +1197,13 @@ async function pollForTranscript(sessionId) {
       const res = await fetch('/api/session/' + sessionId + '/status');
       const data = await res.json();
       
-      if (data.status === 'processing' && data.transcript && data.transcript.length > 0) {
-        // Transcript is available (even while still processing analysis)
+      if ((data.status === 'processing' || data.status === 'complete') && data.transcript && data.transcript.length > 0) {
+        // Transcript is available — render it
         _s._transcript = data.transcript;
         _s._sentiment = data.sentiment_timeline || [];
         _s._audioMetrics = data.audio_metrics || {};
         renderTranscriptOnly(_s._transcript, _s._sentiment);
         updateMetricsPanel(_s._audioMetrics);
-        // Keep polling for analysis results
         return;
       } else if (data.status === 'processing' && attempts < maxAttempts) {
         setTimeout(check, 1000);
@@ -1439,22 +1439,10 @@ function populateAnalysisResults(data) {
 }
 
 function renderAnalysisPage(data) {
-  // This is called when full analysis data is available (legacy path)
   if (!data) return;
   renderTranscriptOnly(data.transcript || [], data.sentiment_timeline || []);
   renderRightPanelLoading(data.audio_metrics || {});
   populateAnalysisResults(data);
-}
-
-// ---------------------------------------------------------------------------
-// Analysis page (Step 6)
-// ---------------------------------------------------------------------------
-function renderAnalysisPage(data) {
-  if (!data) return;
-  renderAnTranscript(data.transcript || [], data.sentiment_timeline || [], data.coaching_feedback || []);
-  renderAnScores(data);
-  syncAnalysisHeights();
-  window.addEventListener('resize', syncAnalysisHeights);
 }
 
 function sentimentClass(timeline, pct) {
@@ -1469,12 +1457,6 @@ function sentimentClass(timeline, pct) {
 // ---------------------------------------------------------------------------
 // Finish analysis → finish card
 // ---------------------------------------------------------------------------
-async function finishAnalysis() {
-  document.getElementById('analysisPage').classList.remove('open');
-  addToHistory();
-  await fetchFinishLb();
-  goToStep('finish');
-}
 async function finishAnalysis() {
   document.getElementById('analysisPage').classList.remove('open');
   addToHistory();
