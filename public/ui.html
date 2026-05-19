@@ -1207,6 +1207,7 @@ async function pollForTranscript(sessionId) {
         _s._transcript = data.transcript;
         _s._sentiment = data.sentiment_timeline || [];
         _s._audioMetrics = data.audio_metrics || {};
+        uiLog('Transcript ready, audio_metrics keys: ' + Object.keys(_s._audioMetrics).join(','), 'ok');
         renderTranscriptOnly(_s._transcript, _s._sentiment);
         updateMetricsPanel(_s._audioMetrics);
         return;
@@ -1409,11 +1410,18 @@ function populateAnalysisResults(data) {
   const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step' };
   const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
   
-  // Snap score to real number
+  // Update score — set text first so it's never invisible during animation
   const bigNum = document.getElementById('anScoreValue');
   if (bigNum) {
-    bigNum.classList.add('score-snap');
     bigNum.textContent = score;
+    bigNum.style.animation = 'none';
+    void bigNum.offsetWidth; // force reflow
+    bigNum.style.animation = 'snap-reveal 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards';
+  }
+
+  // Update metrics with final data (overrides any earlier loading-state dashes)
+  if (data.audio_metrics) {
+    updateMetricsPanel(data.audio_metrics);
   }
   
   // Show verdict and momentum
