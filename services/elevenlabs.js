@@ -2,11 +2,14 @@
 
 const { ElevenLabsClient } = require('elevenlabs');
 
+let _client = null;
 function getClient() {
+  if (_client) return _client;
   if (!process.env.ELEVENLABS_KEY) {
     throw new Error('ELEVENLABS_KEY not configured');
   }
-  return new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_KEY });
+  _client = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_KEY });
+  return _client;
 }
 
 /**

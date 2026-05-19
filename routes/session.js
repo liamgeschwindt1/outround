@@ -69,13 +69,16 @@ router.post('/start', async (req, res) => {
 router.get('/:id/voice-token', async (req, res) => {
   const { id } = req.params;
 
-  // Determine persona — check memStore first, then DB
-  let personaId = memStore.get(id)?.persona_id || 'hendrik';
-  try {
-    const result = await db.query('SELECT persona_id FROM sessions WHERE id = $1', [id]);
-    if (result.rows.length > 0) personaId = result.rows[0].persona_id;
-  } catch {
-    // DB unavailable — use memStore value
+  // Determine persona — memStore is authoritative when present; only hit DB as fallback
+  let personaId = memStore.get(id)?.persona_id;
+  if (!personaId) {
+    try {
+      const result = await db.query('SELECT persona_id FROM sessions WHERE id = $1', [id]);
+      if (result.rows.length > 0) personaId = result.rows[0].persona_id;
+    } catch {
+      // DB unavailable — fall back to default
+    }
+    personaId = personaId || 'hendrik';
   }
 
   try {

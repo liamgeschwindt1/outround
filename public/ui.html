@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Outround</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@11labs/client/+esm" crossorigin>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -977,6 +979,9 @@ function startBrief() {
   goToStep('brief');
   _briefTimer = 30;
   clearInterval(_briefInterval);
+  // Prefetch signed URL + warm SDK module in parallel while the brief countdown runs
+  prefetchVoiceToken();
+  warmConversationSdk();
   setTimeout(() => {
     _briefInterval = setInterval(() => {
       _briefTimer--;
@@ -1018,15 +1023,40 @@ async function initiateCall() {
   await startCall();
 }
 
+let _voiceTokenPromise = null;
+let _conversationSdkPromise = null;
+
+function prefetchVoiceToken() {
+  if (!_s.sessionId || _voiceTokenPromise) return _voiceTokenPromise;
+  uiLog('Prefetching voice token…', 'send');
+  _voiceTokenPromise = fetch('/api/session/' + _s.sessionId + '/voice-token')
+    .then(async (r) => {
+      if (!r.ok) throw new Error('Voice token HTTP ' + r.status);
+      const { signed_url } = await r.json();
+      uiLog('Voice token ready (prefetched)', 'ok');
+      return signed_url;
+    })
+    .catch((err) => { _voiceTokenPromise = null; throw err; });
+  return _voiceTokenPromise;
+}
+
+function warmConversationSdk() {
+  if (_conversationSdkPromise) return _conversationSdkPromise;
+  _conversationSdkPromise = import('https://cdn.jsdelivr.net/npm/@11labs/client/+esm')
+    .then((m) => { uiLog('ElevenLabs SDK warmed', 'ok'); return m; })
+    .catch((err) => { _conversationSdkPromise = null; throw err; });
+  return _conversationSdkPromise;
+}
+
 async function startCall() {
   _s.callStart = Date.now();
   uiLog('Fetching voice token…', 'send');
   try {
-    const tokenRes = await fetch('/api/session/' + _s.sessionId + '/voice-token');
-    if (!tokenRes.ok) throw new Error('Voice token HTTP ' + tokenRes.status);
+    // Use prefetched promises if available — otherwise kick them off now
+    const tokenP = prefetchVoiceToken();
+    const sdkP = warmConversationSdk();
+    const [signed_url, { Conversation }] = await Promise.all([tokenP, sdkP]);
     uiLog('Voice token received', 'ok');
-    const { signed_url } = await tokenRes.json();
-    const { Conversation } = await import('https://cdn.jsdelivr.net/npm/@11labs/client/+esm');
     _s.conversation = await Conversation.startSession({
       signedUrl: signed_url,
       onConnect: () => {
@@ -1107,6 +1137,8 @@ async function endCall() {
 }
 
 async function _finishCall(conversationId) {
+  // Signed URL is single-use — clear it so the next call prefetches a fresh one
+  _voiceTokenPromise = null;
   if (_s.callDuration < 15) {
     uiLog('Call too short (' + _s.callDuration + 's) — skipping analysis', 'info');
     await goToStep('tooshort');
