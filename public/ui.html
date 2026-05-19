@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Outround</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@11labs/client/+esm" crossorigin>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -195,13 +197,15 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .an-body{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .an-topbar{height:var(--top);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
 .an-layout{flex:1;display:flex;overflow:hidden}
-.an-left{flex:1;width:55%;padding:28px 32px;overflow-y:auto;border-right:1px solid var(--border)}
-.an-right{width:45%;padding:24px 28px;background:var(--surface);flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column}
+.an-left{flex:1.45;width:48%;padding:28px 32px;overflow-y:auto;border-right:1px solid var(--border);min-width:0}
+.an-middle{width:22%;padding:24px 18px;border-right:1px solid var(--border);background:rgba(255,255,255,0.55);display:flex;flex-direction:column;justify-content:center;align-items:center;overflow-y:auto;min-width:0}
+.an-right{width:30%;padding:24px 28px;background:var(--surface);flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
 .an-right-section{display:flex;flex-direction:column;gap:3px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
 .an-right-section:last-child{border-bottom:none}
-/* Lens cycling container */
-.lens-container{min-height:48px;display:flex;align-items:center;justify-content:center}
-.lens-text{font-size:0.76rem;color:var(--ink-2);font-weight:500;text-align:center;opacity:1;transition:opacity 0.4s ease;height:1.4em;display:flex;align-items:center;justify-content:center}
+.an-middle-section{width:100%;max-width:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
+.an-middle-label{font-size:0.58rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3)}
+.lens-container{min-height:72px;display:flex;align-items:center;justify-content:center;width:100%}
+.lens-text{font-size:0.76rem;color:var(--ink-2);font-weight:500;text-align:center;opacity:1;transition:opacity 0.4s ease;line-height:1.45;display:flex;align-items:center;justify-content:center;min-height:2.2em}
 .lens-text.fade-out{opacity:0}
 .score-pulse{animation:pulse-subtle 2s infinite}
 @keyframes pulse-subtle{0%,100%{opacity:1}50%{opacity:0.5}}
@@ -277,7 +281,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .sc-label{font-size:0.6rem;font-weight:700;color:var(--ink-2);width:110px;flex-shrink:0}
 .sc-val{font-size:0.72rem;font-weight:800;color:var(--ink);flex-shrink:0;width:26px;text-align:right}
 .sc-bar{flex:1;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
-.sc-fill{height:100%;background:var(--ink);border-radius:2px;width:0%;transition:width .9s ease .3s}
+.sc-fill{height:100%;background:var(--ink-2);border-radius:2px;width:0%;transition:width .9s ease .3s}
 .metrics-strip{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .m-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
 .m-lbl{font-size:0.55rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
@@ -502,6 +506,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 
       <div class="an-layout">
         <div class="an-left" id="anLeft"></div>
+        <div class="an-middle" id="anMiddle"></div>
         <div class="an-right" id="anRight"></div>
       </div>
     </div>
@@ -974,6 +979,9 @@ function startBrief() {
   goToStep('brief');
   _briefTimer = 30;
   clearInterval(_briefInterval);
+  // Prefetch signed URL + warm SDK module in parallel while the brief countdown runs
+  prefetchVoiceToken();
+  warmConversationSdk();
   setTimeout(() => {
     _briefInterval = setInterval(() => {
       _briefTimer--;
@@ -1015,15 +1023,40 @@ async function initiateCall() {
   await startCall();
 }
 
+let _voiceTokenPromise = null;
+let _conversationSdkPromise = null;
+
+function prefetchVoiceToken() {
+  if (!_s.sessionId || _voiceTokenPromise) return _voiceTokenPromise;
+  uiLog('Prefetching voice token…', 'send');
+  _voiceTokenPromise = fetch('/api/session/' + _s.sessionId + '/voice-token')
+    .then(async (r) => {
+      if (!r.ok) throw new Error('Voice token HTTP ' + r.status);
+      const { signed_url } = await r.json();
+      uiLog('Voice token ready (prefetched)', 'ok');
+      return signed_url;
+    })
+    .catch((err) => { _voiceTokenPromise = null; throw err; });
+  return _voiceTokenPromise;
+}
+
+function warmConversationSdk() {
+  if (_conversationSdkPromise) return _conversationSdkPromise;
+  _conversationSdkPromise = import('https://cdn.jsdelivr.net/npm/@11labs/client/+esm')
+    .then((m) => { uiLog('ElevenLabs SDK warmed', 'ok'); return m; })
+    .catch((err) => { _conversationSdkPromise = null; throw err; });
+  return _conversationSdkPromise;
+}
+
 async function startCall() {
   _s.callStart = Date.now();
   uiLog('Fetching voice token…', 'send');
   try {
-    const tokenRes = await fetch('/api/session/' + _s.sessionId + '/voice-token');
-    if (!tokenRes.ok) throw new Error('Voice token HTTP ' + tokenRes.status);
+    // Use prefetched promises if available — otherwise kick them off now
+    const tokenP = prefetchVoiceToken();
+    const sdkP = warmConversationSdk();
+    const [signed_url, { Conversation }] = await Promise.all([tokenP, sdkP]);
     uiLog('Voice token received', 'ok');
-    const { signed_url } = await tokenRes.json();
-    const { Conversation } = await import('https://cdn.jsdelivr.net/npm/@11labs/client/+esm');
     _s.conversation = await Conversation.startSession({
       signedUrl: signed_url,
       onConnect: () => {
@@ -1104,6 +1137,8 @@ async function endCall() {
 }
 
 async function _finishCall(conversationId) {
+  // Signed URL is single-use — clear it so the next call prefetches a fresh one
+  _voiceTokenPromise = null;
   if (_s.callDuration < 15) {
     uiLog('Call too short (' + _s.callDuration + 's) — skipping analysis', 'info');
     await goToStep('tooshort');
@@ -1173,11 +1208,13 @@ async function pollForResults() {
 
 async function renderAnalysisPageLoading(sessionId) {
   const leftEl = document.getElementById('anLeft');
+  const middleEl = document.getElementById('anMiddle');
   const rightEl = document.getElementById('anRight');
-  if (!leftEl || !rightEl) return;
+  if (!leftEl || !middleEl || !rightEl) return;
   
   // Show transcript loading state
   leftEl.innerHTML = '<div class="an-section-label">Annotated transcript</div><p style="font-size:0.76rem;color:var(--ink-2);padding-top:20px">Loading transcript...</p>';
+  renderMiddleLoading();
   
   // Show right panel with metrics and lens cycling
   renderRightPanelLoading({});
@@ -1202,6 +1239,7 @@ async function pollForTranscript(sessionId) {
         _s._transcript = data.transcript;
         _s._sentiment = data.sentiment_timeline || [];
         _s._audioMetrics = data.audio_metrics || {};
+        uiLog('Transcript ready, audio_metrics keys: ' + Object.keys(_s._audioMetrics).join(','), 'ok');
         renderTranscriptOnly(_s._transcript, _s._sentiment);
         updateMetricsPanel(_s._audioMetrics);
         return;
@@ -1261,11 +1299,9 @@ function renderRightPanelLoading(audioMetrics) {
   scoreSection.className = 'an-right-section';
   scoreSection.innerHTML = `
     <div style="text-align:center">
-      <div style="font-size:2.4rem;font-weight:900;letter-spacing:-0.04em;color:var(--ink);margin-bottom:6px">—</div>
+      <div id="anScoreValue" style="font-size:2.4rem;font-weight:900;letter-spacing:-0.04em;color:var(--ink);margin-bottom:6px">—</div>
       <div style="font-size:0.6rem;font-weight:700;color:var(--ink-3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px">/100 Performance</div>
-      <div class="lens-container">
-        <div class="lens-text" id="lensText" style="opacity:0"></div>
-      </div>
+      <div class="verdict-row" id="verdictRow"></div>
     </div>
   `;
   
@@ -1325,8 +1361,20 @@ function renderRightPanelLoading(audioMetrics) {
   el.appendChild(scoreSection);
   el.appendChild(metricsSection);
   el.appendChild(subscoresSection);
-  
-  // Start lens cycling immediately
+}
+
+function renderMiddleLoading() {
+  const el = document.getElementById('anMiddle');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div class="an-middle-section">
+      <div class="an-middle-label">Analysis in progress</div>
+      <div class="lens-container">
+        <div class="lens-text" id="lensText" style="opacity:0"></div>
+      </div>
+    </div>
+  `;
   startLensCycling();
 }
 
@@ -1394,19 +1442,28 @@ function populateAnalysisResults(data) {
   const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step' };
   const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
   
-  // Snap score to real number
-  const bigNum = document.querySelector('.an-right-section:first-child .an-section-label + div div:first-child');
+  // Update score — use CSS transition (more reliable than animation-fill-mode:forwards)
+  const bigNum = document.getElementById('anScoreValue');
   if (bigNum) {
-    bigNum.classList.add('score-snap');
     bigNum.textContent = score;
+    bigNum.style.transition = 'none';
+    bigNum.style.opacity = '0';
+    bigNum.style.transform = 'scale(0.85)';
+    void bigNum.offsetWidth; // force reflow so transition is visible
+    bigNum.style.transition = 'opacity 0.3s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+    bigNum.style.opacity = '1';
+    bigNum.style.transform = 'scale(1)';
+  }
+
+  // Update metrics with final data (overrides any earlier loading-state dashes)
+  if (data.audio_metrics) {
+    updateMetricsPanel(data.audio_metrics);
   }
   
-  // Show verdict and momentum
-  const lensContainer = document.querySelector('.lens-container');
-  if (lensContainer) {
-    lensContainer.innerHTML = '';
-    const verdictRow = document.createElement('div');
-    verdictRow.className = 'verdict-row';
+  // Show verdict and momentum in the right panel's verdictRow
+  const verdictRow = document.getElementById('verdictRow');
+  if (verdictRow) {
+    verdictRow.innerHTML = '';
     if (data.call_verdict) {
       const vBadge = document.createElement('div');
       vBadge.className = 'verdict-badge ' + data.call_verdict;
@@ -1419,7 +1476,18 @@ function populateAnalysisResults(data) {
       mBadge.textContent = mMap[data.call_momentum] || data.call_momentum;
       verdictRow.appendChild(mBadge);
     }
-    lensContainer.appendChild(verdictRow);
+  }
+  // Replace middle column with headline + next focus
+  const middleEl = document.getElementById('anMiddle');
+  if (middleEl) {
+    const headline = data.headline || '';
+    const focus = data.next_session_focus || '';
+    middleEl.innerHTML = `
+      <div class="an-middle-section">
+        ${headline ? `<div style="font-size:0.8rem;font-weight:700;color:var(--ink);line-height:1.5;margin-bottom:16px">${escHtml(headline)}</div>` : ''}
+        ${focus ? `<div class="an-middle-label" style="margin-bottom:6px">Next focus</div><div style="font-size:0.72rem;color:var(--ink-2);line-height:1.6">${escHtml(focus)}</div>` : ''}
+      </div>
+    `;
   }
   
   // Populate sub-scores

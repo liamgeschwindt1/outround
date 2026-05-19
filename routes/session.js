@@ -69,13 +69,16 @@ router.post('/start', async (req, res) => {
 router.get('/:id/voice-token', async (req, res) => {
   const { id } = req.params;
 
-  // Determine persona — check memStore first, then DB
-  let personaId = memStore.get(id)?.persona_id || 'hendrik';
-  try {
-    const result = await db.query('SELECT persona_id FROM sessions WHERE id = $1', [id]);
-    if (result.rows.length > 0) personaId = result.rows[0].persona_id;
-  } catch {
-    // DB unavailable — use memStore value
+  // Determine persona — memStore is authoritative when present; only hit DB as fallback
+  let personaId = memStore.get(id)?.persona_id;
+  if (!personaId) {
+    try {
+      const result = await db.query('SELECT persona_id FROM sessions WHERE id = $1', [id]);
+      if (result.rows.length > 0) personaId = result.rows[0].persona_id;
+    } catch {
+      // DB unavailable — fall back to default
+    }
+    personaId = personaId || 'hendrik';
   }
 
   try {
@@ -138,7 +141,13 @@ router.get('/:id/status', async (req, res) => {
     );
     if (result.rows.length > 0) {
       const row = result.rows[0];
-      if (row.score === null) return res.json({ status: 'processing' });
+      if (row.score === null) {
+        return res.json({
+          status: 'processing',
+          transcript: row.transcript || [],
+          audio_metrics: row.audio_metrics || {},
+        });
+      }
       const breakdown = row.score_breakdown || {};
       return res.json({
         status: 'complete',
@@ -210,6 +219,28 @@ async function processSession(sessionId, { elevenlabs_conversation_id, duration_
 
   // 2. Calculate audio metrics
   const audioMetrics = calculateMetricsFromTranscript(transcript, actualDuration);
+
+  // Surface transcript and deterministic metrics before grading completes so the UI can render early.
+  if (!useMemOnly) {
+    try {
+      await db.query(
+        `UPDATE sessions SET transcript = $1, audio_metrics = $2 WHERE id = $3`,
+        [JSON.stringify(transcript), JSON.stringify(audioMetrics), sessionId]
+      );
+    } catch (err) {
+      console.error('DB error saving partial analysis:', err.message);
+    }
+  }
+
+  if (memSession) {
+    memStore.set(sessionId, {
+      ...memSession,
+      status: 'processing',
+      transcript,
+      audio_metrics: audioMetrics,
+      duration_seconds: actualDuration,
+    });
+  }
 
   // 3. Grade with Claude
   let grading;
