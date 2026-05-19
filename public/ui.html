@@ -194,11 +194,24 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .an-sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:12px 0;flex-shrink:0;gap:2px}
 .an-body{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .an-topbar{height:var(--top);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
-.an-layout{flex:1;display:grid;grid-template-columns:1fr 300px;overflow:hidden}
-.an-left{overflow-y:auto;padding:28px 32px}
-.an-right{overflow-y:auto;padding:22px 20px;background:var(--surface);border-left:1px solid var(--border)}
+.an-layout{flex:1;display:flex;overflow:hidden}
+.an-scroll-container{display:flex;flex:1;overflow-y:auto;position:relative}
+.an-left{width:40%;padding:28px 32px;flex-shrink:0}
+.an-middle{width:35%;padding:0 20px;flex-shrink:0;position:relative}
+.an-right{width:25%;padding:22px 20px;background:var(--surface);border-left:1px solid var(--border);flex-shrink:0;position:fixed;right:0;top:var(--top);bottom:0;overflow-y:auto;z-index:30}
 .an-section-label{font-size:0.58rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
-.t-line{display:flex;gap:12px;padding:10px 0 10px 13px;border-bottom:1px solid rgba(17,17,17,0.04);position:relative}
+.t-line{display:flex;gap:12px;padding:10px 0 10px 13px;border-bottom:1px solid rgba(17,17,17,0.04);position:relative;min-height:auto}
+.t-line.highlighted{background:rgba(17,17,17,0.04)}
+.coaching-card{position:absolute;top:0;left:0;right:0;background:var(--surface);border-left:2px solid var(--ink);border-radius:0 6px 6px 0;padding:14px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-start}
+.coaching-card.severity-critical{border-left-color:#ef4444}
+.coaching-card.severity-warning{border-left-color:#f59e0b}
+.coaching-card.severity-info{border-left-color:#3b82f6}
+.cc-bracket{position:absolute;left:-1px;top:0;bottom:0;width:2px;background:var(--ink-3);opacity:0.3}
+.cc-category{font-size:0.5rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:3px}
+.cc-title{font-size:0.78rem;font-weight:700;color:var(--ink);margin-bottom:4px}
+.cc-body{font-size:0.72rem;color:var(--ink-2);line-height:1.62;margin-bottom:5px}
+.cc-action{font-size:0.68rem;font-weight:600;color:var(--ink-2);display:flex;align-items:flex-start;gap:5px;font-style:italic}
+.cc-action::before{content:'→';flex-shrink:0;color:var(--ink-3)}
 .t-line:last-child{border-bottom:none}
 .sent-bar{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0}
 .s-g{background:#22c55e}.s-a{background:#f59e0b}.s-r{background:#ef4444}.s-n{background:transparent}
@@ -287,6 +300,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
   display:flex;flex-direction:column;max-height:320px;
   transition:max-height .2s ease,opacity .2s ease;
 }
+.analysis-page.open ~ #dbg-widget{display:none}
 #dbg-widget.collapsed{max-height:36px;overflow:hidden}
 #dbg-hdr{
   display:flex;align-items:center;gap:6px;
@@ -465,7 +479,10 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
       </header>
 
       <div class="an-layout">
-        <div class="an-left" id="anLeft"></div>
+        <div class="an-scroll-container">
+          <div class="an-left" id="anLeft"></div>
+          <div class="an-middle" id="anMiddle"></div>
+        </div>
         <div class="an-right" id="anRight"></div>
       </div>
     </div>
@@ -638,6 +655,7 @@ function renderStep(step, wrap) {
     call: renderCallStep,
     loading: renderLoadingStep,
     finish: renderFinishStep,
+    tooshort: renderTooShortStep,
   };
   if (templates[step]) wrap.innerHTML = templates[step]();
 }
@@ -804,6 +822,16 @@ function renderCallStep() {
     <button class="end-btn" id="eb" onclick="endCall()" title="End call" style="display:none">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" transform="rotate(135 12 12)"/></svg>
     </button>
+  </div>`;
+}
+
+function renderTooShortStep() {
+  return `<div class="card-step" style="text-align:center;padding:48px 32px">
+    <div style="font-size:2rem;margin-bottom:16px">📵</div>
+    <div style="font-size:1rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px">Call too short to analyse</div>
+    <div style="font-size:0.78rem;color:var(--ink-2);line-height:1.6;margin-bottom:28px">The call needs to be at least 15 seconds long for a score to be generated. Try to keep Hendrik on the line next time.</div>
+    <button class="ob-btn" onclick="goAgain()">Try again</button>
+    <div class="step-note" style="margin-top:10px"><span onclick="dismissFinish()" style="cursor:pointer">Back to dashboard</span></div>
   </div>`;
 }
 
@@ -1063,6 +1091,11 @@ async function endCall() {
 }
 
 async function _finishCall(conversationId) {
+  if (_s.callDuration < 15) {
+    uiLog('Call too short (' + _s.callDuration + 's) — skipping analysis', 'info');
+    await goToStep('tooshort');
+    return;
+  }
   await goToStep('loading');
   startGradingAnimation();
   uiLog('Ending session (duration: ' + _s.callDuration + 's)', 'send');
@@ -1141,6 +1174,8 @@ function renderAnalysisPage(data) {
   if (!data) return;
   renderAnTranscript(data.transcript || [], data.sentiment_timeline || [], data.coaching_feedback || []);
   renderAnScores(data);
+  syncAnalysisHeights();
+  window.addEventListener('resize', syncAnalysisHeights);
 }
 
 function sentimentClass(timeline, pct) {
@@ -1153,22 +1188,26 @@ function sentimentClass(timeline, pct) {
 }
 
 function renderAnTranscript(transcript, timeline, coaching) {
-  const el = document.getElementById('anLeft');
-  if (!el) return;
+  const leftEl = document.getElementById('anLeft');
+  const middleEl = document.getElementById('anMiddle');
+  if (!leftEl || !middleEl) return;
+  
   if (!transcript || transcript.length === 0) {
-    el.innerHTML = '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
+    leftEl.innerHTML = '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
     return;
   }
+
   const totalMs = (transcript[transcript.length - 1]?.start_ms) || 1;
   const repTurns = transcript.filter(t => t.speaker === 'rep');
-  const coachingByTurnIdx = {};
+  const coachingByRepIdx = {};
   coaching.forEach((item, i) => {
     if (i < repTurns.length) {
-      coachingByTurnIdx[transcript.indexOf(repTurns[i])] = item;
+      coachingByRepIdx[repTurns[i]._idx || i] = item;
     }
   });
 
-  let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
+  // Build transcript HTML
+  let transcriptHtml = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
     + '<div class="an-section-label" style="margin:0">Annotated transcript</div>'
     + '<div class="tl-legend">'
     + '<div class="leg"><div class="leg-dot" style="background:#22c55e"></div>Positive</div>'
@@ -1180,21 +1219,12 @@ function renderAnTranscript(transcript, timeline, coaching) {
     const isRep = t.speaker === 'rep';
     const pct = Math.round(((t.start_ms || 0) / totalMs) * 100);
     const sc = isRep ? 's-n' : sentimentClass(timeline, pct);
-    const ci = isRep ? coachingByTurnIdx[idx] : null;
-    const cid = 'ci-' + idx;
-    html += `<div class="t-line">
+    transcriptHtml += `<div class="t-line" data-line-idx="${idx}">
       <div class="sent-bar ${sc}"></div>
       <div class="t-spk${isRep ? ' rep' : ''}">${isRep ? 'You' : 'Hendrik'}</div>
       <div class="t-content">
         <div class="t-txt${isRep ? ' rep' : ''}">${escHtml(t.text)}</div>
         ${t.start_ms ? `<div class="t-time">${fmtMs(t.start_ms)}</div>` : ''}
-        ${ci ? `<button class="coaching-toggle" onclick="toggleCoaching('${cid}',this)"><span class="ct-arrow">▶</span> Coaching note</button>
-        <div class="coaching-inline" id="${cid}">
-          ${ci.category ? `<div class="ci-cat">${escHtml(ci.category)}</div>` : ''}
-          <div class="ci-title">${escHtml(ci.title || '')}</div>
-          <div class="ci-body">${escHtml(ci.body || '')}</div>
-          ${ci.action ? `<div class="ci-action">${escHtml(ci.action)}</div>` : ''}
-        </div>` : ''}
       </div>
     </div>`;
   });
@@ -1202,15 +1232,55 @@ function renderAnTranscript(transcript, timeline, coaching) {
   if (timeline.length > 0) {
     const sentMap = { positive: '#22c55e', neutral: '#f59e0b', negative: '#ef4444' };
     const segs = timeline.map(s => `<div class="tl-seg" style="left:${s.start_pct}%;width:${s.end_pct - s.start_pct}%;background:${sentMap[s.sentiment] || '#ccc'}"></div>`).join('');
-    html += `<div class="tl-section"><div class="an-section-label">Prospect sentiment</div><div class="tl-track">${segs}</div><div class="tl-ts"><span>0:00</span><span>${fmtSecs(_s.callDuration)}</span></div></div>`;
+    transcriptHtml += `<div class="tl-section"><div class="an-section-label">Prospect sentiment</div><div class="tl-track">${segs}</div><div class="tl-ts"><span>0:00</span><span>${fmtSecs(_s.callDuration)}</span></div></div>`;
   }
-  el.innerHTML = html;
+  
+  leftEl.innerHTML = transcriptHtml;
+
+  // Build coaching cards HTML
+  let coachingHtml = '';
+  let repIdx = 0;
+  transcript.forEach((t, idx) => {
+    if (t.speaker === 'rep') {
+      const ci = coaching[repIdx];
+      if (ci) {
+        const severity = ci.severity || 'info';
+        coachingHtml += `<div class="coaching-card severity-${severity}" data-coach-idx="${repIdx}" data-line-idx="${idx}">
+          <div class="cc-bracket"></div>
+          ${ci.category ? `<div class="cc-category">${escHtml(ci.category)}</div>` : ''}
+          <div class="cc-title">${escHtml(ci.title || '')}</div>
+          <div class="cc-body">${escHtml(ci.body || '')}</div>
+          ${ci.action ? `<div class="cc-action">${escHtml(ci.action)}</div>` : ''}
+        </div>`;
+      } else {
+        coachingHtml += `<div class="coaching-card" data-coach-idx="${repIdx}" data-line-idx="${idx}" style="visibility:hidden;height:0"></div>`;
+      }
+      repIdx++;
+    }
+  });
+  
+  middleEl.innerHTML = coachingHtml;
 }
 
-function toggleCoaching(id, btn) {
-  const p = document.getElementById(id); if (!p) return;
-  p.classList.toggle('open');
-  btn.classList.toggle('open');
+function syncAnalysisHeights() {
+  const leftEl = document.getElementById('anLeft');
+  const middleEl = document.getElementById('anMiddle');
+  if (!leftEl || !middleEl) return;
+
+  const lines = leftEl.querySelectorAll('.t-line');
+  const cards = middleEl.querySelectorAll('.coaching-card');
+
+  lines.forEach((line, idx) => {
+    const card = cards[idx];
+    if (!card) return;
+
+    const lineHeight = line.offsetHeight;
+    const cardHeight = card.offsetHeight;
+    const maxHeight = Math.max(lineHeight, cardHeight);
+
+    line.style.height = maxHeight + 'px';
+    card.style.height = maxHeight + 'px';
+  });
 }
 
 function renderAnScores(data) {
