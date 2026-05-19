@@ -195,23 +195,45 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .an-body{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .an-topbar{height:var(--top);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
 .an-layout{flex:1;display:flex;overflow:hidden}
-.an-scroll-container{display:flex;flex:1;overflow-y:auto;position:relative}
-.an-left{width:40%;padding:28px 32px;flex-shrink:0}
-.an-middle{width:35%;padding:0 20px;flex-shrink:0;position:relative}
-.an-right{width:25%;padding:22px 20px;background:var(--surface);border-left:1px solid var(--border);flex-shrink:0;position:fixed;right:0;top:var(--top);bottom:0;overflow-y:auto;z-index:30}
+.an-left{flex:1;width:55%;padding:28px 32px;overflow-y:auto;border-right:1px solid var(--border)}
+.an-right{width:45%;padding:24px 28px;background:var(--surface);flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column}
+.an-right-section{display:flex;flex-direction:column;gap:3px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.an-right-section:last-child{border-bottom:none}
+/* Lens cycling container */
+.lens-container{min-height:48px;display:flex;align-items:center;justify-content:center}
+.lens-text{font-size:0.76rem;color:var(--ink-2);font-weight:500;text-align:center;opacity:1;transition:opacity 0.4s ease;height:1.4em;display:flex;align-items:center;justify-content:center}
+.lens-text.fade-out{opacity:0}
+.score-pulse{animation:pulse-subtle 2s infinite}
+@keyframes pulse-subtle{0%,100%{opacity:1}50%{opacity:0.5}}
+/* Score reveal snap animation */
+.score-snap{animation:snap-reveal 0.35s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes snap-reveal{0%{transform:scale(0.85);opacity:0}100%{transform:scale(1);opacity:1}}
 .an-section-label{font-size:0.58rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
 .t-line{display:flex;gap:12px;padding:10px 0 10px 13px;border-bottom:1px solid rgba(17,17,17,0.04);position:relative;min-height:auto}
 .t-line.highlighted{background:rgba(17,17,17,0.04)}
-.coaching-card{position:absolute;top:0;left:0;right:0;background:var(--surface);border-left:2px solid var(--ink);border-radius:0 6px 6px 0;padding:14px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-start}
-.coaching-card.severity-critical{border-left-color:#ef4444}
-.coaching-card.severity-warning{border-left-color:#f59e0b}
-.coaching-card.severity-info{border-left-color:#3b82f6}
-.cc-bracket{position:absolute;left:-1px;top:0;bottom:0;width:2px;background:var(--ink-3);opacity:0.3}
-.cc-category{font-size:0.5rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:3px}
-.cc-title{font-size:0.78rem;font-weight:700;color:var(--ink);margin-bottom:4px}
-.cc-body{font-size:0.72rem;color:var(--ink-2);line-height:1.62;margin-bottom:5px}
-.cc-action{font-size:0.68rem;font-weight:600;color:var(--ink-2);display:flex;align-items:flex-start;gap:5px;font-style:italic}
-.cc-action::before{content:'→';flex-shrink:0;color:var(--ink-3)}
+/* Metrics cards (immediate, always visible) */
+.m-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.m-lbl{font-size:0.58rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.m-val{font-size:1.2rem;font-weight:800;color:var(--ink);line-height:1.2}
+.m-note{font-size:0.6rem;color:var(--ink-2);margin-top:4px}
+.m-note.ok{color:#22c55e;font-weight:600}
+.m-note.warn{color:#f59e0b;font-weight:600}
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* Sub-scores loading state */
+.subscores{display:flex;flex-direction:column;gap:10px}
+.sc-row{display:grid;grid-template-columns:100px 1fr 40px;gap:8px;align-items:center}
+.sc-label{font-size:0.7rem;font-weight:600;color:var(--ink-2)}
+.sc-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;flex:1}
+.sc-fill{height:100%;background:var(--ink);border-radius:3px;width:0;transition:width 0.4s ease}
+.sc-val{font-size:0.8rem;font-weight:700;color:var(--ink);text-align:right;min-width:40px}
+.sc-val.loading{color:var(--ink-3);font-weight:500}
+/* Verdict & momentum badges */
+.verdict-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.verdict-badge{font-size:0.65rem;font-weight:700;padding:4px 10px;border-radius:4px;background:var(--bg);color:var(--ink-2);text-transform:uppercase;letter-spacing:0.05em}
+.verdict-badge.advance{color:#22c55e;border:1px solid #22c55e;background:rgba(34,197,94,0.08)}
+.verdict-badge.soft_advance{color:#f59e0b;border:1px solid #f59e0b;background:rgba(245,158,11,0.08)}
+.verdict-badge.dead{color:#ef4444;border:1px solid #ef4444;background:rgba(239,68,68,0.08)}
+.momentum-badge{font-size:0.65rem;font-weight:700;padding:4px 10px;border-radius:4px;background:var(--bg);color:var(--ink-2)}
 .t-line:last-child{border-bottom:none}
 .sent-bar{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0}
 .s-g{background:#22c55e}.s-a{background:#f59e0b}.s-r{background:#ef4444}.s-n{background:transparent}
@@ -479,10 +501,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
       </header>
 
       <div class="an-layout">
-        <div class="an-scroll-container">
-          <div class="an-left" id="anLeft"></div>
-          <div class="an-middle" id="anMiddle"></div>
-        </div>
+        <div class="an-left" id="anLeft"></div>
         <div class="an-right" id="anRight"></div>
       </div>
     </div>
@@ -837,14 +856,8 @@ function renderTooShortStep() {
 
 function renderLoadingStep() {
   return `<div class="loading-step">
-    <div class="load-title">Analysing your call</div>
-    <div class="load-sub">This takes about 30 seconds.</div>
-    <div class="sl-steps">
-      <div class="sl-step active-step" id="slStep0"><div class="sl-step-dot active" id="slDot0"></div>Transcribing</div>
-      <div class="sl-step" id="slStep1"><div class="sl-step-dot" id="slDot1"></div>Analysing objection handling</div>
-      <div class="sl-step" id="slStep2"><div class="sl-step-dot" id="slDot2"></div>Generating coaching</div>
-      <div class="sl-step" id="slStep3"><div class="sl-step-dot" id="slDot3"></div>Building report</div>
-    </div>
+    <div class="load-title">Hendrik just hung up.</div>
+    <div class="load-sub" id="loadSub" style="opacity:0;transition:opacity 0.3s ease">Pulling up your analysis...</div>
   </div>`;
 }
 
@@ -1096,8 +1109,22 @@ async function _finishCall(conversationId) {
     await goToStep('tooshort');
     return;
   }
+  // Show "Hendrik just hung up." for 2 seconds, then transition to analysis view
   await goToStep('loading');
-  startGradingAnimation();
+  await delay(2000);
+  
+  // Transition to analysis view immediately (don't wait for API)
+  const overlay = document.getElementById('focusOverlay');
+  const analysisPage = document.getElementById('analysisPage');
+  overlay.classList.remove('open');
+  await delay(210);
+  analysisPage.classList.add('open');
+  
+  // Show transcript immediately with loading state for metrics/score
+  renderAnalysisPageLoading(_s.sessionId);
+  _currentStep = 'analysis';
+  
+  // Fetch analysis in background
   uiLog('Ending session (duration: ' + _s.callDuration + 's)', 'send');
   try {
     const r = await fetch('/api/session/' + _s.sessionId + '/end', {
@@ -1110,39 +1137,10 @@ async function _finishCall(conversationId) {
 }
 
 // ---------------------------------------------------------------------------
-// Grading animation (4 steps)
+// Poll for results and lens cycling
 // ---------------------------------------------------------------------------
-let _gradingInterval = null;
-let _gradingStep = 0;
+let _lensInterval = null;
 
-function startGradingAnimation() {
-  _gradingStep = 0;
-  _gradingInterval = setInterval(() => {
-    if (_gradingStep < 3) {
-      const cd = document.getElementById('slDot' + _gradingStep);
-      const cs = document.getElementById('slStep' + _gradingStep);
-      if (cd) cd.className = 'sl-step-dot done';
-      if (cs) cs.className = 'sl-step done-step';
-      _gradingStep++;
-      const nd = document.getElementById('slDot' + _gradingStep);
-      const ns = document.getElementById('slStep' + _gradingStep);
-      if (nd) nd.className = 'sl-step-dot active';
-      if (ns) ns.className = 'sl-step active-step';
-    }
-  }, 4000);
-}
-
-function stopGradingAnimation() {
-  if (_gradingInterval) { clearInterval(_gradingInterval); _gradingInterval = null; }
-  for (let i = 0; i < 4; i++) {
-    const d = document.getElementById('slDot' + i); if (d) d.className = 'sl-step-dot done';
-    const s = document.getElementById('slStep' + i); if (s) s.className = 'sl-step done-step';
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Poll for results
-// ---------------------------------------------------------------------------
 async function pollForResults() {
   let attempts = 0;
   const check = async () => {
@@ -1153,10 +1151,11 @@ async function pollForResults() {
       const data = await res.json();
       uiLog('Poll status: ' + data.status + (data.score ? ' score=' + data.score : ''), 'recv');
       if (data.status === 'complete') {
-        stopGradingAnimation();
+        // Analysis complete! Stop lens cycling and reveal real data
+        if (_lensInterval) clearInterval(_lensInterval);
         _s.analysis = data;
-        await delay(600);
-        await goToStep('analysis');
+        populateAnalysisResults(data);
+        uiLog('Analysis complete: score=' + data.score, 'ok');
       } else if (data.status === 'processing') {
         setTimeout(check, 2000);
       } else if (attempts <= 5) {
@@ -1165,6 +1164,286 @@ async function pollForResults() {
     } catch (e) { uiLog('Poll error: ' + (e.message||e), 'err'); if (attempts <= 45) setTimeout(check, 3000); }
   };
   check();
+}
+
+// ---------------------------------------------------------------------------
+// Analysis page rendering - Progressive loading UX
+// ---------------------------------------------------------------------------
+
+async function renderAnalysisPageLoading(sessionId) {
+  const leftEl = document.getElementById('anLeft');
+  const rightEl = document.getElementById('anRight');
+  if (!leftEl || !rightEl) return;
+  
+  // Show transcript loading state
+  leftEl.innerHTML = '<div class="an-section-label">Annotated transcript</div><p style="font-size:0.76rem;color:var(--ink-2);padding-top:20px">Loading transcript...</p>';
+  
+  // Show right panel with metrics and lens cycling
+  renderRightPanelLoading({});
+  
+  // Start polling for transcript data (it arrives from ElevenLabs)
+  pollForTranscript(sessionId);
+}
+
+async function pollForTranscript(sessionId) {
+  let attempts = 0;
+  const maxAttempts = 30; // Try for ~30 seconds
+  
+  const check = async () => {
+    attempts++;
+    try {
+      // Poll for status to get transcript
+      const res = await fetch('/api/session/' + sessionId + '/status');
+      const data = await res.json();
+      
+      if (data.status === 'processing' && data.transcript && data.transcript.length > 0) {
+        // Transcript is available (even while still processing analysis)
+        _s._transcript = data.transcript;
+        _s._sentiment = data.sentiment_timeline || [];
+        _s._audioMetrics = data.audio_metrics || {};
+        renderTranscriptOnly(_s._transcript, _s._sentiment);
+        updateMetricsPanel(_s._audioMetrics);
+        // Keep polling for analysis results
+        return;
+      } else if (data.status === 'processing' && attempts < maxAttempts) {
+        setTimeout(check, 1000);
+      }
+    } catch (e) { uiLog('Transcript poll error: ' + e.message, 'err'); if (attempts < maxAttempts) setTimeout(check, 1000); }
+  };
+  check();
+}
+
+function renderTranscriptOnly(transcript, timeline) {
+  const el = document.getElementById('anLeft');
+  if (!el || !transcript || transcript.length === 0) {
+    el.innerHTML = '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
+    return;
+  }
+  
+  const totalMs = (transcript[transcript.length - 1]?.start_ms) || 1;
+  let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
+    + '<div class="an-section-label" style="margin:0">Annotated transcript</div>'
+    + '<div class="tl-legend">'
+    + '<div class="leg"><div class="leg-dot" style="background:#22c55e"></div>Positive</div>'
+    + '<div class="leg"><div class="leg-dot" style="background:#f59e0b"></div>Neutral</div>'
+    + '<div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Disengaged</div>'
+    + '</div></div>';
+
+  transcript.forEach((t, idx) => {
+    const isRep = t.speaker === 'rep';
+    const pct = Math.round(((t.start_ms || 0) / totalMs) * 100);
+    const sc = isRep ? 's-n' : sentimentClass(timeline, pct);
+    html += `<div class="t-line" data-line-idx="${idx}">
+      <div class="sent-bar ${sc}"></div>
+      <div class="t-spk${isRep ? ' rep' : ''}">${isRep ? 'You' : 'Hendrik'}</div>
+      <div class="t-content">
+        <div class="t-txt${isRep ? ' rep' : ''}">${escHtml(t.text)}</div>
+        ${t.start_ms ? `<div class="t-time">${fmtMs(t.start_ms)}</div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  if (timeline && timeline.length > 0) {
+    const sentMap = { positive: '#22c55e', neutral: '#f59e0b', negative: '#ef4444' };
+    const segs = timeline.map(s => `<div class="tl-seg" style="left:${s.start_pct}%;width:${s.end_pct - s.start_pct}%;background:${sentMap[s.sentiment] || '#ccc'}"></div>`).join('');
+    html += `<div class="tl-section"><div class="an-section-label">Prospect sentiment</div><div class="tl-track">${segs}</div><div class="tl-ts"><span>0:00</span><span>${fmtSecs(_s.callDuration)}</span></div></div>`;
+  }
+  
+  el.innerHTML = html;
+}
+
+function renderRightPanelLoading(audioMetrics) {
+  const el = document.getElementById('anRight');
+  if (!el) return;
+  
+  // Section 1: Score (with lens cycling)
+  const scoreSection = document.createElement('div');
+  scoreSection.className = 'an-right-section';
+  scoreSection.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:2.4rem;font-weight:900;letter-spacing:-0.04em;color:var(--ink);margin-bottom:6px">—</div>
+      <div style="font-size:0.6rem;font-weight:700;color:var(--ink-3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px">/100 Performance</div>
+      <div class="lens-container">
+        <div class="lens-text" id="lensText" style="opacity:0"></div>
+      </div>
+    </div>
+  `;
+  
+  // Section 2: Deterministic Metrics (appear immediately)
+  const metricsSection = document.createElement('div');
+  metricsSection.className = 'an-right-section';
+  const wpm = audioMetrics.wpm || '—';
+  const fill = audioMetrics.filler_words !== undefined ? audioMetrics.filler_words : '—';
+  const rep = audioMetrics.talk_ratio?.rep ?? '—';
+  const mono = audioMetrics.longest_monologue_seconds ? fmtSecs(audioMetrics.longest_monologue_seconds) : '—';
+  
+  const wpmOk = typeof wpm === 'number' && wpm >= 140 && wpm <= 190;
+  const talkOk = typeof rep === 'number' && rep <= 55;
+  const fillOk = typeof fill === 'number' && fill <= 5;
+  const monoOk = !audioMetrics.longest_monologue_seconds || audioMetrics.longest_monologue_seconds <= 20;
+  
+  metricsSection.innerHTML = `
+    <div class="an-section-label">Metrics</div>
+    <div class="metrics-grid">
+      <div class="m-card"><div class="m-lbl">Pace</div><div class="m-val">${typeof wpm === 'number' ? wpm : '—'}<span style="font-size:0.7rem;font-weight:600;color:var(--ink-3)"> wpm</span></div><div class="m-note${wpmOk ? ' ok' : ' warn'}">${wpmOk ? 'Optimal range' : 'Aim 140–190'}</div></div>
+      <div class="m-card"><div class="m-lbl">Filler words</div><div class="m-val">${fill}</div><div class="m-note${fillOk ? ' ok' : ' warn'}">${fillOk ? 'Clean delivery' : 'Too many fillers'}</div></div>
+      <div class="m-card"><div class="m-lbl">Talk ratio</div><div class="m-val">${rep}<span style="font-size:0.7rem;color:var(--ink-3)">%</span></div><div class="m-note${talkOk ? ' ok' : ' warn'}">${talkOk ? 'Good balance' : 'Talking too much'}</div></div>
+      <div class="m-card"><div class="m-lbl">Monologue</div><div class="m-val">${mono}</div><div class="m-note${monoOk ? '' : ' warn'}">${monoOk ? 'Short & punchy' : 'Break it up'}</div></div>
+    </div>
+  `;
+  
+  // Section 3: Sub-scores (loading state)
+  const subscoresSection = document.createElement('div');
+  subscoresSection.className = 'an-right-section';
+  subscoresSection.innerHTML = `
+    <div class="an-section-label">Sub-scores</div>
+    <div class="subscores">
+      <div class="sc-row">
+        <div class="sc-label">Opening hook</div>
+        <div class="sc-bar"><div class="sc-fill" id="anf1"></div></div>
+        <div class="sc-val loading" id="anv1">—</div>
+      </div>
+      <div class="sc-row">
+        <div class="sc-label">Objection handling</div>
+        <div class="sc-bar"><div class="sc-fill" id="anf2"></div></div>
+        <div class="sc-val loading" id="anv2">—</div>
+      </div>
+      <div class="sc-row">
+        <div class="sc-label">Talk ratio</div>
+        <div class="sc-bar"><div class="sc-fill" id="anf3"></div></div>
+        <div class="sc-val loading" id="anv3">—</div>
+      </div>
+      <div class="sc-row">
+        <div class="sc-label">Clear ask</div>
+        <div class="sc-bar"><div class="sc-fill" id="anf4"></div></div>
+        <div class="sc-val loading" id="anv4">—</div>
+      </div>
+    </div>
+  `;
+  
+  el.innerHTML = '';
+  el.appendChild(scoreSection);
+  el.appendChild(metricsSection);
+  el.appendChild(subscoresSection);
+  
+  // Start lens cycling immediately
+  startLensCycling();
+}
+
+function updateMetricsPanel(audioMetrics) {
+  // Update metrics if they weren't available initially
+  const metricsSection = document.querySelector('.an-right-section:nth-child(2)');
+  if (!metricsSection) return;
+  
+  const wpm = audioMetrics.wpm || '—';
+  const fill = audioMetrics.filler_words !== undefined ? audioMetrics.filler_words : '—';
+  const rep = audioMetrics.talk_ratio?.rep ?? '—';
+  const mono = audioMetrics.longest_monologue_seconds ? fmtSecs(audioMetrics.longest_monologue_seconds) : '—';
+  
+  const wpmOk = typeof wpm === 'number' && wpm >= 140 && wpm <= 190;
+  const talkOk = typeof rep === 'number' && rep <= 55;
+  const fillOk = typeof fill === 'number' && fill <= 5;
+  const monoOk = !audioMetrics.longest_monologue_seconds || audioMetrics.longest_monologue_seconds <= 20;
+  
+  metricsSection.innerHTML = `
+    <div class="an-section-label">Metrics</div>
+    <div class="metrics-grid">
+      <div class="m-card"><div class="m-lbl">Pace</div><div class="m-val">${typeof wpm === 'number' ? wpm : '—'}<span style="font-size:0.7rem;font-weight:600;color:var(--ink-3)"> wpm</span></div><div class="m-note${wpmOk ? ' ok' : ' warn'}">${wpmOk ? 'Optimal range' : 'Aim 140–190'}</div></div>
+      <div class="m-card"><div class="m-lbl">Filler words</div><div class="m-val">${fill}</div><div class="m-note${fillOk ? ' ok' : ' warn'}">${fillOk ? 'Clean delivery' : 'Too many fillers'}</div></div>
+      <div class="m-card"><div class="m-lbl">Talk ratio</div><div class="m-val">${rep}<span style="font-size:0.7rem;color:var(--ink-3)">%</span></div><div class="m-note${talkOk ? ' ok' : ' warn'}">${talkOk ? 'Good balance' : 'Talking too much'}</div></div>
+      <div class="m-card"><div class="m-lbl">Monologue</div><div class="m-val">${mono}</div><div class="m-note${monoOk ? '' : ' warn'}">${monoOk ? 'Short & punchy' : 'Break it up'}</div></div>
+    </div>
+  `;
+}
+
+async function startLensCycling() {
+  try {
+    const res = await fetch('/lenses.json');
+    const { lenses } = await res.json();
+    if (!lenses || lenses.length === 0) return;
+    
+    let currentIdx = 0;
+    const lensEl = document.getElementById('lensText');
+    if (!lensEl) return;
+    
+    // Show lenses with fade in/out
+    _lensInterval = setInterval(() => {
+      if (!lensEl) return;
+      
+      // Fade out current
+      lensEl.textContent = lenses[currentIdx];
+      lensEl.style.opacity = '1';
+      
+      setTimeout(() => {
+        currentIdx = (currentIdx + 1) % lenses.length;
+        lensEl.style.opacity = '0';
+      }, 3000);
+    }, 3500);
+    
+    // Show first lens immediately
+    lensEl.textContent = lenses[0];
+    lensEl.style.opacity = '1';
+  } catch (e) { uiLog('Lens load error: ' + e.message, 'err'); }
+}
+
+function populateAnalysisResults(data) {
+  if (_lensInterval) clearInterval(_lensInterval);
+  
+  const score = data.score || 0;
+  const bd = data.score_breakdown || {};
+  const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step' };
+  const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
+  
+  // Snap score to real number
+  const bigNum = document.querySelector('.an-right-section:first-child .an-section-label + div div:first-child');
+  if (bigNum) {
+    bigNum.classList.add('score-snap');
+    bigNum.textContent = score;
+  }
+  
+  // Show verdict and momentum
+  const lensContainer = document.querySelector('.lens-container');
+  if (lensContainer) {
+    lensContainer.innerHTML = '';
+    const verdictRow = document.createElement('div');
+    verdictRow.className = 'verdict-row';
+    if (data.call_verdict) {
+      const vBadge = document.createElement('div');
+      vBadge.className = 'verdict-badge ' + data.call_verdict;
+      vBadge.textContent = vMap[data.call_verdict] || data.call_verdict;
+      verdictRow.appendChild(vBadge);
+    }
+    if (data.call_momentum) {
+      const mBadge = document.createElement('div');
+      mBadge.className = 'momentum-badge';
+      mBadge.textContent = mMap[data.call_momentum] || data.call_momentum;
+      verdictRow.appendChild(mBadge);
+    }
+    lensContainer.appendChild(verdictRow);
+  }
+  
+  // Populate sub-scores
+  setTimeout(() => {
+    [['anv1','anf1',bd.opening||0],['anv2','anf2',bd.objections||0],['anv3','anf3',bd.talk_ratio||0],['anv4','anf4',bd.clear_ask||0]].forEach(([vi,fi,v],i) => {
+      setTimeout(() => {
+        const vel = document.getElementById(vi);
+        const fel = document.getElementById(fi);
+        if (vel) {
+          vel.classList.remove('loading');
+          vel.textContent = v;
+        }
+        if (fel) fel.style.width = v + '%';
+      }, i * 150);
+    });
+  }, 200);
+}
+
+function renderAnalysisPage(data) {
+  // This is called when full analysis data is available (legacy path)
+  if (!data) return;
+  renderTranscriptOnly(data.transcript || [], data.sentiment_timeline || []);
+  renderRightPanelLoading(data.audio_metrics || {});
+  populateAnalysisResults(data);
 }
 
 // ---------------------------------------------------------------------------
@@ -1187,154 +1466,15 @@ function sentimentClass(timeline, pct) {
   return 's-n';
 }
 
-function renderAnTranscript(transcript, timeline, coaching) {
-  const leftEl = document.getElementById('anLeft');
-  const middleEl = document.getElementById('anMiddle');
-  if (!leftEl || !middleEl) return;
-  
-  if (!transcript || transcript.length === 0) {
-    leftEl.innerHTML = '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
-    return;
-  }
-
-  const totalMs = (transcript[transcript.length - 1]?.start_ms) || 1;
-  const repTurns = transcript.filter(t => t.speaker === 'rep');
-  const coachingByRepIdx = {};
-  coaching.forEach((item, i) => {
-    if (i < repTurns.length) {
-      coachingByRepIdx[repTurns[i]._idx || i] = item;
-    }
-  });
-
-  // Build transcript HTML
-  let transcriptHtml = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
-    + '<div class="an-section-label" style="margin:0">Annotated transcript</div>'
-    + '<div class="tl-legend">'
-    + '<div class="leg"><div class="leg-dot" style="background:#22c55e"></div>Positive</div>'
-    + '<div class="leg"><div class="leg-dot" style="background:#f59e0b"></div>Neutral</div>'
-    + '<div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Disengaged</div>'
-    + '</div></div>';
-
-  transcript.forEach((t, idx) => {
-    const isRep = t.speaker === 'rep';
-    const pct = Math.round(((t.start_ms || 0) / totalMs) * 100);
-    const sc = isRep ? 's-n' : sentimentClass(timeline, pct);
-    transcriptHtml += `<div class="t-line" data-line-idx="${idx}">
-      <div class="sent-bar ${sc}"></div>
-      <div class="t-spk${isRep ? ' rep' : ''}">${isRep ? 'You' : 'Hendrik'}</div>
-      <div class="t-content">
-        <div class="t-txt${isRep ? ' rep' : ''}">${escHtml(t.text)}</div>
-        ${t.start_ms ? `<div class="t-time">${fmtMs(t.start_ms)}</div>` : ''}
-      </div>
-    </div>`;
-  });
-
-  if (timeline.length > 0) {
-    const sentMap = { positive: '#22c55e', neutral: '#f59e0b', negative: '#ef4444' };
-    const segs = timeline.map(s => `<div class="tl-seg" style="left:${s.start_pct}%;width:${s.end_pct - s.start_pct}%;background:${sentMap[s.sentiment] || '#ccc'}"></div>`).join('');
-    transcriptHtml += `<div class="tl-section"><div class="an-section-label">Prospect sentiment</div><div class="tl-track">${segs}</div><div class="tl-ts"><span>0:00</span><span>${fmtSecs(_s.callDuration)}</span></div></div>`;
-  }
-  
-  leftEl.innerHTML = transcriptHtml;
-
-  // Build coaching cards HTML
-  let coachingHtml = '';
-  let repIdx = 0;
-  transcript.forEach((t, idx) => {
-    if (t.speaker === 'rep') {
-      const ci = coaching[repIdx];
-      if (ci) {
-        const severity = ci.severity || 'info';
-        coachingHtml += `<div class="coaching-card severity-${severity}" data-coach-idx="${repIdx}" data-line-idx="${idx}">
-          <div class="cc-bracket"></div>
-          ${ci.category ? `<div class="cc-category">${escHtml(ci.category)}</div>` : ''}
-          <div class="cc-title">${escHtml(ci.title || '')}</div>
-          <div class="cc-body">${escHtml(ci.body || '')}</div>
-          ${ci.action ? `<div class="cc-action">${escHtml(ci.action)}</div>` : ''}
-        </div>`;
-      } else {
-        coachingHtml += `<div class="coaching-card" data-coach-idx="${repIdx}" data-line-idx="${idx}" style="visibility:hidden;height:0"></div>`;
-      }
-      repIdx++;
-    }
-  });
-  
-  middleEl.innerHTML = coachingHtml;
-}
-
-function syncAnalysisHeights() {
-  const leftEl = document.getElementById('anLeft');
-  const middleEl = document.getElementById('anMiddle');
-  if (!leftEl || !middleEl) return;
-
-  const lines = leftEl.querySelectorAll('.t-line');
-  const cards = middleEl.querySelectorAll('.coaching-card');
-
-  lines.forEach((line, idx) => {
-    const card = cards[idx];
-    if (!card) return;
-
-    const lineHeight = line.offsetHeight;
-    const cardHeight = card.offsetHeight;
-    const maxHeight = Math.max(lineHeight, cardHeight);
-
-    line.style.height = maxHeight + 'px';
-    card.style.height = maxHeight + 'px';
-  });
-}
-
-function renderAnScores(data) {
-  const el = document.getElementById('anRight'); if (!el) return;
-  const score = data.score || 0;
-  const bd = data.score_breakdown || {};
-  const m = data.audio_metrics || {};
-  const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step' };
-  const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
-  const vHtml = data.call_verdict ? `<div class="verdict-badge ${data.call_verdict}">${escHtml(vMap[data.call_verdict] || data.call_verdict)}</div>` : '';
-  const mHtml = data.call_momentum ? `<div class="momentum-badge">${escHtml(mMap[data.call_momentum] || data.call_momentum)}</div>` : '';
-  const wpm = m.wpm || '—';
-  const rep = m.talk_ratio?.rep ?? '—';
-  const fill = m.filler_words !== undefined ? m.filler_words : '—';
-  const mono = m.longest_monologue_seconds ? fmtSecs(m.longest_monologue_seconds) : '—';
-  const wpmOk = typeof wpm === 'number' && wpm >= 140 && wpm <= 190;
-  const talkOk = typeof rep === 'number' && rep <= 55;
-  const fillOk = typeof fill === 'number' && fill <= 5;
-  const monoOk = !m.longest_monologue_seconds || m.longest_monologue_seconds <= 20;
-
-  el.innerHTML = `<div class="score-block">
-    <div class="big-num" id="anBigNum">0</div>
-    <div class="score-den">/100 Performance score</div>
-    <div class="verdict-row">${vHtml}${mHtml}</div>
-  </div>
-  <div class="subscores">
-    <div class="an-section-label">Sub-scores</div>
-    <div class="sc-row"><div class="sc-label">Opening hook</div><div class="sc-bar"><div class="sc-fill" id="anf1"></div></div><div class="sc-val" id="anv1">—</div></div>
-    <div class="sc-row"><div class="sc-label">Objection handling</div><div class="sc-bar"><div class="sc-fill" id="anf2"></div></div><div class="sc-val" id="anv2">—</div></div>
-    <div class="sc-row"><div class="sc-label">Talk ratio</div><div class="sc-bar"><div class="sc-fill" id="anf3"></div></div><div class="sc-val" id="anv3">—</div></div>
-    <div class="sc-row"><div class="sc-label">Clear ask</div><div class="sc-bar"><div class="sc-fill" id="anf4"></div></div><div class="sc-val" id="anv4">—</div></div>
-  </div>
-  <div class="an-section-label">Metrics</div>
-  <div class="metrics-strip">
-    <div class="m-card"><div class="m-lbl">Pace</div><div class="m-val">${typeof wpm === 'number' ? wpm : '—'}<span style="font-size:0.55rem;font-weight:600;color:var(--ink-3)"> wpm</span></div><div class="m-note${wpmOk ? ' ok' : ' warn'}">${wpmOk ? 'Optimal range' : 'Aim 140–190'}</div></div>
-    <div class="m-card"><div class="m-lbl">Filler words</div><div class="m-val">${fill}</div><div class="m-note${fillOk ? ' ok' : ' warn'}">${fillOk ? 'Clean delivery' : 'Too many fillers'}</div></div>
-    <div class="m-card"><div class="m-lbl">Talk ratio</div><div class="m-val">${rep}<span style="font-size:0.7rem;color:var(--ink-3)">%</span></div><div class="m-note${talkOk ? ' ok' : ' warn'}">${talkOk ? 'Good balance' : 'Talking too much'}</div></div>
-    <div class="m-card"><div class="m-lbl">Monologue</div><div class="m-val">${mono}</div><div class="m-note${monoOk ? '' : ' warn'}">${monoOk ? 'Short & punchy' : 'Break it up'}</div></div>
-  </div>`;
-
-  let n = 0;
-  const numEl = document.getElementById('anBigNum');
-  const iv = setInterval(() => { n = Math.min(n + 2, score); if (numEl) numEl.textContent = n; if (n >= score) clearInterval(iv); }, 20);
-  setTimeout(() => {
-    [['anv1','anf1',bd.opening||0],['anv2','anf2',bd.objections||0],['anv3','anf3',bd.talk_ratio||0],['anv4','anf4',bd.clear_ask||0]].forEach(([vi,fi,v]) => {
-      const vel = document.getElementById(vi); if (vel) vel.textContent = v;
-      setTimeout(() => { const fel = document.getElementById(fi); if (fel) fel.style.width = v + '%'; }, 60);
-    });
-  }, 400);
-}
-
 // ---------------------------------------------------------------------------
 // Finish analysis → finish card
 // ---------------------------------------------------------------------------
+async function finishAnalysis() {
+  document.getElementById('analysisPage').classList.remove('open');
+  addToHistory();
+  await fetchFinishLb();
+  goToStep('finish');
+}
 async function finishAnalysis() {
   document.getElementById('analysisPage').classList.remove('open');
   addToHistory();
