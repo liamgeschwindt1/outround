@@ -540,6 +540,67 @@ function _postSurvey() {
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Win celebration — confetti + banner when meeting is booked
+// ---------------------------------------------------------------------------
+function _triggerWinCelebration(mode) {
+  if (!document.getElementById('_winCelebStyles')) {
+    const s = document.createElement('style');
+    s.id = '_winCelebStyles';
+    s.textContent = `
+      @keyframes _confettiFall {
+        0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+      }
+      @keyframes _winBannerIn {
+        0%   { transform: translateX(-50%) translateY(-20px) scale(0.85); opacity: 0; }
+        12%  { transform: translateX(-50%) translateY(0) scale(1.06); opacity: 1; }
+        75%  { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+        100% { transform: translateX(-50%) translateY(-12px) scale(0.95); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  // Banner
+  const banner = document.createElement('div');
+  banner.style.cssText = [
+    'position:fixed', 'top:22%', 'left:50%',
+    'transform:translateX(-50%)',
+    'background:#111', 'color:#fff',
+    'font-size:1.05rem', 'font-weight:800',
+    'letter-spacing:0.07em', 'text-transform:uppercase',
+    'padding:14px 36px', 'border-radius:12px',
+    'z-index:9999', 'pointer-events:none',
+    'animation:_winBannerIn 3s ease forwards',
+    'white-space:nowrap', 'box-shadow:0 8px 32px rgba(0,0,0,0.18)',
+  ].join(';');
+  banner.textContent = mode === 'investor_pitch' ? 'Meeting booked ✓' : 'Meeting set ✓';
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 3100);
+
+  // Confetti
+  const colours = ['#f59e0b', '#22c55e', '#3b82f6', '#ec4899', '#a855f7', '#ef4444', '#f97316'];
+  for (let i = 0; i < 90; i++) {
+    const p = document.createElement('div');
+    const size = 5 + Math.random() * 9;
+    const left = Math.random() * 100;
+    const delay = Math.random() * 0.9;
+    const dur = 1.6 + Math.random() * 1.6;
+    const colour = colours[Math.floor(Math.random() * colours.length)];
+    p.style.cssText = [
+      'position:fixed', 'top:0', `left:${left}%`,
+      `width:${size}px`, `height:${size}px`,
+      `background:${colour}`,
+      `border-radius:${Math.random() > 0.5 ? '50%' : '2px'}`,
+      'z-index:9998', 'pointer-events:none',
+      `animation:_confettiFall ${dur}s ${delay}s ease-in forwards`,
+    ].join(';');
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), (dur + delay) * 1000 + 300);
+  }
+}
+
 // Results page — Screen 2
 // ---------------------------------------------------------------------------
 function openResultsPage(data) {
@@ -554,6 +615,9 @@ function openResultsPage(data) {
   const page = document.getElementById('resultsPage');
   if (page) page.classList.add('open');
   renderResultsPage(data);
+  // Win celebration — meeting booked
+  const isWin = data.call_verdict === 'advance' || data.call_verdict === 'meeting_set';
+  if (isWin) setTimeout(() => _triggerWinCelebration(data.mode || _s.mode || 'cold_call'), 700);
 }
 
 function renderResultsPage(data) {
