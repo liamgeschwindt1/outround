@@ -46,16 +46,30 @@ async function getConversationToken(personaId) {
     throw new Error(`No agent_id found for persona "${personaId}" — set ELEVENLABS_AGENT_ID in env`);
   }
 
-  const client = getClient();
-  const payload = { agent_id: agentId };
-
+  // The ElevenLabs Node SDK's getSignedUrl is a GET-only call that silently
+  // drops conversation_config_override. Call the REST API directly as POST
+  // so the override is sent in the request body.
+  const body = { agent_id: agentId };
   if (persona.conversation_config) {
-    payload.conversation_config_override = persona.conversation_config;
+    body.conversation_config_override = persona.conversation_config;
   }
 
-  const response = await client.conversationalAi.getSignedUrl(payload);
+  const res = await fetch('https://api.elevenlabs.io/v1/convai/conversation/get-signed-url', {
+    method: 'POST',
+    headers: {
+      'xi-api-key': process.env.ELEVENLABS_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
 
-  return response.signed_url;
+  if (!res.ok) {
+    const err = await res.text().catch(() => res.statusText);
+    throw new Error(`ElevenLabs signed URL request failed (${res.status}): ${err}`);
+  }
+
+  const data = await res.json();
+  return data.signed_url;
 }
 
 /**
