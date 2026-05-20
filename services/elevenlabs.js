@@ -79,7 +79,9 @@ function buildClientOverrides(config) {
   const agent = config.agent;
   if (agent) {
     result.agent = {};
-    if (agent.prompt) result.agent.prompt = agent.prompt;
+    // Only pass the prompt string — not the full prompt object (which includes
+    // llm, temperature, built_in_tools etc. that ElevenLabs rejects as invalid)
+    if (agent.prompt?.prompt) result.agent.prompt = { prompt: agent.prompt.prompt };
     if (agent.first_message) result.agent.firstMessage = agent.first_message;
     if (agent.language) result.agent.language = agent.language;
   }

@@ -886,7 +886,7 @@ function renderPitchCharacterStep() {
     <div class="ob-title" style="margin-bottom:16px;font-size:1.2rem">Who are you pitching to?</div>
     <div class="char-grid">
       <div class="char-card" onclick="beginPitchSession()">
-        <div class="char-flag" style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:1px solid var(--border);flex-shrink:0;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem">🇬🇧</div>
+        <div class="char-flag" style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:1px solid var(--border);flex-shrink:0;margin-bottom:8px"><img src="/natalie.jpg" alt="Natalie Pemberton" style="width:100%;height:100%;object-fit:cover"></div>
         <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
           <span style="font-size:0.9rem">🇬🇧</span>
           <div class="char-name" style="margin-bottom:0">Natalie Pemberton</div>
@@ -895,7 +895,7 @@ function renderPitchCharacterStep() {
         <div class="char-tags"><div class="tag">Precision</div><div class="tag">Hard</div></div>
       </div>
       <div class="char-card char-locked">
-        <div class="char-flag" style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:1px solid var(--border);flex-shrink:0;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem">🇩🇪</div>
+        <div class="char-flag" style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:1px solid var(--border);flex-shrink:0;margin-bottom:8px"><img src="/natalie.jpg" alt="Klaus Brandt" style="width:100%;height:100%;object-fit:cover;opacity:0.4"></div>
         <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
           <span style="font-size:0.9rem">🇩🇪</span>
           <div class="char-name" style="margin-bottom:0">Klaus Brandt</div>
@@ -910,7 +910,7 @@ function renderPitchCharacterStep() {
 
 function renderPitchPrepStep() {
   return `<div class="call-step" style="padding:36px 28px 32px">
-    <div class="cv-avatar" style="width:72px;height:72px;border-radius:50%;background:var(--bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.9rem;margin-bottom:14px">🇬🇧</div>
+    <div class="cv-avatar" style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:2px solid var(--border);flex-shrink:0;margin-bottom:14px"><img src="/natalie.jpg" alt="Natalie Pemberton" style="width:100%;height:100%;object-fit:cover"></div>
     <div class="cv-name">Natalie Pemberton</div>
     <div class="cv-role" style="margin-bottom:28px"><span style="margin-right:4px">🇬🇧</span>Partner — Baobab Capital</div>
     <div style="text-align:center;margin-bottom:8px">
@@ -972,7 +972,7 @@ function renderBriefStep() {
 function renderCallStep() {
   if (_s.mode === 'investor_pitch') {
     return `<div class="call-step">
-      <div class="cv-avatar"><div class="cv-ring" id="cvRing"></div><span style="font-size:1.9rem">🇬🇧</span></div>
+      <div class="cv-avatar"><img src="/natalie.jpg" alt="Natalie Pemberton" style="width:100%;height:100%;object-fit:cover"/><div class="cv-ring" id="cvRing"></div></div>
       <div class="cv-name">Natalie Pemberton</div>
       <div class="cv-role"><span style="margin-right:4px">🇬🇧</span>Partner — Baobab Capital</div>
       <div class="wf idle" id="wf">
