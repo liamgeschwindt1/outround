@@ -1,0 +1,638 @@
+'use strict';
+
+// ---------------------------------------------------------------------------
+// Onboarding
+// ---------------------------------------------------------------------------
+function openSession() {
+  goToStep(_s.onboardingDone ? 'mode' : 'onboarding');
+}
+
+function completeOnboarding() {
+  const fn = (document.getElementById('ob-fn')?.value || '').trim() || 'L';
+  const ln = (document.getElementById('ob-ln')?.value || '').trim() || 'G';
+  const email = (document.getElementById('ob-email')?.value || '').trim();
+  const role = document.getElementById('ob-role')?.value || 'Account Executive';
+  _s.user = { name: fn + ' ' + ln, email, role };
+  _s.onboardingDone = true;
+  updateUserUI();
+  loadLeaderboard();
+  const overlay = document.getElementById('focusOverlay');
+  overlay.classList.remove('open');
+  _currentStep = null;
+}
+
+function skipOnboarding() {
+  _s.onboardingDone = true;
+  const overlay = document.getElementById('focusOverlay');
+  overlay.classList.remove('open');
+  _currentStep = null;
+}
+
+function updateUserUI() {
+  const ini = (_s.user.name || 'LG').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  const el = document.getElementById('userAva'); if (el) el.textContent = ini;
+  const av = document.getElementById('ulbav'); if (av) av.textContent = ini;
+  const nm = document.getElementById('ulbn'); if (nm) nm.textContent = (_s.user.name || '').split(' ')[0] + ' (you)';
+}
+
+// ---------------------------------------------------------------------------
+// Session start
+// ---------------------------------------------------------------------------
+async function beginSession() {
+  uiLog('Starting session…', 'send');
+  const persona_id = _s.mode === 'investor_pitch' ? 'natalie' : 'hendrik';
+  try {
+    const res = await fetch('/api/session/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_name: _s.user.name || null, user_email: _s.user.email || null, user_role: _s.user.role || null, persona_id, mode: _s.mode || 'cold_call' }),
+    });
+    if (res.ok) { const data = await res.json(); _s.sessionId = data.session_id; uiLog('Session created: ' + data.session_id, 'ok'); }
+    else { uiLog('Session start failed: HTTP ' + res.status, 'err'); }
+  } catch (err) { uiLog('Session start error: ' + err.message, 'err'); }
+  if (_s.mode === 'investor_pitch') {
+    initiateCall();
+  } else {
+    startBrief();
+  }
+}
+
+async function beginPitchSession() {
+  goToStep('pitchprep');
+  // Prefetch token + warm SDK while user reads the prep card
+  prefetchVoiceToken();
+  warmConversationSdk();
+  // Auto-countdown 5s then kick off
+  let secs = 5;
+  const update = () => {
+    const el = document.getElementById('pitchPrepCountdown');
+    if (el) el.textContent = '0:0' + secs;
+  };
+  update();
+  const iv = setInterval(async () => {
+    secs--;
+    update();
+    if (secs <= 0) {
+      clearInterval(iv);
+      await beginSession();
+    }
+  }, 1000);
+  _s._pitchPrepInterval = iv;
+}
+
+function skipPitchPrep() {
+  if (_s._pitchPrepInterval) { clearInterval(_s._pitchPrepInterval); _s._pitchPrepInterval = null; }
+  beginSession();
+}
+
+// ---------------------------------------------------------------------------
+// Brief countdown — auto-transitions to call, or rep can skip early
+// ---------------------------------------------------------------------------
+let _briefTimer = 30;
+let _briefInterval = null;
+
+function skipBrief() {
+  clearInterval(_briefInterval);
+  initiateCall();
+}
+
+function startBrief() {
+  goToStep('brief');
+  _briefTimer = 30;
+  clearInterval(_briefInterval);
+  // Prefetch signed URL + warm SDK module in parallel while the brief countdown runs
+  prefetchVoiceToken();
+  warmConversationSdk();
+  setTimeout(() => {
+    _briefInterval = setInterval(() => {
+      _briefTimer--;
+      const el = document.getElementById('briefCountdown');
+      if (el) {
+        el.textContent = '0:' + String(_briefTimer).padStart(2, '0');
+        if (_briefTimer <= 10) el.classList.add('urgent');
+      }
+      if (_briefTimer <= 0) { clearInterval(_briefInterval); initiateCall(); }
+    }, 1000);
+  }, 280);
+}
+
+
+// ---------------------------------------------------------------------------
+// Call — ElevenLabs websocket
+// ---------------------------------------------------------------------------
+async function initiateCall() {
+  if (!_s.sessionId) { uiLog('No session ID — cannot start call', 'err'); return; }
+  await goToStep('call');
+  if (_s.mode !== 'investor_pitch') await playSoundAndWait('/start_call.mp3');
+  await startCall();
+}
+
+let _voiceTokenPromise = null;
+let _conversationSdkPromise = null;
+
+function prefetchVoiceToken() {
+  if (!_s.sessionId || _voiceTokenPromise) return _voiceTokenPromise;
+  uiLog('Prefetching voice token…', 'send');
+  _voiceTokenPromise = fetch('/api/session/' + _s.sessionId + '/voice-token')
+    .then(async (r) => {
+      if (!r.ok) throw new Error('Voice token HTTP ' + r.status);
+      const data = await r.json();
+      uiLog('Voice token ready (prefetched)', 'ok');
+      return data; // { signed_url, overrides }
+    })
+    .catch((err) => { _voiceTokenPromise = null; throw err; });
+  return _voiceTokenPromise;
+}
+
+function warmConversationSdk() {
+  if (_conversationSdkPromise) return _conversationSdkPromise;
+  _conversationSdkPromise = import('https://cdn.jsdelivr.net/npm/@11labs/client/+esm')
+    .then((m) => { uiLog('ElevenLabs SDK warmed', 'ok'); return m; })
+    .catch((err) => { _conversationSdkPromise = null; throw err; });
+  return _conversationSdkPromise;
+}
+
+async function startCall() {
+  _s.callStart = Date.now();
+  uiLog('Fetching voice token…', 'send');
+  try {
+    // Use prefetched promises if available — otherwise kick them off now
+    const tokenP = prefetchVoiceToken();
+    const sdkP = warmConversationSdk();
+    const [tokenData, { Conversation }] = await Promise.all([tokenP, sdkP]);
+    uiLog('Voice token received', 'ok');
+    const sessionOpts = { signedUrl: tokenData.signed_url };
+    if (tokenData.overrides) sessionOpts.overrides = tokenData.overrides;
+    _s.conversation = await Conversation.startSession({
+      ...sessionOpts,
+      onConnect: () => {
+        uiLog('ElevenLabs connected', 'ok');
+        const cst = document.getElementById('cst'); if (cst) cst.textContent = 'Connected — start talking';
+        const wf = document.getElementById('wf'); if (wf) wf.classList.remove('idle');
+        const ring = document.getElementById('cvRing'); if (ring) ring.classList.add('on');
+        if (_s.mode !== 'investor_pitch') {
+          const eb = document.getElementById('eb'); if (eb) eb.style.display = 'flex';
+        }
+        if (_s.mode === 'investor_pitch') {
+          // Pitch mode: show countdown in the main timer, phase label above it
+          _s._pitchPhase = 'pitching';
+          let pitchSecs = 60;
+          const phaseBar = document.getElementById('pitchPhaseBar');
+          const timer = document.getElementById('cvTimer');
+          if (phaseBar) phaseBar.textContent = 'YOUR PITCH';
+          if (timer) { timer.textContent = '1:00'; timer.style.fontSize = '2.2rem'; timer.style.fontWeight = '800'; timer.style.color = 'var(--ink)'; }
+          _s._pitchTimerInterval = setInterval(() => {
+            pitchSecs--;
+            const bar = document.getElementById('pitchPhaseBar');
+            const t = document.getElementById('cvTimer');
+            if (pitchSecs > 0) {
+              if (t) { t.textContent = fmtSecs(pitchSecs); t.style.color = pitchSecs <= 10 ? '#e05252' : 'var(--ink)'; }
+            } else {
+              clearInterval(_s._pitchTimerInterval);
+              _s._pitchPhase = 'qa';
+              if (bar) bar.textContent = "NATALIE'S QUESTIONS";
+              if (t) { t.textContent = ''; t.style.fontSize = ''; t.style.fontWeight = ''; t.style.color = ''; }
+            }
+          }, 1000);
+        } else {
+          _s.callTimerInterval = setInterval(() => {
+            const elapsed = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
+            const el = document.getElementById('cvTimer'); if (el) el.textContent = fmtSecs(elapsed);
+          }, 1000);
+        }
+      },
+      onDisconnect: (details) => {
+        const reasonStr = details ? ` [${details.reason}${details.message ? ': ' + details.message : ''}]` : '';
+        uiLog('ElevenLabs disconnected — callEnding=' + _s._callEnding + reasonStr, 'info');
+        if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
+        if (_s._pitchTimerInterval) { clearInterval(_s._pitchTimerInterval); _s._pitchTimerInterval = null; }
+        if (!_s._callEnding) {
+          // Prospect/investor ended the call — reflect in UI then auto-transition
+          _s._callEnding = true;
+          _s.callDuration = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
+          const hangupMsg = _s.mode === 'investor_pitch' ? 'Natalie ended the call.' : 'Hendrik hung up.';
+          uiLog(hangupMsg + ' (' + _s.callDuration + 's)', 'info');
+          const wf = document.getElementById('wf'); if (wf) wf.classList.add('idle');
+          const ring = document.getElementById('cvRing'); if (ring) ring.classList.remove('on');
+          const eb = document.getElementById('eb'); if (eb) eb.style.display = 'none';
+          const cst = document.getElementById('cst'); if (cst) cst.textContent = '';
+          const cvTimer = document.getElementById('cvTimer'); if (cvTimer) { cvTimer.textContent = ''; cvTimer.style.fontSize = ''; cvTimer.style.fontWeight = ''; cvTimer.style.color = ''; }
+          const phaseBar = document.getElementById('pitchPhaseBar'); if (phaseBar) phaseBar.textContent = '';
+          const callStep = document.querySelector('.call-step');
+          if (callStep) {
+            const banner = document.createElement('div');
+            banner.className = 'hangup-banner';
+            banner.textContent = hangupMsg;
+            callStep.insertBefore(banner, callStep.firstChild);
+          }
+          let convId = null;
+          try { convId = _s.conversation?.getId ? _s.conversation.getId() : null; } catch {}
+          if (_s.mode !== 'investor_pitch') playSound('/end_call.mp3');
+          setTimeout(() => _finishCall(convId), 2000);
+        }
+      },
+      onMessage: (msg) => {
+        if (!msg) return;
+        uiLog('msg: ' + (msg.type || msg.source || '?'), 'recv');
+        let isAgent = false, isUser = false;
+        if (msg.source === 'ai' && msg.message) isAgent = true;
+        else if (msg.source === 'user' && msg.message) isUser = true;
+        else if (msg.type === 'agent_response' && msg.agent_response_event?.agent_response) isAgent = true;
+        else if (msg.type === 'user_transcript' && msg.user_transcription_event?.user_transcript) isUser = true;
+        const cst = document.getElementById('cst');
+        if (cst) cst.textContent = isAgent ? 'Hendrik speaking' : isUser ? 'Your turn' : cst.textContent;
+      },
+      onError: (err) => {
+        uiLog('ElevenLabs error: ' + (err?.message || err), 'err');
+        const cst = document.getElementById('cst'); if (cst) cst.textContent = 'Connection error';
+      },
+    });
+  } catch (err) {
+    uiLog('startCall error: ' + err.message, 'err');
+    const cst = document.getElementById('cst'); if (cst) cst.textContent = 'Failed to connect';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// End call → loading
+// ---------------------------------------------------------------------------
+async function endCall() {
+  if (_s._callEnding) return; // already ending (e.g. Hendrik hung up)
+  _s._callEnding = true;
+  if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
+  _s.callDuration = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
+  let conversationId = null;
+  if (_s.conversation) {
+    try {
+      conversationId = _s.conversation.getId ? _s.conversation.getId() : null;
+      await _s.conversation.endSession();
+    } catch (err) { uiLog('ElevenLabs end: ' + err.message, 'err'); }
+  }
+  await _finishCall(conversationId);
+}
+
+async function _finishCall(conversationId) {
+  // Signed URL is single-use — clear it so the next call prefetches a fresh one
+  _voiceTokenPromise = null;
+  if (_s.callDuration < 15) {
+    uiLog('Call too short (' + _s.callDuration + 's) — skipping analysis', 'info');
+    await goToStep('tooshort');
+    return;
+  }
+  // Show loading screen, stays open until basic analysis is ready
+  await goToStep('loading');
+  _startLoadingCycle();
+
+  // Fetch analysis in background (survey runs in parallel — doesn't block)
+  uiLog('Ending session (duration: ' + _s.callDuration + 's)', 'send');
+  try {
+    const r = await fetch('/api/session/' + _s.sessionId + '/end', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ elevenlabs_conversation_id: conversationId || null, duration_seconds: _s.callDuration }),
+    });
+    if (r.ok) { uiLog('Session ended, polling for results…', 'ok'); pollForResults(); }
+    else { uiLog('End session failed: HTTP ' + r.status, 'err'); }
+  } catch (err) { uiLog('End session error: ' + err.message, 'err'); }
+}
+
+// ---------------------------------------------------------------------------
+// Poll for results and lens cycling
+// ---------------------------------------------------------------------------
+var _lensInterval = null;
+let _loadCycleInterval = null;
+
+async function pollForResults() {
+  let attempts = 0;
+  const check = async () => {
+    attempts++;
+    if (attempts > 45) return;
+    try {
+      const res = await fetch('/api/session/' + _s.sessionId + '/status');
+      const data = await res.json();
+      uiLog('Poll status: ' + data.status + (data.score ? ' score=' + data.score : ''), 'recv');
+      if (data.status === 'complete') {
+        // Analysis complete — open Results page (Screen 2)
+        if (_lensInterval) clearInterval(_lensInterval);
+        _s.analysis = data;
+        openResultsPage(data);
+        uiLog('Analysis complete: score=' + data.score, 'ok');
+      } else if (data.status === 'processing') {
+        setTimeout(check, 2000);
+      } else if (attempts <= 5) {
+        setTimeout(check, 3000);
+      }
+    } catch (e) { uiLog('Poll error: ' + (e.message||e), 'err'); if (attempts <= 45) setTimeout(check, 3000); }
+  };
+  check();
+}
+
+// ---------------------------------------------------------------------------
+// Finish analysis → finish card
+// ---------------------------------------------------------------------------
+async function finishAnalysis() {
+  document.getElementById('analysisPage').classList.remove('open');
+  addToHistory();
+  await fetchFinishLb();
+  goToStep('finish');
+}
+
+async function fetchFinishLb() {
+  try {
+    const res = await fetch('/api/leaderboard');
+    const { entries } = await res.json();
+    if (entries && entries.length > 0) _s._finishLb = entries;
+  } catch { /* use fallback */ }
+}
+
+// ---------------------------------------------------------------------------
+// History
+// ---------------------------------------------------------------------------
+function addToHistory() {
+  const isPitch = _s.mode === 'investor_pitch';
+  const histName = isPitch ? 'Natalie Pemberton' : 'Hendrik van der Berg';
+  const histRole = isPitch ? 'Partner — Baobab Capital' : 'CFO — Vandermeer Logistics';
+  _s.history.unshift({
+    name: histName, role: histRole,
+    score: _s.analysis?.score || 0,
+    date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+    duration: fmtSecs(_s.callDuration),
+    mode: _s.mode,
+  });
+  renderHistory();
+}
+
+function renderHistory() {
+  const empty = document.getElementById('emptyState');
+  const list = document.getElementById('historyList');
+  if (!list) return;
+  if (_s.history.length === 0) { empty.style.display = 'flex'; list.style.display = 'none'; return; }
+  empty.style.display = 'none';
+  list.style.display = 'flex';
+  list.innerHTML = _s.history.map(h => `<div class="hist-item">
+    <div class="hist-flag" style="overflow:hidden;padding:0"><img src="/hendrik.jpg" alt="${escHtml(h.name)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.parentElement.innerHTML='<svg width=\\'18\\'height=\\'18\\'viewBox=\\'0 0 24 24\\'fill=\\'none\\'stroke=\\'currentColor\\'stroke-width=\\'1.6\\'stroke-linecap=\\'round\\'><circle cx=\\'12\\'cy=\\'8\\'r=\\'4\\'/><path d=\\'M4 20c0-4 3.6-7 8-7s8 3 8 7\\'/></svg>';this.parentElement.style.cssText='display:flex;align-items:center;justify-content:center;color:var(--ink-2)'"/></div>
+    <div class="hist-info"><div class="hist-name">${escHtml(h.name)}</div><div class="hist-meta">${escHtml(h.role)} · ${h.duration}</div></div>
+    <div class="hist-score">${h.score}</div>
+    <div class="hist-date">${h.date}</div>
+  </div>`).join('');
+}
+
+// ---------------------------------------------------------------------------
+// Dismiss + Go again
+// ---------------------------------------------------------------------------
+async function dismissFinish() {
+  const overlay = document.getElementById('focusOverlay');
+  overlay.classList.remove('open');
+  _currentStep = null;
+}
+
+async function goAgain() {
+  _s.sessionId = null; _s.conversation = null; _s.analysis = null;
+  _s.callStart = null; _s.callDuration = 0; _s.muted = false; _s._callEnding = false;
+  _s.mode = 'cold_call'; _s._pitchPhase = null;
+  if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
+  if (_s._pitchTimerInterval) { clearInterval(_s._pitchTimerInterval); _s._pitchTimerInterval = null; }
+  clearInterval(_briefInterval);
+  // Close full-page screens if open
+  const rp = document.getElementById('resultsPage'); if (rp) rp.classList.remove('open');
+  const ap = document.getElementById('analysisPage');
+  if (ap) {
+    ap.classList.remove('open');
+    // Reset layout and topbar for next time
+    const layout = ap.querySelector('.an-layout');
+    if (layout) layout.classList.remove('no-middle');
+    const tb = document.getElementById('anTopbar');
+    if (tb) _resetAnTopbar(tb);
+  }
+  goToStep('mode');
+}
+
+// ---------------------------------------------------------------------------
+// Share
+// ---------------------------------------------------------------------------
+function shareLI() {
+  const score = _s.analysis?.score || '?';
+  const raw = _s.analysis?.headline || '';
+  const verdictLine = raw ? `"${raw}"\n\n` : '';
+  let text;
+  if (_s.mode === 'investor_pitch') {
+    text = `Just pitched to an AI seed investor on Outround.\n\n${verdictLine}Scored ${score}/100.\n\nThink you can beat it? → outround.io`;
+  } else {
+    text = `Just practised a cold call on Outround against an AI Dutch CFO.\n\n${verdictLine}Scored ${score}/100.\n\nTry to beat it → outround.io`;
+  }
+  window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(text), '_blank');
+}
+
+// ---------------------------------------------------------------------------
+// Leaderboard
+// ---------------------------------------------------------------------------
+async function loadLeaderboard() {
+  try {
+    const res = await fetch('/api/leaderboard');
+    const { entries } = await res.json();
+    if (entries && entries.length > 0) renderLeaderboard(entries);
+  } catch { /* keep static */ }
+}
+
+function renderLeaderboard(entries) {
+  const body = document.getElementById('lbBody'); if (!body) return;
+  body.innerHTML = entries.map((e, i) => {
+    const rank = i + 1;
+    const ini = (e.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    return `<div class="lb-row"><div class="lb-rank${rank <= 3 ? ' top' : ''}">${rank}</div><div class="lb-av">${escHtml(ini)}</div><div class="lb-info"><div class="lb-name">${escHtml(e.name)}</div><div class="lb-role">${escHtml(e.role || '')}${e.location ? ' · ' + escHtml(e.location) : ''}</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:${e.score}%"></div></div><div class="lb-sc">${e.score}</div></div>`;
+  }).join('');
+}
+
+// ---------------------------------------------------------------------------
+// Loading cycle text
+// ---------------------------------------------------------------------------
+const _LOAD_CYCLE_TEXTS = [
+  'Reading between the lines...',
+  'Finding the moment it turned...',
+  'Scoring your opening...',
+  'Building your coaching report...',
+];
+
+function _startLoadingCycle() {
+  if (_loadCycleInterval) { clearInterval(_loadCycleInterval); _loadCycleInterval = null; }
+  let idx = 0;
+  const set = () => {
+    const el = document.getElementById('loadCycleText');
+    if (!el) { clearInterval(_loadCycleInterval); return; }
+    el.classList.add('fade');
+    setTimeout(() => {
+      idx = (idx + 1) % _LOAD_CYCLE_TEXTS.length;
+      const el2 = document.getElementById('loadCycleText');
+      if (el2) { el2.textContent = _LOAD_CYCLE_TEXTS[idx]; el2.classList.remove('fade'); }
+    }, 360);
+  };
+  _loadCycleInterval = setInterval(set, 3000);
+}
+
+// ---------------------------------------------------------------------------
+// Survey — decision tree, runs in parallel with analysis
+// ---------------------------------------------------------------------------
+const _SURVEY_FLOW = {
+  q1: { q: 'How did that round feel?', opts: ['Tough', 'Decent', 'Strong'], next: (a) => a === 'Tough' ? 'q2a' : a === 'Decent' ? 'q2b' : 'q2c' },
+  q2a: { q: 'What caught you off guard?', opts: ['The opener', 'First objection', 'Ran out of things to say'], next: () => 'q3' },
+  q2b: { q: 'What would have helped most?', opts: ['Better opening line', 'Handling objections', 'Knowing when to close'], next: () => 'q3' },
+  q2c: { q: 'Do you prep like this before every call?', opts: ['Yes always', 'Sometimes', 'This was my first time'], next: () => 'q3' },
+  q3: { q: "What's your role?", opts: ['SDR', 'AE', 'Founder', 'Other'], next: () => 'q4' },
+  q4: { q: 'How often are you in high-stakes calls?', opts: ['Daily', 'Weekly', 'A few times a month'], next: () => null },
+};
+
+function startSurvey(targetId) {
+  window._surveyAnswers = {};
+  window._surveyTargetId = targetId || 'surveyPanel';
+  _renderSurveyQ('q1');
+}
+
+function _renderSurveyQ(qId) {
+  const panel = document.getElementById(window._surveyTargetId || 'surveyPanel');
+  if (!panel) return;
+  const q = _SURVEY_FLOW[qId];
+  if (!q) { _finishSurvey(); return; }
+  panel.innerHTML = `<div class="survey-q">
+    <div class="survey-eyebrow">Quick question</div>
+    <div class="survey-question">${escHtml(q.q)}</div>
+    <div class="survey-options">${q.opts.map(o =>
+      `<button class="survey-opt" onclick="_pickSurveyOpt('${qId}','${escHtml(o).replace(/'/g,"\\'")}',this)">${escHtml(o)}</button>`
+    ).join('')}</div>
+    <span class="survey-skip-link" onclick="_skipSurvey()">Skip</span>
+  </div>`;
+}
+
+function _pickSurveyOpt(qId, value, btn) {
+  btn.closest('.survey-options').querySelectorAll('.survey-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  window._surveyAnswers[qId] = value;
+  setTimeout(() => {
+    const nextId = _SURVEY_FLOW[qId]?.next(value);
+    if (nextId) _renderSurveyQ(nextId);
+    else _finishSurvey();
+  }, 400);
+}
+
+function _skipSurvey() {
+  _postSurvey();
+  const panel = document.getElementById('surveyPanel');
+  if (panel) panel.innerHTML = `<div class="survey-done"><div class="survey-done-icon">→</div><div class="survey-done-text">Skipped. Results incoming.</div></div>`;
+}
+
+function _finishSurvey() {
+  _postSurvey();
+  const panel = document.getElementById('surveyPanel');
+  if (panel) panel.innerHTML = `<div class="survey-done"><div class="survey-done-icon">✦</div><div class="survey-done-text">Thanks — that helps.</div></div>`;
+}
+
+function _postSurvey() {
+  if (!_s.sessionId) return;
+  fetch('/api/survey', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: _s.sessionId, answers: window._surveyAnswers || {} }),
+  }).catch(() => {});
+}
+
+// ---------------------------------------------------------------------------
+// Results page — Screen 2
+// ---------------------------------------------------------------------------
+function openResultsPage(data) {
+  // Stop loading cycle
+  if (_loadCycleInterval) { clearInterval(_loadCycleInterval); _loadCycleInterval = null; }
+  // Close loading overlay
+  const overlay = document.getElementById('focusOverlay');
+  if (overlay) overlay.classList.remove('open');
+  const card = document.getElementById('focusCard');
+  if (card) card.classList.remove('loading-wide');
+  // Open results
+  const page = document.getElementById('resultsPage');
+  if (page) page.classList.add('open');
+  renderResultsPage(data);
+}
+
+function renderResultsPage(data) {
+  const el = document.getElementById('resultsInner');
+  if (!el) return;
+  const score = data.score || 0;
+  const bd = data.score_breakdown || {};
+  const mode = data.mode || _s.mode || 'cold_call';
+  const isPitch = mode === 'investor_pitch';
+  const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step', meeting_set: 'Meeting set', deck_requested: 'Deck requested', passed: 'Passed' };
+  const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
+
+  const labels = isPitch
+    ? ['Problem clarity', 'Why now', 'Right to win', 'Ask clarity']
+    : ['Opening', 'Objections', 'Talk ratio', 'Clear ask'];
+  const vals = isPitch
+    ? [bd.problem_clarity||0, bd.why_now||0, bd.right_to_win||0, bd.ask_clarity||0]
+    : [bd.opening||0, bd.objections||0, bd.talk_ratio||0, bd.clear_ask||0];
+
+  el.innerHTML = `
+    <div class="res-score-num">${score}</div>
+    <div class="res-score-den">/100</div>
+    <div class="res-badges">
+      ${data.call_verdict ? `<div class="verdict-badge ${escHtml(data.call_verdict)}">${escHtml(vMap[data.call_verdict] || data.call_verdict)}</div>` : ''}
+      ${data.call_momentum ? `<div class="momentum-badge">${escHtml(mMap[data.call_momentum] || data.call_momentum)}</div>` : ''}
+    </div>
+    ${data.headline ? `<div class="res-headline">${escHtml(data.headline)}</div>` : ''}
+    <div class="res-subcards">
+      <div class="res-subcard"><div class="res-subcard-label">${labels[0]}</div><div class="res-subcard-val" id="rsc1">—</div><div class="res-subcard-bar"><div class="res-subcard-fill" id="rsf1"></div></div></div>
+      <div class="res-subcard"><div class="res-subcard-label">${labels[1]}</div><div class="res-subcard-val" id="rsc2">—</div><div class="res-subcard-bar"><div class="res-subcard-fill" id="rsf2"></div></div></div>
+      <div class="res-subcard"><div class="res-subcard-label">${labels[2]}</div><div class="res-subcard-val" id="rsc3">—</div><div class="res-subcard-bar"><div class="res-subcard-fill" id="rsf3"></div></div></div>
+      <div class="res-subcard"><div class="res-subcard-label">${labels[3]}</div><div class="res-subcard-val" id="rsc4">—</div><div class="res-subcard-bar"><div class="res-subcard-fill" id="rsf4"></div></div></div>
+    </div>
+    ${data.next_session_focus ? `<div class="res-focus-block"><div class="res-focus-lbl">Next focus</div><div class="res-focus-txt">${escHtml(data.next_session_focus)}</div></div>` : ''}
+    <div class="res-share-row">
+      <button class="share-btn" title="Share on LinkedIn" onclick="shareResults('linkedin')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+      </button>
+      <button class="share-btn" title="Share on WhatsApp" onclick="shareResults('whatsapp')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </button>
+      <button class="share-btn" title="Copy for Slack" onclick="shareResults('slack')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+      </button>
+      <button class="share-btn" title="Copy link" onclick="shareResults('copy')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </button>
+      <button class="share-btn" title="Share on X / Twitter" onclick="shareResults('twitter')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </button>
+    </div>
+    <div class="res-actions">
+      <button class="res-btn-primary" onclick="openDeepAnalysis()">✦ Deep analysis</button>
+      <button class="res-btn-secondary" onclick="goAgain()">Go again</button>
+    </div>
+  `;
+
+  // Animate sub-scores
+  setTimeout(() => {
+    vals.forEach((v, i) => {
+      const vi = 'rsc' + (i+1); const fi = 'rsf' + (i+1);
+      setTimeout(() => {
+        const vel = document.getElementById(vi); const fel = document.getElementById(fi);
+        if (vel) vel.textContent = v;
+        if (fel) fel.style.width = v + '%';
+      }, i * 150);
+    });
+  }, 300);
+}
+
+function shareResults(platform) {
+  const score = _s.analysis?.score || '?';
+  const isPitch = (_s.mode || 'cold_call') === 'investor_pitch';
+  const text = isPitch
+    ? `I scored ${score}/100 pitching to an AI seed investor on Outround. Think you can beat it? → outround.io`
+    : `I scored ${score}/100 on a cold call against an AI Dutch CFO. Think you can beat it? → outround.io`;
+  const enc = encodeURIComponent(text);
+  switch (platform) {
+    case 'linkedin': window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + enc, '_blank'); break;
+    case 'whatsapp': window.open('https://wa.me/?text=' + enc, '_blank'); break;
+    case 'twitter':  window.open('https://twitter.com/intent/tweet?text=' + enc, '_blank'); break;
+    case 'slack':
+      navigator.clipboard.writeText(text).then(() => showToast('Copied for Slack')).catch(() => showToast('Copied for Slack'));
+      break;
+    case 'copy':
+      navigator.clipboard.writeText('outround.io').then(() => showToast('Link copied')).catch(() => showToast('Link copied'));
+      break;
+  }
+}
