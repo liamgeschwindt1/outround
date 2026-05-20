@@ -292,4 +292,185 @@ Return ONLY valid JSON, no markdown fences:
   }
 }
 
-module.exports = { gradeSession, gradeSessionFast, gradeSessionDeep };
+module.exports = { gradeSession, gradeSessionFast, gradeSessionDeep, gradePitchFast, gradePitchDeep };
+
+// ---------------------------------------------------------------------------
+// Investor pitch — fast grading
+// ---------------------------------------------------------------------------
+/**
+ * Fast grading for a 60-second investor pitch + Q&A session.
+ * Returns score_breakdown with pitch-specific dimensions.
+ */
+async function gradePitchFast(transcript, audioMetrics, persona) {
+  if (!process.env.ANTHROPIC_KEY) {
+    throw new Error('ANTHROPIC_KEY not configured');
+  }
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_KEY });
+
+  const transcriptText = transcript
+    .map((t) => `[${t.speaker.toUpperCase()}] ${t.text}`)
+    .join('\n');
+
+  const nameNote = persona.canonical_name
+    ? `INVESTOR NAME NOTE: The investor's canonical first name is "${persona.canonical_name}". Never penalise STT spelling errors.\n\n`
+    : '';
+
+  const prompt = `You are a senior venture capital analyst grading a 60-second seed pitch. Be precise, unsparing, and commercially-minded. Return ONLY valid JSON — no preamble, no markdown fences.
+
+${nameNote}Founder pitched to ${persona.name}, ${persona.title} at ${persona.company}${persona.location ? ', ' + persona.location : ''}. Investor traits: ${(persona.traits || []).join(', ')}.
+
+Context: The founder had 60 seconds to pitch, then the investor asked questions. The investor does not interrupt in the first 60 seconds.
+
+TRANSCRIPT:
+${transcriptText}
+
+AUDIO METRICS:
+- WPM: ${audioMetrics.wpm} | Talk ratio: Founder ${audioMetrics.talk_ratio?.rep ?? '?'}% / Investor ${audioMetrics.talk_ratio?.prospect ?? '?'}%
+- Fillers: ${audioMetrics.filler_words} | Longest monologue: ${audioMetrics.longest_monologue_seconds}s
+
+SCORING (0–100 each):
+- problem_clarity: Did the founder articulate a specific, real problem with a named customer segment? 90+ = vivid, specific, quantified. <50 = vague hand-waving.
+- why_now: Did the founder explain what changed (model capability, data availability, regulation) that makes this the right moment? 90+ = precise unlock named. <50 = absent or generic "AI is transforming".
+- right_to_win: Did the founder establish why they specifically — not a well-funded competitor — are best positioned? 90+ = specific unfair advantage (data, distribution, domain). <50 = "we're building a great team".
+- ask_clarity: Was the raise amount, milestone, and use of funds clear and rational? 90+ = specific ask + 18-month milestone + use of funds. <50 = no ask or "we're raising a round".
+
+call_verdict:
+- "meeting_set" — investor agreed to a follow-up meeting
+- "deck_requested" — investor asked for deck/materials only, no meeting yet
+- "passed" — investor passed or gave no next step
+
+call_momentum: "building" / "flat" / "declining" (based on how investor engagement evolved through the call)
+
+Return JSON:
+{
+  "overall_score": 0-100,
+  "score_breakdown": {
+    "problem_clarity": 0-100,
+    "why_now": 0-100,
+    "right_to_win": 0-100,
+    "ask_clarity": 0-100
+  },
+  "headline": "One brutal sentence — what this pitch actually communicated",
+  "call_verdict": "meeting_set|deck_requested|passed",
+  "call_momentum": "building|flat|declining",
+  "next_session_focus": "The single most important thing to fix — one direct sentence"
+}`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 512,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const raw = response.content[0].text.trim();
+  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (parseErr) {
+    console.error('gradePitchFast JSON parse failed:', raw.slice(0, 300));
+    throw new Error('Claude pitch fast grading returned unparseable response: ' + parseErr.message);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Investor pitch — deep grading
+// ---------------------------------------------------------------------------
+/**
+ * Deep grading for a pitch session — annotates transcript and gives coaching.
+ */
+async function gradePitchDeep(transcript, audioMetrics, persona, basicResult) {
+  if (!process.env.ANTHROPIC_KEY) {
+    throw new Error('ANTHROPIC_KEY not configured');
+  }
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_KEY });
+
+  const numberedTranscript = transcript
+    .map((t, i) => `[${i}][${t.speaker.toUpperCase()}] ${t.text}`)
+    .join('\n');
+
+  const nameNote = persona.canonical_name
+    ? `INVESTOR NAME NOTE: Canonical name is "${persona.canonical_name}". Never penalise spelling variants.\n\n`
+    : '';
+
+  const bd = basicResult.score_breakdown || {};
+
+  const prompt = `You are a senior venture capital coach providing deep pitch feedback. Annotate every turn and give coaching.
+
+${nameNote}Founder pitched to ${persona.name}, ${persona.title} at ${persona.company}. This was a 60-second pitch followed by investor Q&A.
+
+BASIC SCORES (context): Overall ${basicResult.overall_score}/100 | Problem clarity ${bd.problem_clarity} | Why now ${bd.why_now} | Right to win ${bd.right_to_win} | Ask clarity ${bd.ask_clarity}
+Verdict: ${basicResult.call_verdict} | Momentum: ${basicResult.call_momentum}
+
+NUMBERED TRANSCRIPT (annotate each FOUNDER turn only):
+${numberedTranscript}
+
+AUDIO METRICS:
+- WPM: ${audioMetrics.wpm} | Talk ratio: Founder ${audioMetrics.talk_ratio?.rep ?? '?'}% / Investor ${audioMetrics.talk_ratio?.prospect ?? '?'}%
+- Fillers: ${audioMetrics.filler_words} | Longest monologue: ${audioMetrics.longest_monologue_seconds}s
+
+ANNOTATION RULES for founder turns:
+- quality: "good" (strong move), "ok" (acceptable, room to improve), "poor" (missed opportunity or mistake)
+- coaching: 1–2 direct sentences on what worked or what to do differently. Be specific to the words used.
+- For investor turns: quality must be "neutral", coaching must be null.
+
+COACHING FEEDBACK: 2–4 moments that defined this pitch.
+- Each must reference a direct quote.
+- category: problem | why_now | right_to_win | ask | qa_response
+- score_label: bad | mid | good
+- action: exact alternative line the founder can use word-for-word
+
+SENTIMENT TIMELINE: investor engagement in 20% chunks (neutral/positive/negative).
+
+Return ONLY valid JSON, no markdown fences:
+{
+  "annotated_transcript": [
+    { "index": 0, "quality": "good|ok|poor|neutral", "coaching": "..." }
+  ],
+  "coaching_feedback": [
+    {
+      "category": "problem|why_now|right_to_win|ask|qa_response",
+      "title": "Short label",
+      "score": 0-100,
+      "score_label": "bad|mid|good",
+      "body": "What happened and why it matters.",
+      "quote": "Exact words from the founder",
+      "action": "Word-for-word alternative"
+    }
+  ],
+  "sentiment_timeline": [
+    { "start_pct": 0, "end_pct": 20, "sentiment": "neutral" }
+  ]
+}`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4096,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const raw = response.content[0].text.trim();
+  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  try {
+    const result = JSON.parse(cleaned);
+    const annotated = transcript.map((turn, i) => {
+      const ann = (result.annotated_transcript || []).find(a => a.index === i);
+      return {
+        ...turn,
+        quality: ann?.quality || 'neutral',
+        coaching: ann?.coaching || null,
+      };
+    });
+    return {
+      annotated_transcript: annotated,
+      coaching_feedback: result.coaching_feedback || [],
+      sentiment_timeline: result.sentiment_timeline || [],
+    };
+  } catch (parseErr) {
+    console.error('gradePitchDeep JSON parse failed:', raw.slice(0, 300));
+    throw new Error('Claude pitch deep grading returned unparseable response: ' + parseErr.message);
+  }
+}

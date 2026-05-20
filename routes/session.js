@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs');
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
@@ -14,31 +15,68 @@ const memStore = new Map();
 // Ensure deep analysis columns exist on the sessions table (safe to run repeatedly)
 db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS deep_analysis JSONB`).catch(() => {});
 db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS deep_analysis_status TEXT`).catch(() => {});
+db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS mode TEXT`).catch(() => {});
+
+// ---------------------------------------------------------------------------
+// Persona loading — searches all modes/ subdirectories
+// ---------------------------------------------------------------------------
+function loadPersonaFile(personaId) {
+  const modesDir = require('path').join(__dirname, '..', 'modes');
+  for (const sub of fs.readdirSync(modesDir)) {
+    const fp = require('path').join(modesDir, sub, `${personaId}.json`);
+    if (fs.existsSync(fp)) return require(fp);
+  }
+  throw new Error(`Persona "${personaId}" not found`);
+}
+
+/**
+ * Normalise persona to a flat object regardless of which JSON format is used.
+ * New format (modes/) stores character fields inside _meta.
+ */
+function normalisePersona(raw) {
+  if (!raw._meta) return raw; // old flat format
+  const m = raw._meta;
+  return {
+    ...raw,
+    // surface _meta fields at top level for backward-compat grading code
+    canonical_name: m.canonical_name,
+    phonetic_variants: m.phonetic_variants || [m.canonical_name],
+    name: m.name || raw.name,
+    title: m.title || '',
+    company: m.company || '',
+    location: m.location || '',
+    flag: m.flag || '',
+    traits: m.traits || [],
+    scenario: m.grading_context?.scenario || '',
+    mode: m.mode || 'cold_call',
+  };
+}
 
 // ---------------------------------------------------------------------------
 // POST /api/session/start
 // ---------------------------------------------------------------------------
 router.post('/start', async (req, res) => {
-  const { user_name, user_email, user_role, persona_id = 'hendrik' } = req.body;
+  const { user_name, user_email, user_role, persona_id = 'hendrik', mode = 'cold_call' } = req.body;
 
   if (!persona_id) {
     return res.status(400).json({ error: 'persona_id required' });
   }
 
-  let persona;
+  let personaRaw;
   try {
-    persona = require(`../personas/${persona_id}.json`);
+    personaRaw = loadPersonaFile(persona_id);
   } catch {
     return res.status(404).json({ error: 'Persona not found' });
   }
+  const persona = normalisePersona(personaRaw);
 
   let sessionId;
   try {
     const result = await db.query(
-      `INSERT INTO sessions (user_name, user_email, user_role, persona_id)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO sessions (user_name, user_email, user_role, persona_id, mode)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [user_name || null, user_email || null, user_role || null, persona_id]
+      [user_name || null, user_email || null, user_role || null, persona_id, mode]
     );
     sessionId = result.rows[0].id;
   } catch (err) {
@@ -50,18 +88,20 @@ router.post('/start', async (req, res) => {
   memStore.set(sessionId, {
     id: sessionId,
     persona_id,
+    mode,
     user_name: user_name || null,
     status: 'pending',
   });
 
   res.json({
     session_id: sessionId,
+    mode,
     persona: {
       name: persona.name,
-      title: `${persona.title} — ${persona.company} — ${persona.location.split(',')[0]}`,
+      title: persona.title ? `${persona.title} — ${persona.company} — ${persona.location.split(',')[0]}` : persona.name,
       flag: persona.flag,
       scenario: persona.scenario,
-      traits: persona.traits.map((t) => t.charAt(0).toUpperCase() + t.slice(1)),
+      traits: (persona.traits || []).map((t) => t.charAt(0).toUpperCase() + t.slice(1)),
     },
     brief_expires_seconds: 30,
   });
@@ -74,8 +114,7 @@ router.get('/:id/voice-token', async (req, res) => {
   const { id } = req.params;
 
   // Determine persona — memStore is authoritative when present; only hit DB as fallback
-  let personaId = memStore.get(id)?.persona_id;
-  if (!personaId) {
+  let personaId = memStore.get(id)?.persona_id;  if (!personaId) {
     try {
       const result = await db.query('SELECT persona_id FROM sessions WHERE id = $1', [id]);
       if (result.rows.length > 0) personaId = result.rows[0].persona_id;
@@ -139,7 +178,7 @@ router.get('/:id/status', async (req, res) => {
   // Try DB first
   try {
     const result = await db.query(
-      `SELECT score, score_breakdown, transcript, audio_metrics
+      `SELECT score, score_breakdown, transcript, audio_metrics, mode
        FROM sessions WHERE id = $1`,
       [id]
     );
@@ -150,18 +189,15 @@ router.get('/:id/status', async (req, res) => {
           status: 'processing',
           transcript: row.transcript || [],
           audio_metrics: row.audio_metrics || {},
+          mode: row.mode || 'cold_call',
         });
       }
       const breakdown = row.score_breakdown || {};
       return res.json({
         status: 'complete',
         score: row.score,
-        score_breakdown: {
-          opening: breakdown.opening,
-          objections: breakdown.objections,
-          talk_ratio: breakdown.talk_ratio,
-          clear_ask: breakdown.clear_ask,
-        },
+        mode: row.mode || 'cold_call',
+        score_breakdown: breakdown,
         headline: breakdown.headline || null,
         call_verdict: breakdown.call_verdict || null,
         call_momentum: breakdown.call_momentum || null,
@@ -178,9 +214,9 @@ router.get('/:id/status', async (req, res) => {
   // Fall back to in-memory store
   const mem = memStore.get(id);
   if (!mem) return res.status(404).json({ error: 'Session not found' });
-  if (mem.status === 'complete' && mem.result) return res.json({ status: 'complete', ...mem.result });
+  if (mem.status === 'complete' && mem.result) return res.json({ status: 'complete', mode: mem.mode || 'cold_call', ...mem.result });
   if (mem.status === 'error') return res.status(500).json({ error: mem.errorMessage || 'Analysis failed' });
-  return res.json({ status: 'processing' });
+  return res.json({ status: 'processing', mode: mem.mode || 'cold_call' });
 });
 
 // ---------------------------------------------------------------------------
@@ -190,6 +226,7 @@ async function processSession(sessionId, { elevenlabs_conversation_id, duration_
   const durationSecs = duration_seconds || 0;
   const memSession = memStore.get(sessionId);
   const personaId = memSession?.persona_id || 'hendrik';
+  const sessionMode = memSession?.mode || 'cold_call';
 
   // Check session exists in DB or memStore — proceed as long as one has it
   let useMemOnly = false;
@@ -244,31 +281,30 @@ async function processSession(sessionId, { elevenlabs_conversation_id, duration_
     });
   }
 
-  // 3. Fast-grade with Claude (score/headline/verdict/focus only — no per-turn annotations)
+  // 3. Fast-grade with Claude — route to pitch grading if investor_pitch mode
   let grading;
   try {
-    const persona = require(`../personas/${personaId}.json`);
-    grading = await claude.gradeSessionFast(transcript, audioMetrics, persona);
+    const personaRaw = loadPersonaFile(personaId);
+    const persona = normalisePersona(personaRaw);
+    if (sessionMode === 'investor_pitch') {
+      grading = await claude.gradePitchFast(transcript, audioMetrics, persona);
+    } else {
+      grading = await claude.gradeSessionFast(transcript, audioMetrics, persona);
+    }
   } catch (err) {
     console.error('Claude fast grading error:', err.message);
-    grading = {
-      overall_score: 0,
-      score_breakdown: { opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 },
-      headline: 'Analysis failed — check server logs',
-      call_verdict: null, call_momentum: null, next_session_focus: null,
-    };
+    grading = sessionMode === 'investor_pitch'
+      ? { overall_score: 0, score_breakdown: { problem_clarity: 0, why_now: 0, right_to_win: 0, ask_clarity: 0 }, headline: 'Analysis failed — check server logs', call_verdict: null, call_momentum: null, next_session_focus: null }
+      : { overall_score: 0, score_breakdown: { opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 }, headline: 'Analysis failed — check server logs', call_verdict: null, call_momentum: null, next_session_focus: null };
   }
 
   // 4. Persist results
-  await storeResults(sessionId, useMemOnly, grading, transcript, audioMetrics);
+  await storeResults(sessionId, useMemOnly, grading, transcript, audioMetrics, sessionMode);
 }
 
-async function storeResults(sessionId, useMemOnly, grading, transcript, audioMetrics) {
+async function storeResults(sessionId, useMemOnly, grading, transcript, audioMetrics, sessionMode) {
   const scoreBreakdown = {
-    opening: grading.score_breakdown.opening,
-    objections: grading.score_breakdown.objections,
-    talk_ratio: grading.score_breakdown.talk_ratio,
-    clear_ask: grading.score_breakdown.clear_ask,
+    ...grading.score_breakdown,
     headline: grading.headline || null,
     call_verdict: grading.call_verdict || null,
     call_momentum: grading.call_momentum || null,
@@ -302,22 +338,18 @@ async function storeResults(sessionId, useMemOnly, grading, transcript, audioMet
     status: 'complete',
     result: {
       score: grading.overall_score,
-      score_breakdown: {
-        opening: grading.score_breakdown.opening,
-        objections: grading.score_breakdown.objections,
-        talk_ratio: grading.score_breakdown.talk_ratio,
-        clear_ask: grading.score_breakdown.clear_ask,
-      },
+      score_breakdown: grading.score_breakdown,
       headline: grading.headline || null,
       call_verdict: grading.call_verdict || null,
       call_momentum: grading.call_momentum || null,
       next_session_focus: grading.next_session_focus || null,
       transcript,
       audio_metrics: audioMetrics,
+      mode: sessionMode || existing.mode || 'cold_call',
     },
   });
 
-  console.log(`Session ${sessionId} — score: ${grading.overall_score}, verdict: ${grading.call_verdict || 'n/a'} (${savedToDb ? 'DB+mem' : 'mem only'})`);
+  console.log(`Session ${sessionId} (${sessionMode}) — score: ${grading.overall_score}, verdict: ${grading.call_verdict || 'n/a'} (${savedToDb ? 'DB+mem' : 'mem only'})`);
 }
 
 // ---------------------------------------------------------------------------
@@ -388,14 +420,20 @@ async function processDeepSession(sessionId) {
   if (!mem) throw new Error('Session not in memStore');
 
   const personaId = mem.persona_id || 'hendrik';
-  const persona = require(`../personas/${personaId}.json`);
+  const sessionMode = mem.mode || mem.result?.mode || 'cold_call';
+  const personaRaw = loadPersonaFile(personaId);
+  const persona = normalisePersona(personaRaw);
   const transcript = mem.result?.transcript || [];
   const audioMetrics = mem.result?.audio_metrics || {};
   const basicResult = mem.result || {};
 
   let deepResult;
   try {
-    deepResult = await claude.gradeSessionDeep(transcript, audioMetrics, persona, basicResult);
+    if (sessionMode === 'investor_pitch') {
+      deepResult = await claude.gradePitchDeep(transcript, audioMetrics, persona, basicResult);
+    } else {
+      deepResult = await claude.gradeSessionDeep(transcript, audioMetrics, persona, basicResult);
+    }
   } catch (err) {
     console.error('Deep grading error:', err.message);
     memStore.set(sessionId, { ...memStore.get(sessionId), deep_status: 'error', deep_error: err.message });

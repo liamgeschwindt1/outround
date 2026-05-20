@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const { ElevenLabsClient } = require('elevenlabs');
 
 let _client = null;
@@ -13,20 +15,45 @@ function getClient() {
 }
 
 /**
+ * Load a persona JSON file by ID, searching all subdirectories of modes/.
+ * @param {string} personaId
+ * @returns {object}
+ */
+function loadPersona(personaId) {
+  const modesDir = path.join(__dirname, '..', 'modes');
+  for (const sub of fs.readdirSync(modesDir)) {
+    const fp = path.join(modesDir, sub, `${personaId}.json`);
+    if (fs.existsSync(fp)) return require(fp);
+  }
+  throw new Error(`Persona "${personaId}" not found in modes/ directory`);
+}
+
+/**
  * Get a signed WebSocket URL for a conversational AI session.
+ * Passes conversation_config from the persona JSON as overrides so that
+ * ElevenLabs uses our payload rather than the dashboard configuration.
  * @param {string} personaId
  * @returns {Promise<string>} signed_url
  */
 async function getConversationToken(personaId) {
-  const agentId = process.env[`ELEVENLABS_AGENT_ID_${personaId.toUpperCase()}`];
+  const persona = loadPersona(personaId);
+
+  const agentId =
+    (persona._meta && persona._meta.agent_id) ||
+    process.env.ELEVENLABS_AGENT_ID;
+
   if (!agentId) {
-    throw new Error(`ELEVENLABS_AGENT_ID_${personaId.toUpperCase()} not configured`);
+    throw new Error(`No agent_id found for persona "${personaId}" — set ELEVENLABS_AGENT_ID in env`);
   }
 
   const client = getClient();
-  const response = await client.conversationalAi.getSignedUrl({
-    agent_id: agentId,
-  });
+  const payload = { agent_id: agentId };
+
+  if (persona.conversation_config) {
+    payload.conversation_config_override = persona.conversation_config;
+  }
+
+  const response = await client.conversationalAi.getSignedUrl(payload);
 
   return response.signed_url;
 }
