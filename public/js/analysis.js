@@ -544,6 +544,7 @@ function renderDeepTranscript(transcript, timeline) {
     return;
   }
 
+  const prospectName = _s.mode === 'investor_pitch' ? 'Natalie' : 'Hendrik';
   let html = '<div class="an-section-label" style="margin-bottom:16px">Annotated transcript</div>';
   transcript.forEach((t) => {
     const isRep = t.speaker === 'rep';
@@ -556,7 +557,7 @@ function renderDeepTranscript(transcript, timeline) {
       : '';
 
     html += `<div class="t-line ${tlClass}">
-      <div class="t-spk${isRep ? ' rep' : ''}">${isRep ? 'You' : 'Hendrik'}</div>
+      <div class="t-spk${isRep ? ' rep' : ''}">${isRep ? 'You' : prospectName}</div>
       <div class="t-content">
         <div class="t-txt${isRep ? ' rep' : ''}">${escHtml(t.text)}</div>
         ${t.start_ms ? `<div class="t-time">${fmtMs(t.start_ms)}</div>` : ''}
@@ -572,8 +573,31 @@ function renderDeepRightPanel(data) {
   if (!el) return;
   const score = data.score || 0;
   const bd = data.score_breakdown || {};
-  const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step' };
-  const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
+  const mode = data.mode || bd.mode || _s.mode || 'cold_call';
+  const isPitch = mode === 'investor_pitch' || bd.problem_clarity !== undefined || bd.why_now !== undefined;
+
+  const vMap = isPitch
+    ? { meeting_set: 'Meeting set', deck_requested: 'Deck requested', passed: 'Passed' }
+    : { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step' };
+  const mMap = { building: '\u2197 Building', flat: '\u2192 Flat', declining: '\u2198 Declining' };
+
+  const subScores = isPitch
+    ? [
+        { label: 'Problem clarity', val: bd.problem_clarity || 0 },
+        { label: 'Why now',         val: bd.why_now || 0 },
+        { label: 'Right to win',    val: bd.right_to_win || 0 },
+        { label: 'Ask clarity',     val: bd.ask_clarity || 0 },
+      ]
+    : [
+        { label: 'Opening',    val: bd.opening || 0 },
+        { label: 'Objections', val: bd.objections || 0 },
+        { label: 'Talk ratio', val: bd.talk_ratio || 0 },
+        { label: 'Clear ask',  val: bd.clear_ask || 0 },
+      ];
+
+  const subHtml = subScores.map(s =>
+    `<div class="sc-row"><div class="sc-label">${s.label}</div><div class="sc-bar"><div class="sc-fill" style="width:${s.val}%"></div></div><div class="sc-val">${s.val}</div></div>`
+  ).join('');
 
   el.innerHTML = `
     <div class="an-right-section" style="text-align:center">
@@ -586,12 +610,7 @@ function renderDeepRightPanel(data) {
     </div>
     <div class="an-right-section">
       <div class="an-section-label">Sub-scores</div>
-      <div class="subscores">
-        <div class="sc-row"><div class="sc-label">Opening</div><div class="sc-bar"><div class="sc-fill" style="width:${bd.opening||0}%"></div></div><div class="sc-val">${bd.opening||0}</div></div>
-        <div class="sc-row"><div class="sc-label">Objections</div><div class="sc-bar"><div class="sc-fill" style="width:${bd.objections||0}%"></div></div><div class="sc-val">${bd.objections||0}</div></div>
-        <div class="sc-row"><div class="sc-label">Talk ratio</div><div class="sc-bar"><div class="sc-fill" style="width:${bd.talk_ratio||0}%"></div></div><div class="sc-val">${bd.talk_ratio||0}</div></div>
-        <div class="sc-row"><div class="sc-label">Clear ask</div><div class="sc-bar"><div class="sc-fill" style="width:${bd.clear_ask||0}%"></div></div><div class="sc-val">${bd.clear_ask||0}</div></div>
-      </div>
+      <div class="subscores">${subHtml}</div>
     </div>
     ${data.next_session_focus ? `<div class="an-right-section"><div class="an-section-label">Next focus</div><div style="font-size:0.74rem;color:var(--ink-2);line-height:1.6">${escHtml(data.next_session_focus)}</div></div>` : ''}
   `;
