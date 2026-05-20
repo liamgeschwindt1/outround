@@ -1,6 +1,36 @@
 'use strict';
 
 // ---------------------------------------------------------------------------
+// Test sample transcripts — winning calls for each mode
+// ---------------------------------------------------------------------------
+const TEST_TRANSCRIPTS = {
+  cold_call: [
+    { speaker: 'rep',      text: "Hendrik, quick call — two minutes. I saw Vandermeer grew 40% last year, adding three new depots. That kind of expansion typically creates one specific finance problem: spend variance that doesn't surface until after quarter close because the reconciliation process hasn't scaled with the business. Is that showing up for you?", start_ms: 0 },
+    { speaker: 'prospect', text: "Who gave you this number? Make it quick — I have a meeting in five minutes.", start_ms: 8000 },
+    { speaker: 'rep',      text: "Understood. I'm Alex from Spendly. We work with logistics CFOs in the Netherlands who are scaling fast and hitting the same reconciliation wall. I found you on LinkedIn — your growth numbers stood out. The specific problem I'm solving is close cycle time. CFOs at your growth stage typically close a quarter 10 to 14 days late because cost centre data sits across too many systems. What does your current close cycle look like?", start_ms: 12000 },
+    { speaker: 'prospect', text: "We manage it. We have systems in place.", start_ms: 28000 },
+    { speaker: 'rep',      text: "I'd expect that. The CFOs I speak to who say that usually have the right systems — they just have too many of them. The problem isn't capability, it's consolidation time. I'm not asking you to change anything. I want 20 minutes to show you one number your current stack probably can't surface in under an hour. If it's not useful, tell me and I won't call again.", start_ms: 33000 },
+    { speaker: 'prospect', text: "What number exactly?", start_ms: 53000 },
+    { speaker: 'rep',      text: "Real-time committed spend versus approved budget, broken down by depot, updated within the hour. Most logistics CFOs I speak to can only get that view at month end. I want to show you what that looks like live. Thursday at 2pm — does that work? I'll send a calendar invite you can decline if it no longer makes sense.", start_ms: 56000 },
+    { speaker: 'prospect', text: "Fine. Send me a calendar invite for Thursday.", start_ms: 73000 },
+    { speaker: 'rep',      text: "Done. Thursday 2pm — I'll send the invite with a one-line agenda. Thank you, Hendrik.", start_ms: 77000 },
+  ],
+  investor_pitch: [
+    { speaker: 'rep',      text: "Natalie — the problem: 73% of European B2B sales reps go into high-stakes calls cold. Sales training tools analyse transcripts. None of them analyse your voice. Outround is a pre-performance readiness platform — not training, readiness. You pick your scenario, you face an AI persona that behaves exactly like the real prospect, you get a score on what you said and how you said it. We use Hume AI for vocal affect analysis — no competitor has this. Target is European SMB sales teams, 10 to 100 reps, pricing from 49 euros per seat per month. We have 12 paying teams in beta, 94% seat-level retention at day 60, median user runs 3.4 sessions per week. The landing page is a live demo — every visitor calls Hendrik, gets scored, and the shame of a bad score drives the share. We're raising 400,000 euros to reach 50 paying teams and prove the viral loop. That's the ask.", start_ms: 0 },
+    { speaker: 'prospect', text: "94% retention across 12 teams — how many total users is that?", start_ms: 62000 },
+    { speaker: 'rep',      text: "87 active users. 12 teams averaging 7 seats. The 94% is seat-level — 82 of the original 87 still active at day 60. We define active as at least two full practice sessions in the trailing two weeks. We set that bar deliberately high.", start_ms: 68000 },
+    { speaker: 'prospect', text: "What does the Hume AI integration actually surface that a transcript doesn't?", start_ms: 82000 },
+    { speaker: 'rep',      text: "Three things a transcript misses. First, pace under pressure — reps slow down or speed up when nervous and the voice signals it before they're aware. Second, the confidence of the close — whether an ask lands committed or tentative. Third, emotional congruence — when your words say confident but your voice says uncertain, Hendrik picks up on it. The model flags those exact moments in the feedback. That's the differentiation no transcript-only tool can replicate.", start_ms: 88000 },
+    { speaker: 'prospect', text: "What's your biggest risk right now?", start_ms: 110000 },
+    { speaker: 'rep',      text: "Honest answer: distribution. The viral mechanic works in early data — our demo page has a 34% email capture rate from strangers, unprompted. The risk is it doesn't scale without a brand presence. The 400k gets us to 50 paying teams and a LinkedIn launch moment with real retention data behind it. That de-risks distribution before Series A.", start_ms: 115000 },
+    { speaker: 'prospect', text: "I want 30 minutes. Are you free Thursday?", start_ms: 133000 },
+    { speaker: 'rep',      text: "Thursday works. Morning or afternoon?", start_ms: 137000 },
+    { speaker: 'prospect', text: "10am. My EA will send a hold.", start_ms: 140000 },
+    { speaker: 'rep',      text: "Perfect. I'll have the retention data and the live demo ready. Thank you, Natalie.", start_ms: 143000 },
+  ],
+};
+
+// ---------------------------------------------------------------------------
 // Onboarding
 // ---------------------------------------------------------------------------
 function openSession() {
@@ -83,6 +113,50 @@ async function beginPitchSession() {
 function skipPitchPrep() {
   if (_s._pitchPrepInterval) { clearInterval(_s._pitchPrepInterval); _s._pitchPrepInterval = null; }
   beginSession();
+}
+
+// ---------------------------------------------------------------------------
+// Test mode — inject sample winning transcript, skip real call
+// ---------------------------------------------------------------------------
+async function runTestSession() {
+  // Clear any active countdowns
+  if (_briefInterval) { clearInterval(_briefInterval); _briefInterval = null; }
+  if (_s._pitchPrepInterval) { clearInterval(_s._pitchPrepInterval); _s._pitchPrepInterval = null; }
+  _voiceTokenPromise = null;
+
+  const mode = _s.mode || 'cold_call';
+  const transcript = TEST_TRANSCRIPTS[mode];
+  if (!transcript) { uiLog('No test transcript for mode: ' + mode, 'err'); return; }
+
+  // Create session if not yet created (e.g. triggered from pitchprep before countdown ended)
+  if (!_s.sessionId) {
+    uiLog('Creating test session…', 'send');
+    const persona_id = mode === 'investor_pitch' ? 'natalie' : 'hendrik';
+    try {
+      const res = await fetch('/api/session/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_name: _s.user?.name || null, user_email: _s.user?.email || null, user_role: _s.user?.role || null, persona_id, mode }),
+      });
+      if (res.ok) { const data = await res.json(); _s.sessionId = data.session_id; uiLog('Test session: ' + data.session_id, 'ok'); }
+      else { uiLog('Test session start failed: HTTP ' + res.status, 'err'); return; }
+    } catch (err) { uiLog('Test session start error: ' + err.message, 'err'); return; }
+  }
+
+  _s.callDuration = 90;
+  await goToStep('loading');
+  _startLoadingCycle();
+
+  uiLog('Submitting test transcript (' + transcript.length + ' turns)…', 'send');
+  try {
+    const r = await fetch('/api/session/' + _s.sessionId + '/end-test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript, duration_seconds: 90 }),
+    });
+    if (r.ok) { uiLog('Test transcript submitted — polling for results…', 'ok'); pollForResults(); }
+    else { uiLog('end-test failed: HTTP ' + r.status, 'err'); }
+  } catch (err) { uiLog('end-test error: ' + err.message, 'err'); }
 }
 
 // ---------------------------------------------------------------------------

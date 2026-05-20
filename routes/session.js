@@ -170,6 +170,92 @@ router.post('/:id/end', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /api/session/:id/end-test — inject a sample transcript, skip ElevenLabs
+// ---------------------------------------------------------------------------
+router.post('/:id/end-test', async (req, res) => {
+  const { id } = req.params;
+  const { transcript, duration_seconds } = req.body;
+
+  if (!Array.isArray(transcript) || transcript.length === 0) {
+    return res.status(400).json({ error: 'transcript array required' });
+  }
+
+  try {
+    await db.query(
+      `UPDATE sessions SET ended_at = NOW(), duration_seconds = $1 WHERE id = $2`,
+      [duration_seconds || 90, id]
+    );
+  } catch (err) {
+    console.error('DB error ending test session:', err.message);
+  }
+
+  const existing = memStore.get(id) || { id, persona_id: 'hendrik', mode: 'cold_call' };
+  memStore.set(id, { ...existing, status: 'processing' });
+
+  res.json({ status: 'processing', message: 'Test analysis running. Poll /api/session/:id/status' });
+
+  _processTestSession(id, transcript, duration_seconds || 90).catch((err) =>
+    console.error('Test session error for', id, err.message)
+  );
+});
+
+async function _processTestSession(sessionId, injectedTranscript, durationSecs) {
+  const memSession = memStore.get(sessionId);
+  let personaId = memSession?.persona_id || null;
+  let sessionMode = memSession?.mode || null;
+  let useMemOnly = false;
+
+  try {
+    const check = await db.query('SELECT id, persona_id, mode FROM sessions WHERE id = $1', [sessionId]);
+    useMemOnly = check.rows.length === 0;
+    if (check.rows.length > 0) {
+      if (!personaId) personaId = check.rows[0].persona_id || 'hendrik';
+      if (!sessionMode) sessionMode = check.rows[0].mode || 'cold_call';
+    }
+  } catch (err) {
+    console.error('_processTestSession: DB check failed —', err.message);
+    useMemOnly = true;
+  }
+
+  if (!personaId) personaId = 'hendrik';
+  if (!sessionMode) sessionMode = 'cold_call';
+
+  const audioMetrics = calculateMetricsFromTranscript(injectedTranscript, durationSecs);
+
+  if (!useMemOnly) {
+    try {
+      await db.query(
+        `UPDATE sessions SET transcript = $1, audio_metrics = $2 WHERE id = $3`,
+        [JSON.stringify(injectedTranscript), JSON.stringify(audioMetrics), sessionId]
+      );
+    } catch (err) { console.error('DB error saving test transcript:', err.message); }
+  }
+
+  memStore.set(sessionId, {
+    ...(memStore.get(sessionId) || { id: sessionId }),
+    status: 'processing',
+    transcript: injectedTranscript,
+    audio_metrics: audioMetrics,
+  });
+
+  let grading;
+  try {
+    const personaRaw = loadPersonaFile(personaId);
+    const persona = normalisePersona(personaRaw);
+    grading = sessionMode === 'investor_pitch'
+      ? await claude.gradePitchFast(injectedTranscript, audioMetrics, persona)
+      : await claude.gradeSessionFast(injectedTranscript, audioMetrics, persona);
+  } catch (err) {
+    console.error('Test grading error:', err.message);
+    grading = sessionMode === 'investor_pitch'
+      ? { overall_score: 0, score_breakdown: { problem_clarity: 0, why_now: 0, right_to_win: 0, ask_clarity: 0 }, headline: 'Analysis failed', call_verdict: null, call_momentum: null, next_session_focus: null }
+      : { overall_score: 0, score_breakdown: { opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 }, headline: 'Analysis failed', call_verdict: null, call_momentum: null, next_session_focus: null };
+  }
+
+  await storeResults(sessionId, useMemOnly, grading, injectedTranscript, audioMetrics, sessionMode);
+}
+
+// ---------------------------------------------------------------------------
 // GET /api/session/:id/status
 // ---------------------------------------------------------------------------
 router.get('/:id/status', async (req, res) => {

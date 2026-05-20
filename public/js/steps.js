@@ -164,6 +164,7 @@ function renderPitchPrepStep() {
       60 seconds to cover: problem, why now, your right to win, and the ask.
     </div>
     <button class="ob-btn" style="margin:0" onclick="skipPitchPrep()">Start now</button>
+    <div style="margin-top:10px;font-size:0.7rem;color:var(--ink-3);cursor:pointer" onclick="runTestSession()">or use sample winning transcript →</div>
   </div>`;
 }
 
@@ -208,6 +209,7 @@ function renderBriefStep() {
         <div class="brief-countdown" id="briefCountdown">0:30</div>
         <button class="ob-btn" style="padding:6px 14px;font-size:0.72rem;margin:0" onclick="skipBrief()">Start now</button>
       </div>
+      <div style="margin-top:10px;font-size:0.7rem;color:var(--ink-3);cursor:pointer;text-align:center" onclick="runTestSession()">or use sample winning transcript →</div>
     </div>
   </div>`;
 }
