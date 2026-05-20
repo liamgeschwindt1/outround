@@ -983,9 +983,6 @@ function renderCallStep() {
       <div class="cv-st" id="cst">Connecting…</div>
       <div id="pitchPhaseBar" style="font-size:0.62rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);min-height:14px;margin-bottom:2px"></div>
       <div class="cv-timer" id="cvTimer"></div>
-      <button class="end-btn" id="eb" onclick="endCall()" title="End pitch" style="display:none">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" transform="rotate(135 12 12)"/></svg>
-      </button>
     </div>`;
   }
   return `<div class="call-step">
@@ -1258,31 +1255,40 @@ async function startCall() {
         const cst = document.getElementById('cst'); if (cst) cst.textContent = 'Connected — start talking';
         const wf = document.getElementById('wf'); if (wf) wf.classList.remove('idle');
         const ring = document.getElementById('cvRing'); if (ring) ring.classList.add('on');
-        const eb = document.getElementById('eb'); if (eb) eb.style.display = 'flex';
-        _s.callTimerInterval = setInterval(() => {
-          const elapsed = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
-          const el = document.getElementById('cvTimer'); if (el) el.textContent = fmtSecs(elapsed);
-        }, 1000);
+        if (_s.mode !== 'investor_pitch') {
+          const eb = document.getElementById('eb'); if (eb) eb.style.display = 'flex';
+        }
         if (_s.mode === 'investor_pitch') {
+          // Pitch mode: show countdown in the main timer, phase label above it
           _s._pitchPhase = 'pitching';
           let pitchSecs = 60;
           const phaseBar = document.getElementById('pitchPhaseBar');
-          if (phaseBar) phaseBar.textContent = 'YOUR PITCH — 1:00';
+          const timer = document.getElementById('cvTimer');
+          if (phaseBar) phaseBar.textContent = 'YOUR PITCH';
+          if (timer) { timer.textContent = '1:00'; timer.style.fontSize = '2.2rem'; timer.style.fontWeight = '800'; timer.style.color = 'var(--ink)'; }
           _s._pitchTimerInterval = setInterval(() => {
             pitchSecs--;
             const bar = document.getElementById('pitchPhaseBar');
+            const t = document.getElementById('cvTimer');
             if (pitchSecs > 0) {
-              if (bar) bar.textContent = 'YOUR PITCH — ' + fmtSecs(pitchSecs);
+              if (t) { t.textContent = fmtSecs(pitchSecs); t.style.color = pitchSecs <= 10 ? '#e05252' : 'var(--ink)'; }
             } else {
               clearInterval(_s._pitchTimerInterval);
               _s._pitchPhase = 'qa';
               if (bar) bar.textContent = "NATALIE'S QUESTIONS";
+              if (t) { t.textContent = ''; t.style.fontSize = ''; t.style.fontWeight = ''; t.style.color = ''; }
             }
+          }, 1000);
+        } else {
+          _s.callTimerInterval = setInterval(() => {
+            const elapsed = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
+            const el = document.getElementById('cvTimer'); if (el) el.textContent = fmtSecs(elapsed);
           }, 1000);
         }
       },
-      onDisconnect: () => {
-        uiLog('ElevenLabs disconnected — callEnding=' + _s._callEnding, 'info');
+      onDisconnect: (details) => {
+        const reasonStr = details ? ` [${details.reason}${details.message ? ': ' + details.message : ''}]` : '';
+        uiLog('ElevenLabs disconnected — callEnding=' + _s._callEnding + reasonStr, 'info');
         if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
         if (_s._pitchTimerInterval) { clearInterval(_s._pitchTimerInterval); _s._pitchTimerInterval = null; }
         if (!_s._callEnding) {
@@ -1295,7 +1301,7 @@ async function startCall() {
           const ring = document.getElementById('cvRing'); if (ring) ring.classList.remove('on');
           const eb = document.getElementById('eb'); if (eb) eb.style.display = 'none';
           const cst = document.getElementById('cst'); if (cst) cst.textContent = '';
-          const cvTimer = document.getElementById('cvTimer'); if (cvTimer) cvTimer.textContent = '';
+          const cvTimer = document.getElementById('cvTimer'); if (cvTimer) { cvTimer.textContent = ''; cvTimer.style.fontSize = ''; cvTimer.style.fontWeight = ''; cvTimer.style.color = ''; }
           const phaseBar = document.getElementById('pitchPhaseBar'); if (phaseBar) phaseBar.textContent = '';
           const callStep = document.querySelector('.call-step');
           if (callStep) {

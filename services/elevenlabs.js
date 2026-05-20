@@ -82,7 +82,11 @@ function buildClientOverrides(config) {
     // Only pass the prompt string — not the full prompt object (which includes
     // llm, temperature, built_in_tools etc. that ElevenLabs rejects as invalid)
     if (agent.prompt?.prompt) result.agent.prompt = { prompt: agent.prompt.prompt };
-    if (agent.first_message) result.agent.firstMessage = agent.first_message;
+    // NOTE: firstMessage override omitted — ElevenLabs rejects sessions when
+    // a field is overridden that the agent's platform_settings marks as false.
+    // To use a custom first_message per persona, either:
+    //   1. Enable first_message override in the ElevenLabs dashboard for the agent, or
+    //   2. Give the persona its own agent_id in _meta (separate dashboard agent).
     if (agent.language) result.agent.language = agent.language;
   }
 
