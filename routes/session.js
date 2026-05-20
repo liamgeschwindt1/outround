@@ -125,8 +125,8 @@ router.get('/:id/voice-token', async (req, res) => {
   }
 
   try {
-    const signedUrl = await elevenlabs.getConversationToken(personaId);
-    res.json({ signed_url: signedUrl });
+    const { signed_url, overrides } = await elevenlabs.getConversationToken(personaId);
+    res.json({ signed_url, overrides: overrides || null });
   } catch (err) {
     console.error('ElevenLabs token error:', err.message);
     res.status(503).json({ error: 'Voice service unavailable', detail: err.message });

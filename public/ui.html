@@ -1224,9 +1224,9 @@ function prefetchVoiceToken() {
   _voiceTokenPromise = fetch('/api/session/' + _s.sessionId + '/voice-token')
     .then(async (r) => {
       if (!r.ok) throw new Error('Voice token HTTP ' + r.status);
-      const { signed_url } = await r.json();
+      const data = await r.json();
       uiLog('Voice token ready (prefetched)', 'ok');
-      return signed_url;
+      return data; // { signed_url, overrides }
     })
     .catch((err) => { _voiceTokenPromise = null; throw err; });
   return _voiceTokenPromise;
@@ -1247,10 +1247,12 @@ async function startCall() {
     // Use prefetched promises if available — otherwise kick them off now
     const tokenP = prefetchVoiceToken();
     const sdkP = warmConversationSdk();
-    const [signed_url, { Conversation }] = await Promise.all([tokenP, sdkP]);
+    const [tokenData, { Conversation }] = await Promise.all([tokenP, sdkP]);
     uiLog('Voice token received', 'ok');
+    const sessionOpts = { signedUrl: tokenData.signed_url };
+    if (tokenData.overrides) sessionOpts.overrides = tokenData.overrides;
     _s.conversation = await Conversation.startSession({
-      signedUrl: signed_url,
+      ...sessionOpts,
       onConnect: () => {
         uiLog('ElevenLabs connected', 'ok');
         const cst = document.getElementById('cst'); if (cst) cst.textContent = 'Connected — start talking';

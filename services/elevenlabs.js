@@ -46,22 +46,13 @@ async function getConversationToken(personaId) {
     throw new Error(`No agent_id found for persona "${personaId}" — set ELEVENLABS_AGENT_ID in env`);
   }
 
-  // The ElevenLabs Node SDK's getSignedUrl is a GET-only call that silently
-  // drops conversation_config_override. Call the REST API directly as POST
-  // so the override is sent in the request body.
-  const body = { agent_id: agentId };
-  if (persona.conversation_config) {
-    body.conversation_config_override = persona.conversation_config;
-  }
-
-  const res = await fetch('https://api.elevenlabs.io/v1/convai/conversation/get-signed-url', {
-    method: 'POST',
-    headers: {
-      'xi-api-key': process.env.ELEVENLABS_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
+  // The ElevenLabs signed URL is a simple GET authenticated call.
+  // The conversation_config_override must be passed by the *client* SDK
+  // when initiating the WebSocket session (startSession({ overrides })).
+  const res = await fetch(
+    `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(agentId)}`,
+    { headers: { 'xi-api-key': process.env.ELEVENLABS_KEY } }
+  );
 
   if (!res.ok) {
     const err = await res.text().catch(() => res.statusText);
@@ -69,7 +60,36 @@ async function getConversationToken(personaId) {
   }
 
   const data = await res.json();
-  return data.signed_url;
+
+  // Build overrides in the format @11labs/client expects so the caller can
+  // pass them to Conversation.startSession({ overrides }).
+  const overrides = buildClientOverrides(persona.conversation_config);
+
+  return { signed_url: data.signed_url, overrides };
+}
+
+/**
+ * Convert a persona's conversation_config into the camelCase overrides
+ * structure that the @11labs/client Conversation.startSession API accepts.
+ */
+function buildClientOverrides(config) {
+  if (!config) return null;
+  const result = {};
+
+  const agent = config.agent;
+  if (agent) {
+    result.agent = {};
+    if (agent.prompt) result.agent.prompt = agent.prompt;
+    if (agent.first_message) result.agent.firstMessage = agent.first_message;
+    if (agent.language) result.agent.language = agent.language;
+  }
+
+  const tts = config.tts;
+  if (tts && tts.voice_id) {
+    result.tts = { voiceId: tts.voice_id };
+  }
+
+  return Object.keys(result).length ? result : null;
 }
 
 /**
