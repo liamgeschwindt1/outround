@@ -3,11 +3,9 @@
 const Anthropic = require('@anthropic-ai/sdk').default || require('@anthropic-ai/sdk');
 
 /**
- * Grade a completed call session using Claude.
- * @param {Array} transcript - [{speaker, text, start_ms}]
- * @param {Object} audioMetrics
- * @param {Object} persona - persona definition
- * @returns {Promise<Object>} grading result
+ * @deprecated Use gradeSessionFast + gradeSessionDeep instead.
+ * This monolithic grading function is no longer called by the application.
+ * Kept for reference only — do not invoke.
  */
 async function gradeSession(transcript, audioMetrics, persona) {
   if (!process.env.ANTHROPIC_KEY) {
@@ -55,7 +53,7 @@ COACHING FEEDBACK RULES:
 - "Confrontational dynamic" → "you were rude to this prospect"
 - If a move was good, say clearly why it worked — don't soften it
 - If the call was a disaster, say so
-- action must be a specific line the rep can use word-for-word next time
+- action must be a complete sentence the rep can say verbatim on their next call — not advice, not a direction, an actual spoken line
 - category must be one of: opening | discovery | objection | rapport | close
 
 CALL VERDICT:
@@ -93,10 +91,12 @@ Return valid JSON only. No preamble, no markdown fences:
     }
   ],
   "sentiment_timeline": [
-    { "start_pct": 0, "end_pct": 20, "sentiment": "neutral" },
-    { "start_pct": 21, "end_pct": 60, "sentiment": "positive" }
+    { "start_pct": 0, "end_pct": 20, "sentiment": "neutral", "label": "neutral" },
+    { "start_pct": 21, "end_pct": 60, "sentiment": "positive", "label": "engaged" }
   ]
-}`;
+}
+
+sentiment_timeline label must be one of: engaged | checking_out | resistant | warming | neutral — one word describing the quality of prospect engagement in that chunk, for direct UI display.`;
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
@@ -236,9 +236,9 @@ COACHING FEEDBACK: 2–4 specific moments that defined this call.
 - Each must reference a direct quote from the transcript.
 - category: opening | discovery | objection | rapport | close
 - score_label: bad | mid | good
-- action: exact alternative line the rep can use word-for-word
+- action: a complete sentence the rep can say verbatim on their next call — not advice, not a direction, an actual spoken line
 
-SENTIMENT TIMELINE: prospect engagement in 20% chunks (neutral/positive/negative).
+SENTIMENT TIMELINE: prospect engagement in 20% chunks. For each chunk include: sentiment (neutral/positive/negative) and label (engaged/checking_out/resistant/warming/neutral) — one word describing quality of engagement for direct UI display.
 
 Return ONLY valid JSON, no markdown fences:
 {
@@ -253,11 +253,11 @@ Return ONLY valid JSON, no markdown fences:
       "score_label": "bad|mid|good",
       "body": "What happened and why it matters.",
       "quote": "Exact words from the rep",
-      "action": "Word-for-word alternative"
+      "action": "A complete sentence the rep can say verbatim on their next call — not advice, not a direction, an actual spoken line"
     }
   ],
   "sentiment_timeline": [
-    { "start_pct": 0, "end_pct": 20, "sentiment": "neutral" }
+    { "start_pct": 0, "end_pct": 20, "sentiment": "neutral", "label": "neutral" }
   ]
 }`;
 
@@ -291,8 +291,6 @@ Return ONLY valid JSON, no markdown fences:
     throw new Error('Claude deep grading returned unparseable response: ' + parseErr.message);
   }
 }
-
-module.exports = { gradeSession, gradeSessionFast, gradeSessionDeep, gradePitchFast, gradePitchDeep };
 
 // ---------------------------------------------------------------------------
 // Investor pitch — fast grading
@@ -420,9 +418,9 @@ COACHING FEEDBACK: 2–4 moments that defined this pitch.
 - Each must reference a direct quote.
 - category: problem | why_now | right_to_win | ask | qa_response
 - score_label: bad | mid | good
-- action: exact alternative line the founder can use word-for-word
+- action: a complete sentence the founder can say verbatim on their next call — not advice, not a direction, an actual spoken line
 
-SENTIMENT TIMELINE: investor engagement in 20% chunks (neutral/positive/negative).
+SENTIMENT TIMELINE: investor engagement in 20% chunks. For each chunk include: sentiment (neutral/positive/negative) and label (engaged/checking_out/resistant/warming/neutral) — one word describing quality of engagement for direct UI display.
 
 Return ONLY valid JSON, no markdown fences:
 {
@@ -437,11 +435,11 @@ Return ONLY valid JSON, no markdown fences:
       "score_label": "bad|mid|good",
       "body": "What happened and why it matters.",
       "quote": "Exact words from the founder",
-      "action": "Word-for-word alternative"
+      "action": "A complete sentence the founder can say verbatim on their next call — not advice, not a direction, an actual spoken line"
     }
   ],
   "sentiment_timeline": [
-    { "start_pct": 0, "end_pct": 20, "sentiment": "neutral" }
+    { "start_pct": 0, "end_pct": 20, "sentiment": "neutral", "label": "neutral" }
   ]
 }`;
 
@@ -474,3 +472,5 @@ Return ONLY valid JSON, no markdown fences:
     throw new Error('Claude pitch deep grading returned unparseable response: ' + parseErr.message);
   }
 }
+
+module.exports = { gradeSession, gradeSessionFast, gradeSessionDeep, gradePitchFast, gradePitchDeep };
