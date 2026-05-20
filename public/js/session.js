@@ -445,24 +445,31 @@ function renderLeaderboard(entries) {
 // ---------------------------------------------------------------------------
 // Loading cycle text
 // ---------------------------------------------------------------------------
-const _LOAD_CYCLE_TEXTS = [
+const _LOAD_CYCLE_TEXTS_COLD = [
   'Reading between the lines...',
   'Finding the moment it turned...',
   'Scoring your opening...',
   'Building your coaching report...',
 ];
+const _LOAD_CYCLE_TEXTS_PITCH = [
+  'Reading between the lines...',
+  'Scoring your problem clarity...',
+  'Finding the moment it turned...',
+  'Building your coaching report...',
+];
 
 function _startLoadingCycle() {
   if (_loadCycleInterval) { clearInterval(_loadCycleInterval); _loadCycleInterval = null; }
+  const texts = _s.mode === 'investor_pitch' ? _LOAD_CYCLE_TEXTS_PITCH : _LOAD_CYCLE_TEXTS_COLD;
   let idx = 0;
   const set = () => {
     const el = document.getElementById('loadCycleText');
     if (!el) { clearInterval(_loadCycleInterval); return; }
     el.classList.add('fade');
     setTimeout(() => {
-      idx = (idx + 1) % _LOAD_CYCLE_TEXTS.length;
+      idx = (idx + 1) % texts.length;
       const el2 = document.getElementById('loadCycleText');
-      if (el2) { el2.textContent = _LOAD_CYCLE_TEXTS[idx]; el2.classList.remove('fade'); }
+      if (el2) { el2.textContent = texts[idx]; el2.classList.remove('fade'); }
     }, 360);
   };
   _loadCycleInterval = setInterval(set, 3000);
@@ -554,7 +561,11 @@ function renderResultsPage(data) {
   if (!el) return;
   const score = data.score || 0;
   const bd = data.score_breakdown || {};
-  const mode = data.mode || _s.mode || 'cold_call';
+  // Auto-detect pitch mode from breakdown keys in case data.mode was lost
+  let mode = data.mode || bd.mode || _s.mode || 'cold_call';
+  if (mode !== 'investor_pitch' && (bd.problem_clarity !== undefined || bd.why_now !== undefined || bd.right_to_win !== undefined)) {
+    mode = 'investor_pitch';
+  }
   const isPitch = mode === 'investor_pitch';
   const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step', meeting_set: 'Meeting set', deck_requested: 'Deck requested', passed: 'Passed' };
   const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };

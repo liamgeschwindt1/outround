@@ -196,7 +196,7 @@ router.get('/:id/status', async (req, res) => {
       return res.json({
         status: 'complete',
         score: row.score,
-        mode: row.mode || 'cold_call',
+        mode: row.mode || breakdown.mode || 'cold_call',
         score_breakdown: breakdown,
         headline: breakdown.headline || null,
         call_verdict: breakdown.call_verdict || null,
@@ -320,6 +320,7 @@ async function storeResults(sessionId, useMemOnly, grading, transcript, audioMet
     call_verdict: grading.call_verdict || null,
     call_momentum: grading.call_momentum || null,
     next_session_focus: grading.next_session_focus || null,
+    mode: sessionMode || 'cold_call',  // persist mode in JSON so status API can read it even if column is NULL
   };
 
   let savedToDb = false;

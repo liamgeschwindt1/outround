@@ -90,7 +90,7 @@ function renderTranscriptOnly(transcript, timeline, mode) {
   el.innerHTML = html;
 }
 
-function renderRightPanelLoading(audioMetrics) {
+function renderRightPanelLoading(audioMetrics, mode) {
   const el = document.getElementById('anRight');
   if (!el) return;
   
@@ -129,8 +129,8 @@ function renderRightPanelLoading(audioMetrics) {
   `;
   
   // Section 3: Sub-scores (loading state)
-  const mode = _s.mode || 'cold_call';
-  const isPitch = mode === 'investor_pitch';
+  const resolvedMode = mode || _s.mode || 'cold_call';
+  const isPitch = resolvedMode === 'investor_pitch';
   const subLabels = isPitch
     ? ['Problem clarity', 'Why now', 'Right to win', 'Ask clarity']
     : ['Opening hook', 'Objection handling', 'Talk ratio', 'Clear ask'];
@@ -296,8 +296,8 @@ function populateAnalysisResults(data) {
   }
   
   // Populate sub-scores
-  const mode = _s.mode || 'cold_call';
-  const isPitch = mode === 'investor_pitch';
+  const mode = data.mode || (bd.mode) || _s.mode || 'cold_call';
+  const isPitch = mode === 'investor_pitch' || bd.problem_clarity !== undefined || bd.why_now !== undefined;
   const subVals = isPitch
     ? [bd.problem_clarity||0, bd.why_now||0, bd.right_to_win||0, bd.ask_clarity||0]
     : [bd.opening||0, bd.objections||0, bd.talk_ratio||0, bd.clear_ask||0];
@@ -318,9 +318,11 @@ function populateAnalysisResults(data) {
 
 function renderAnalysisPage(data) {
   if (!data) return;
-  if (data.mode) _s.mode = data.mode;
-  renderTranscriptOnly(data.transcript || [], data.sentiment_timeline || [], data.mode);
-  renderRightPanelLoading(data.audio_metrics || {});
+  // Resolve mode from all available sources before rendering
+  const resolvedMode = data.mode || (data.score_breakdown && data.score_breakdown.mode) || _s.mode || 'cold_call';
+  if (resolvedMode !== _s.mode) _s.mode = resolvedMode;
+  renderTranscriptOnly(data.transcript || [], data.sentiment_timeline || [], resolvedMode);
+  renderRightPanelLoading(data.audio_metrics || {}, resolvedMode);
   populateAnalysisResults(data);
 }
 
