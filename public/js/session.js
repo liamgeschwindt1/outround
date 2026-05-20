@@ -240,7 +240,7 @@ async function startCall() {
         else if (msg.type === 'agent_response' && msg.agent_response_event?.agent_response) isAgent = true;
         else if (msg.type === 'user_transcript' && msg.user_transcription_event?.user_transcript) isUser = true;
         const cst = document.getElementById('cst');
-        if (cst) cst.textContent = isAgent ? 'Hendrik speaking' : isUser ? 'Your turn' : cst.textContent;
+        if (cst) cst.textContent = isAgent ? (_s.mode === 'investor_pitch' ? 'Natalie speaking' : 'Hendrik speaking') : isUser ? 'Your turn' : cst.textContent;
       },
       onError: (err) => {
         uiLog('ElevenLabs error: ' + (err?.message || err), 'err');

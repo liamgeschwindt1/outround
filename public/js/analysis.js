@@ -37,8 +37,9 @@ async function pollForTranscript(sessionId) {
         _s._transcript = data.transcript;
         _s._sentiment = data.sentiment_timeline || [];
         _s._audioMetrics = data.audio_metrics || {};
+        if (data.mode) _s.mode = data.mode;
         uiLog('Transcript ready, audio_metrics keys: ' + Object.keys(_s._audioMetrics).join(','), 'ok');
-        renderTranscriptOnly(_s._transcript, _s._sentiment);
+        renderTranscriptOnly(_s._transcript, _s._sentiment, data.mode || _s.mode);
         updateMetricsPanel(_s._audioMetrics);
         return;
       } else if (data.status === 'processing' && attempts < maxAttempts) {
@@ -49,7 +50,7 @@ async function pollForTranscript(sessionId) {
   check();
 }
 
-function renderTranscriptOnly(transcript, timeline) {
+function renderTranscriptOnly(transcript, timeline, mode) {
   const el = document.getElementById('anLeft');
   if (!el || !transcript || transcript.length === 0) {
     el.innerHTML = '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
@@ -69,7 +70,7 @@ function renderTranscriptOnly(transcript, timeline) {
     const isRep = t.speaker === 'rep';
     const pct = Math.round(((t.start_ms || 0) / totalMs) * 100);
     const sc = isRep ? 's-n' : sentimentClass(timeline, pct);
-    const prospectName = (_s.mode === 'investor_pitch') ? 'Natalie' : 'Hendrik';
+    const prospectName = ((mode || _s.mode) === 'investor_pitch') ? 'Natalie' : 'Hendrik';
     html += `<div class="t-line" data-line-idx="${idx}">
       <div class="sent-bar ${sc}"></div>
       <div class="t-spk${isRep ? ' rep' : ''}">${isRep ? 'You' : prospectName}</div>
@@ -317,7 +318,8 @@ function populateAnalysisResults(data) {
 
 function renderAnalysisPage(data) {
   if (!data) return;
-  renderTranscriptOnly(data.transcript || [], data.sentiment_timeline || []);
+  if (data.mode) _s.mode = data.mode;
+  renderTranscriptOnly(data.transcript || [], data.sentiment_timeline || [], data.mode);
   renderRightPanelLoading(data.audio_metrics || {});
   populateAnalysisResults(data);
 }

@@ -214,7 +214,7 @@ router.get('/:id/status', async (req, res) => {
   // Fall back to in-memory store
   const mem = memStore.get(id);
   if (!mem) return res.status(404).json({ error: 'Session not found' });
-  if (mem.status === 'complete' && mem.result) return res.json({ status: 'complete', mode: mem.mode || 'cold_call', ...mem.result });
+  if (mem.status === 'complete' && mem.result) return res.json({ status: 'complete', ...mem.result, mode: mem.mode || mem.result?.mode || 'cold_call' });
   if (mem.status === 'error') return res.status(500).json({ error: mem.errorMessage || 'Analysis failed' });
   return res.json({ status: 'processing', mode: mem.mode || 'cold_call' });
 });
@@ -225,23 +225,34 @@ router.get('/:id/status', async (req, res) => {
 async function processSession(sessionId, { elevenlabs_conversation_id, duration_seconds }) {
   const durationSecs = duration_seconds || 0;
   const memSession = memStore.get(sessionId);
-  const personaId = memSession?.persona_id || 'hendrik';
-  const sessionMode = memSession?.mode || 'cold_call';
+
+  // Resolve persona_id and mode — prefer memStore, fall back to DB so server
+  // restarts don't silently downgrade investor_pitch sessions to cold_call grading.
+  let personaId = memSession?.persona_id || null;
+  let sessionMode = memSession?.mode || null;
 
   // Check session exists in DB or memStore — proceed as long as one has it
   let useMemOnly = false;
   try {
-    const check = await db.query('SELECT id FROM sessions WHERE id = $1', [sessionId]);
+    const check = await db.query('SELECT id, persona_id, mode FROM sessions WHERE id = $1', [sessionId]);
     if (check.rows.length === 0 && !memSession) {
       console.error('processSession: session not found anywhere, skipping —', sessionId);
       return;
     }
     useMemOnly = check.rows.length === 0;
+    if (check.rows.length > 0) {
+      if (!personaId) personaId = check.rows[0].persona_id || 'hendrik';
+      if (!sessionMode) sessionMode = check.rows[0].mode || 'cold_call';
+    }
   } catch (err) {
     console.error('processSession: DB check failed —', err.message);
     if (!memSession) return;
     useMemOnly = true;
   }
+
+  // Final defaults if DB was also unavailable
+  if (!personaId) personaId = 'hendrik';
+  if (!sessionMode) sessionMode = 'cold_call';
 
   // 1. Fetch transcript from ElevenLabs
   let transcript = [];
