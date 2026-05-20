@@ -1208,7 +1208,7 @@ function playSoundAndWait(src) {
 async function initiateCall() {
   if (!_s.sessionId) { uiLog('No session ID — cannot start call', 'err'); return; }
   await goToStep('call');
-  await playSoundAndWait('/start_call.mp3');
+  if (_s.mode !== 'investor_pitch') await playSoundAndWait('/start_call.mp3');
   await startCall();
 }
 
@@ -1312,7 +1312,7 @@ async function startCall() {
           }
           let convId = null;
           try { convId = _s.conversation?.getId ? _s.conversation.getId() : null; } catch {}
-          playSound('/end_call.mp3');
+          if (_s.mode !== 'investor_pitch') playSound('/end_call.mp3');
           setTimeout(() => _finishCall(convId), 2000);
         }
       },

@@ -62,7 +62,7 @@
       "background_voice_detection": false
     },
     "agent": {
-      "first_message": "Go ahead.",
+      "first_message": "Go ahead. You have 60 seconds.",
       "language": "en",
       "prompt": {
         "llm": "claude-3-haiku",
