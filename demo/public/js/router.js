@@ -30,11 +30,7 @@ var _currentStep = null;
 
 function selectMode(mode) {
   _s.mode = mode;
-  if (mode === 'investor_pitch') {
-    beginPitchSession();
-  } else {
-    goToStep('persona');
-  }
+  goToStep('character');
 }
 
 async function goToStep(step) {
