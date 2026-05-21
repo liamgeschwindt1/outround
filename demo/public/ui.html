@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outround</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@11labs/client/+esm" crossorigin>
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<!-- ===== DASHBOARD — always the base layer ===== -->
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-icon active" data-tip="Practice">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><line x1="8" y1="8" x2="10.5" y2="10.5"/></svg>
+    </div>
+    <div class="sb-icon" data-tip="Sessions">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="2"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>
+    </div>
+    <div class="sb-icon" data-tip="Leaderboard">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="9" width="3" height="5" rx="1"/><rect x="6.5" y="5" width="3" height="9" rx="1"/><rect x="11" y="7" width="3" height="7" rx="1"/></svg>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-icon locked" data-tip="Meeting Bot">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-3 2v-2H4a2 2 0 0 1-2-2V4z"/></svg>
+    </div>
+    <div class="sb-icon locked" data-tip="Analytics">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="2,12 6,7 9,9 14,4"/></svg>
+    </div>
+    <div class="sb-icon locked" data-tip="Team">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/></svg>
+    </div>
+    <div class="sb-spacer"></div>
+    <div class="sb-icon locked" data-tip="Settings">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="2"/><path d="M8 2v1M8 13v1M2 8h1M13 8h1M3.5 3.5l.7.7M11.8 11.8l.7.7M3.5 12.5l.7-.7M11.8 4.2l.7-.7"/></svg>
+    </div>
+  </aside>
+
+  <div class="body-wrap">
+    <header class="topbar">
+      <img src="/outround_logo_white.svg" alt="Outround" style="height:32px;width:auto;display:block;">
+      <div class="top-spacer"></div>
+      <div class="last-updated"><div class="last-updated-dot"></div>Updated May 17, 2026</div>
+      <div class="ava" id="userAva">LG</div>
+    </header>
+
+    <div class="main">
+      <button class="session-trigger" onclick="openSession()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+        Start session
+      </button>
+
+      <div class="grid">
+        <div id="leftCol">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12,7 12,12 15,15"/></svg></div>
+            <div class="empty-title">No sessions yet</div>
+            <div class="empty-sub">Start a session to practice your cold call against an AI persona. The clock is ticking.</div>
+          </div>
+          <div class="history-list" id="historyList" style="display:none"></div>
+        </div>
+
+        <div class="lb-panel">
+          <div class="panel-hdr">
+            <div class="panel-title">Leaderboard</div>
+            <div class="tag" style="background:rgba(34,197,94,0.07);color:#16a34a;border-color:rgba(34,197,94,0.18)">This week</div>
+          </div>
+          <div style="padding:12px 18px" id="lbBody">
+            <div class="lb-row"><div class="lb-rank top">1</div><div class="lb-av">SR</div><div class="lb-info"><div class="lb-name">Sophie R.</div><div class="lb-role">VP Sales · Berlin</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:91%"></div></div><div class="lb-sc">91</div></div>
+            <div class="lb-row"><div class="lb-rank top">2</div><div class="lb-av">MT</div><div class="lb-info"><div class="lb-name">Marcus T.</div><div class="lb-role">AE · Amsterdam</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:88%"></div></div><div class="lb-sc">88</div></div>
+            <div class="lb-row"><div class="lb-rank top">3</div><div class="lb-av">LK</div><div class="lb-info"><div class="lb-name">Lena K.</div><div class="lb-role">SDR · Munich</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:85%"></div></div><div class="lb-sc">85</div></div>
+            <div class="lb-row"><div class="lb-rank">4</div><div class="lb-av" id="ulbav" style="background:var(--ink);color:white">LG</div><div class="lb-info"><div class="lb-name" id="ulbn">You</div><div class="lb-role">Cold Call · Amsterdam</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:79%"></div></div><div class="lb-sc">79</div></div>
+            <div class="lb-row"><div class="lb-rank">5</div><div class="lb-av">AM</div><div class="lb-info"><div class="lb-name">Ana M.</div><div class="lb-role">Head of Sales · Madrid</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:74%"></div></div><div class="lb-sc">74</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DEBUG WIDGET ===== -->
+<div id="dbg-widget">
+  <div id="dbg-hdr" onclick="dbgToggle()">
+    <div class="dbg-dot"></div>
+    <div id="dbg-title">Debug Log</div>
+    <div id="dbg-count">0</div>
+    <button class="dbg-btn" onclick="event.stopPropagation();dbgCopy(this)">Copy</button>
+    <button class="dbg-btn" onclick="event.stopPropagation();dbgClear()">Clear</button>
+    <button class="dbg-btn" id="dbg-tog" style="width:22px;padding:3px 0;text-align:center">−</button>
+  </div>
+  <div id="dbg-body">
+    <div class="dbg-empty" id="dbg-empty">No logs yet.</div>
+  </div>
+</div>
+
+<!-- ===== FOCUS OVERLAY — modal layer above dashboard, steps 1-5 and 7 ===== -->
+<div class="focus-overlay" id="focusOverlay">
+  <div class="focus-card" id="focusCard">
+    <div class="progress-dots" id="progressDots"></div>
+    <div class="card-step-wrap" id="cardStepWrap">
+      <!-- rendered by JS per step -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== ANALYSIS PAGE — Step 6, full screen ===== -->
+<div class="analysis-page" id="analysisPage">
+  <div class="an-shell">
+    <aside class="an-sidebar">
+      <div class="sb-icon active" data-tip="Practice">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><line x1="8" y1="8" x2="10.5" y2="10.5"/></svg>
+      </div>
+      <div class="sb-icon" data-tip="Sessions">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="2"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>
+      </div>
+      <div class="sb-icon" data-tip="Leaderboard">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="9" width="3" height="5" rx="1"/><rect x="6.5" y="5" width="3" height="9" rx="1"/><rect x="11" y="7" width="3" height="7" rx="1"/></svg>
+      </div>
+      <div class="sb-divider"></div>
+      <div class="sb-icon locked" data-tip="Meeting Bot">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-3 2v-2H4a2 2 0 0 1-2-2V4z"/></svg>
+      </div>
+      <div class="sb-icon locked" data-tip="Analytics">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="2,12 6,7 9,9 14,4"/></svg>
+      </div>
+      <div class="sb-spacer"></div>
+      <div class="sb-icon locked" data-tip="Settings">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="2"/><path d="M8 2v1M8 13v1M2 8h1M13 8h1M3.5 3.5l.7.7M11.8 11.8l.7.7M3.5 12.5l.7-.7M11.8 4.2l.7-.7"/></svg>
+      </div>
+    </aside>
+
+    <div class="an-body">
+      <header class="an-topbar" id="anTopbar">
+        <div class="logo">
+          <div class="logo-mark">
+            <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="6" y1="3" x2="6" y2="6"/><line x1="6" y1="6" x2="8" y2="8"/></svg>
+          </div>
+          <div class="logo-text">Outround</div>
+        </div>
+        <div class="top-spacer"></div>
+        <button class="an-finish-btn" onclick="finishAnalysis()">Finish</button>
+      </header>
+
+      <div class="an-layout">
+        <div class="an-left" id="anLeft"></div>
+        <div class="an-middle" id="anMiddle"></div>
+        <div class="an-right" id="anRight"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESULTS PAGE — Screen 2 ===== -->
+<div class="results-page" id="resultsPage">
+  <div class="results-inner" id="resultsInner"></div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toastEl"></div>
+
+<script src="/js/state.js"></script>
+<script src="/js/debug.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/router.js"></script>
+<script src="/js/steps.js"></script>
+<script src="/js/session.js"></script>
+<script src="/js/analysis.js"></script>
+<script>
+(function init() {
+  loadLeaderboard();
+  goToStep('onboarding');
+})();
+</script></body>
+</html>

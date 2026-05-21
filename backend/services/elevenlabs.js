@@ -20,7 +20,7 @@ function getClient() {
  * @returns {object}
  */
 function loadPersona(personaId) {
-  const modesDir = path.join(__dirname, '..', 'modes');
+  const modesDir = path.join(__dirname, '..', 'personas');
   for (const sub of fs.readdirSync(modesDir)) {
     const fp = path.join(modesDir, sub, `${personaId}.json`);
     if (fs.existsSync(fp)) return require(fp);

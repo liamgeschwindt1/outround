@@ -21,7 +21,7 @@ db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS mode TEXT`).ca
 // Persona loading — searches all modes/ subdirectories
 // ---------------------------------------------------------------------------
 function loadPersonaFile(personaId) {
-  const modesDir = require('path').join(__dirname, '..', 'modes');
+  const modesDir = require('path').join(__dirname, '..', 'personas');
   for (const sub of fs.readdirSync(modesDir)) {
     const fp = require('path').join(modesDir, sub, `${personaId}.json`);
     if (fs.existsSync(fp)) return require(fp);
