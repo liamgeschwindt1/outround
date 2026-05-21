@@ -38,19 +38,17 @@ function renderOnboardingStep() {
 }
 
 function renderModeStep() {
-  const isCold = _s.mode === 'cold_call';
-  const isPitch = _s.mode === 'investor_pitch';
   return `<div class="card-step">
     <div class="step-eyebrow">Practice mode</div>
     <div class="ob-title" style="margin-bottom:4px;font-size:1.2rem">What are you preparing for?</div>
     <div class="ob-sub" style="margin-bottom:16px">Two modes live. More dropping soon.</div>
     <div class="mode-grid">
-      <div class="mode-card${isCold ? ' mode-active' : ''}" onclick="selectMode('cold_call')">
+      <div class="mode-card" onclick="selectMode('cold_call')">`
         <div class="mode-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.36 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
         <div class="mode-name">Cold Calls</div>
         <div class="mode-desc">Live AI conversation, 3–5 min. SDR &amp; AE world.</div>
       </div>
-      <div class="mode-card${isPitch ? ' mode-active' : ''}" onclick="selectMode('investor_pitch')">
+      <div class="mode-card" onclick="selectMode('investor_pitch')">`
         <div class="mode-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
         <div class="mode-name">Investor Pitch</div>
         <div class="mode-desc">60 seconds to pitch. Then Natalie asks the hard question.</div>
