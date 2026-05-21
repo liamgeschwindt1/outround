@@ -68,7 +68,6 @@ function renderModeStep() {
         <div class="mode-desc">High-value, one-shot deals where preparation is everything.</div>
       </div>
     </div>
-    <button class="ob-btn" onclick="goToStep('character')">Continue</button>
   </div>`;
 }
 
