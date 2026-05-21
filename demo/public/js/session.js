@@ -118,7 +118,12 @@ function skipPitchPrep() {
 // ---------------------------------------------------------------------------
 // Test mode — inject sample winning transcript, skip real call
 // ---------------------------------------------------------------------------
+var _testSessionPending = false;
+
 async function runTestSession() {
+  if (_testSessionPending) { showToast('Still connecting — please wait…'); return; }
+  _testSessionPending = true;
+
   // Clear any active countdowns — also mark a flag so the 280ms brief setTimeout doesn't re-arm
   _briefTestMode = true;
   if (_briefInterval) { clearInterval(_briefInterval); _briefInterval = null; }
@@ -127,7 +132,7 @@ async function runTestSession() {
 
   const mode = _s.mode || 'cold_call';
   const transcript = TEST_TRANSCRIPTS[mode];
-  if (!transcript) { uiLog('No test transcript for mode: ' + mode, 'err'); return; }
+  if (!transcript) { uiLog('No test transcript for mode: ' + mode, 'err'); _testSessionPending = false; return; }
 
   // Create session if not yet created (e.g. triggered from pitchprep before countdown ended)
   if (!_s.sessionId) {
@@ -140,8 +145,14 @@ async function runTestSession() {
         body: JSON.stringify({ user_name: _s.user?.name || null, user_email: _s.user?.email || null, user_role: _s.user?.role || null, persona_id, mode }),
       });
       if (res.ok) { const data = await res.json(); _s.sessionId = data.session_id; uiLog('Test session: ' + data.session_id, 'ok'); }
-      else { uiLog('Test session start failed: HTTP ' + res.status, 'err'); return; }
-    } catch (err) { uiLog('Test session start error: ' + err.message, 'err'); return; }
+      else {
+        const msg = res.status === 504 ? 'Backend is warming up — try again in a few seconds' : 'Session start failed: HTTP ' + res.status;
+        uiLog('Test session start failed: HTTP ' + res.status, 'err');
+        showToast(msg);
+        _testSessionPending = false;
+        return;
+      }
+    } catch (err) { uiLog('Test session start error: ' + err.message, 'err'); showToast('Connection error — check backend'); _testSessionPending = false; return; }
   }
 
   _s.callDuration = 90;
@@ -155,9 +166,9 @@ async function runTestSession() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ transcript, duration_seconds: 90 }),
     });
-    if (r.ok) { uiLog('Test transcript submitted — polling for results…', 'ok'); pollForResults(); }
-    else { uiLog('end-test failed: HTTP ' + r.status, 'err'); _showLoadingError(); }
-  } catch (err) { uiLog('end-test error: ' + err.message, 'err'); _showLoadingError(); }
+    if (r.ok) { uiLog('Test transcript submitted — polling for results…', 'ok'); _testSessionPending = false; pollForResults(); }
+    else { uiLog('end-test failed: HTTP ' + r.status, 'err'); _testSessionPending = false; _showLoadingError(); }
+  } catch (err) { uiLog('end-test error: ' + err.message, 'err'); _testSessionPending = false; _showLoadingError(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -488,6 +499,7 @@ async function goAgain() {
   _s.sessionId = null; _s.conversation = null; _s.analysis = null;
   _s.callStart = null; _s.callDuration = 0; _s.muted = false; _s._callEnding = false;
   _s.mode = 'cold_call'; _s._pitchPhase = null;
+  _testSessionPending = false; _briefTestMode = false;
   if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
   if (_s._pitchTimerInterval) { clearInterval(_s._pitchTimerInterval); _s._pitchTimerInterval = null; }
   clearInterval(_briefInterval);
