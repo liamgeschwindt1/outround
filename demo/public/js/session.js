@@ -119,7 +119,8 @@ function skipPitchPrep() {
 // Test mode — inject sample winning transcript, skip real call
 // ---------------------------------------------------------------------------
 async function runTestSession() {
-  // Clear any active countdowns
+  // Clear any active countdowns — also mark a flag so the 280ms brief setTimeout doesn't re-arm
+  _briefTestMode = true;
   if (_briefInterval) { clearInterval(_briefInterval); _briefInterval = null; }
   if (_s._pitchPrepInterval) { clearInterval(_s._pitchPrepInterval); _s._pitchPrepInterval = null; }
   _voiceTokenPromise = null;
@@ -155,8 +156,8 @@ async function runTestSession() {
       body: JSON.stringify({ transcript, duration_seconds: 90 }),
     });
     if (r.ok) { uiLog('Test transcript submitted — polling for results…', 'ok'); pollForResults(); }
-    else { uiLog('end-test failed: HTTP ' + r.status, 'err'); }
-  } catch (err) { uiLog('end-test error: ' + err.message, 'err'); }
+    else { uiLog('end-test failed: HTTP ' + r.status, 'err'); _showLoadingError(); }
+  } catch (err) { uiLog('end-test error: ' + err.message, 'err'); _showLoadingError(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -164,6 +165,7 @@ async function runTestSession() {
 // ---------------------------------------------------------------------------
 let _briefTimer = 30;
 let _briefInterval = null;
+let _briefTestMode = false; // set true when runTestSession is called to suppress the delayed setInterval
 
 function skipBrief() {
   clearInterval(_briefInterval);
@@ -171,6 +173,7 @@ function skipBrief() {
 }
 
 function startBrief() {
+  _briefTestMode = false;
   goToStep('brief');
   _briefTimer = 30;
   clearInterval(_briefInterval);
@@ -178,6 +181,7 @@ function startBrief() {
   prefetchVoiceToken();
   warmConversationSdk();
   setTimeout(() => {
+    if (_briefTestMode) return; // runTestSession was clicked before the interval armed
     _briefInterval = setInterval(() => {
       _briefTimer--;
       const el = document.getElementById('briefCountdown');
@@ -379,7 +383,7 @@ async function pollForResults() {
   let attempts = 0;
   const check = async () => {
     attempts++;
-    if (attempts > 45) return;
+    if (attempts > 45) { _showLoadingError(); return; }
     try {
       const res = await fetch('/api/session/' + _s.sessionId + '/status');
       const data = await res.json();
@@ -394,10 +398,31 @@ async function pollForResults() {
         setTimeout(check, 2000);
       } else if (attempts <= 5) {
         setTimeout(check, 3000);
+      } else {
+        // Status stuck — give up
+        uiLog('Polling gave up after ' + attempts + ' attempts, status=' + data.status, 'err');
+        _showLoadingError();
       }
-    } catch (e) { uiLog('Poll error: ' + (e.message||e), 'err'); if (attempts <= 45) setTimeout(check, 3000); }
+    } catch (e) { uiLog('Poll error: ' + (e.message||e), 'err'); if (attempts <= 45) setTimeout(check, 3000); else _showLoadingError(); }
   };
   check();
+}
+
+function _showLoadingError() {
+  if (_loadCycleInterval) { clearInterval(_loadCycleInterval); _loadCycleInterval = null; }
+  uiLog('Loading timed out — showing retry option', 'err');
+  const cycleEl = document.getElementById('loadCycleText');
+  if (cycleEl) cycleEl.textContent = 'Something went wrong.';
+  // Inject a retry button into the loading card
+  const lsvLeft = document.querySelector('.lsv2-left');
+  if (lsvLeft && !lsvLeft.querySelector('.load-retry-btn')) {
+    const btn = document.createElement('button');
+    btn.className = 'ob-btn load-retry-btn';
+    btn.style.cssText = 'margin-top:20px;font-size:0.7rem;padding:8px 20px';
+    btn.textContent = 'Go again';
+    btn.onclick = goAgain;
+    lsvLeft.appendChild(btn);
+  }
 }
 
 // ---------------------------------------------------------------------------

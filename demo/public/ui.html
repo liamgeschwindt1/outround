@@ -28,18 +28,27 @@
   <div class="demo-logo-text">Outround</div>
 </div>
 
-<!-- Debug widget — hidden, kept so uiLog() doesn't throw -->
-<div id="dbg-widget" style="display:none">
+<!-- Debug widget — logs + notes side by side -->
+<div id="dbg-widget">
   <div id="dbg-hdr" onclick="dbgToggle()">
     <div class="dbg-dot"></div>
     <div id="dbg-title">Debug Log</div>
     <div id="dbg-count">0</div>
-    <button class="dbg-btn" onclick="event.stopPropagation();dbgCopy(this)">Copy</button>
+    <button class="dbg-btn" onclick="event.stopPropagation();dbgCopy(this)">Copy all</button>
     <button class="dbg-btn" onclick="event.stopPropagation();dbgClear()">Clear</button>
     <button class="dbg-btn" id="dbg-tog" style="width:22px;padding:3px 0;text-align:center">−</button>
   </div>
-  <div id="dbg-body">
-    <div class="dbg-empty" id="dbg-empty">No logs yet.</div>
+  <div id="dbg-panels">
+    <div id="dbg-body">
+      <div class="dbg-empty" id="dbg-empty">No logs yet.</div>
+    </div>
+    <div id="dbg-notes-panel">
+      <div id="dbg-notes-hdr">
+        <span id="dbg-notes-label">Notes</span>
+        <button class="dbg-btn" onclick="dbgStampTime()" title="Insert timestamp at cursor">+ time</button>
+      </div>
+      <textarea id="dbg-notes" placeholder="Write notes here…" spellcheck="false"></textarea>
+    </div>
   </div>
 </div>
 
