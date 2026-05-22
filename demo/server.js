@@ -16,6 +16,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 app.use('/api', createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
+  pathRewrite: { '^/': '/api/' },
 }));
 
 // Serve static files
