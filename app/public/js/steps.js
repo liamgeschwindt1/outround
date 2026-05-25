@@ -20,6 +20,11 @@ function renderStep(step, wrap) {
 }
 
 function renderOnboardingStep() {
+  // If user is authenticated (via Supabase), show the 3-step integration onboarding
+  if (_s.authUser && !_s.authUser.onboarding_complete) {
+    return renderOnboarding3Step();
+  }
+  // Legacy: no auth configured — simple name/email form
   return `<div class="card-step">
     <div class="ob-ey">Quick setup</div>
     <div class="ob-title">Welcome. Let's get you ready.</div>
@@ -34,6 +39,84 @@ function renderOnboardingStep() {
     </div>
     <button class="ob-btn" onclick="completeOnboarding()">Start practicing</button>
     <div class="ob-skip" onclick="skipOnboarding()">Skip — try the demo</div>
+  </div>`;
+}
+
+function renderOnboarding3Step() {
+  const step = _s._onboardingSubStep || 1;
+  const integrations = _s.authUser?.integrations || {};
+
+  const stepLabels = ['Connect CRM', 'Connect Calendar', 'Choose coach'];
+  const dotsHtml = stepLabels.map((label, i) => {
+    const n = i + 1;
+    const cls = n < step ? 'ob3-dot done' : n === step ? 'ob3-dot active' : 'ob3-dot';
+    return `<div class="${cls}"><div class="ob3-dot-num">${n < step ? '✓' : n}</div><div class="ob3-dot-label">${label}</div></div>`;
+  }).join('<div class="ob3-connector"></div>');
+
+  let body = '';
+
+  if (step === 1) {
+    const connected = integrations.pipedrive;
+    body = `
+      <div class="ob3-icon">${connected
+        ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></svg>'
+        : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>'
+      }</div>
+      <div class="ob3-title">${connected ? 'Pipedrive connected' : 'Connect Pipedrive'}</div>
+      <div class="ob3-desc">${connected
+        ? 'Your CRM is connected. Outround will pull deal and contact data to build your prospect personas.'
+        : 'Connect Pipedrive so Outround can pull prospect data and build a dynamic persona from your actual pipeline.'
+      }</div>
+      ${connected
+        ? `<button class="ob-btn" onclick="advanceOnboarding()">Continue</button>`
+        : `<button class="ob-btn" onclick="window.location.href='/auth/pipedrive'">Connect Pipedrive</button>
+           <div class="ob-skip" onclick="advanceOnboarding()">Skip for now</div>`
+      }`;
+  } else if (step === 2) {
+    const connected = integrations.gcal;
+    body = `
+      <div class="ob3-icon">${connected
+        ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></svg>'
+        : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+      }</div>
+      <div class="ob3-title">${connected ? 'Google Calendar connected' : 'Connect Google Calendar'}</div>
+      <div class="ob3-desc">${connected
+        ? 'Your calendar is connected. Outround will show your upcoming meetings and let you go a round before each one.'
+        : 'Connect Google Calendar to see your upcoming meetings and prepare for each one before it counts.'
+      }</div>
+      ${connected
+        ? `<button class="ob-btn" onclick="advanceOnboarding()">Continue</button>`
+        : `<button class="ob-btn" onclick="window.location.href='/auth/gcal'">Connect Google Calendar</button>
+           <div class="ob-skip" onclick="advanceOnboarding()">Skip for now</div>`
+      }`;
+  } else if (step === 3) {
+    body = `
+      <div class="ob3-title" style="margin-bottom:6px">Choose your coach</div>
+      <div class="ob3-desc" style="margin-bottom:20px">Your coach gives you pre-round context and post-round verdicts. You can change this any time.</div>
+      <div class="ob3-coaches" id="ob3-coaches">
+        <div class="ob3-coach-card ob3-coach-selected" onclick="ob3SelectCoach(this,'alex')" data-id="alex">
+          <div class="ob3-coach-av">A</div>
+          <div class="ob3-coach-info">
+            <div class="ob3-coach-name">Alex</div>
+            <div class="ob3-coach-style">Straight-talking. No fluff.</div>
+          </div>
+          <div class="ob3-coach-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></svg></div>
+        </div>
+        <div class="ob3-coach-card" onclick="ob3SelectCoach(this,'maya')" data-id="maya">
+          <div class="ob3-coach-av" style="background:#6366f1">M</div>
+          <div class="ob3-coach-info">
+            <div class="ob3-coach-name">Maya</div>
+            <div class="ob3-coach-style">Pattern recognition. Always one step ahead.</div>
+          </div>
+          <div class="ob3-coach-check" style="opacity:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></svg></div>
+        </div>
+      </div>
+      <button class="ob-btn" style="margin-top:20px" onclick="finishOnboarding3Step()">Start — let's go</button>`;
+  }
+
+  return `<div class="card-step">
+    <div class="ob3-steps">${dotsHtml}</div>
+    ${body}
   </div>`;
 }
 

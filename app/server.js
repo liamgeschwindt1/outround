@@ -12,10 +12,25 @@ const app = express();
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 
-// Proxy all API calls to the backend service
+// Proxy API and auth calls to the backend service
 app.use('/api', createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
+}));
+
+app.use('/auth', createProxyMiddleware({
+  target: BACKEND_URL,
+  changeOrigin: true,
+  // Preserve cookies set by the backend (httpOnly auth cookies)
+  onProxyRes(proxyRes) {
+    const setCookie = proxyRes.headers['set-cookie'];
+    if (setCookie) {
+      // Strip Secure flag when running on http in dev so cookies still work
+      proxyRes.headers['set-cookie'] = setCookie.map(c =>
+        process.env.NODE_ENV !== 'production' ? c.replace(/; ?Secure/i, '') : c
+      );
+    }
+  },
 }));
 
 // Serve static files

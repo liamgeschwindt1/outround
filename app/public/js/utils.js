@@ -11,6 +11,13 @@ function fmtMs(ms) { return fmtSecs(Math.floor(ms / 1000)); }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ---------------------------------------------------------------------------
+// Authenticated fetch — always sends the httpOnly sb_token cookie
+// ---------------------------------------------------------------------------
+function apiFetch(url, options = {}) {
+  return fetch(url, { credentials: 'include', ...options });
+}
+
+// ---------------------------------------------------------------------------
 // Audio helpers
 // ---------------------------------------------------------------------------
 function playSound(src) {

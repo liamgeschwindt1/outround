@@ -31,7 +31,7 @@ const TEST_TRANSCRIPTS = {
 };
 
 // ---------------------------------------------------------------------------
-// Onboarding
+// Onboarding — legacy (no auth) and 3-step (authenticated)
 // ---------------------------------------------------------------------------
 function openSession() {
   goToStep(_s.onboardingDone ? 'mode' : 'onboarding');
@@ -65,6 +65,29 @@ function updateUserUI() {
   const nm = document.getElementById('ulbn'); if (nm) nm.textContent = (_s.user.name || '').split(' ')[0] + ' (you)';
 }
 
+// 3-step onboarding helpers (used when auth is enabled)
+function advanceOnboarding() {
+  _s._onboardingSubStep = (_s._onboardingSubStep || 1) + 1;
+  goToStep('onboarding');
+}
+
+function ob3SelectCoach(el, coachId) {
+  document.querySelectorAll('.ob3-coach-card').forEach(c => {
+    c.classList.remove('ob3-coach-selected');
+    const chk = c.querySelector('.ob3-coach-check');
+    if (chk) chk.style.opacity = '0';
+  });
+  el.classList.add('ob3-coach-selected');
+  const chk = el.querySelector('.ob3-coach-check');
+  if (chk) chk.style.opacity = '1';
+  _s._selectedCoach = coachId;
+}
+
+function finishOnboarding3Step() {
+  const coachId = _s._selectedCoach || 'alex';
+  completeOnboardingStep3(coachId);
+}
+
 // ---------------------------------------------------------------------------
 // Session start
 // ---------------------------------------------------------------------------
@@ -72,7 +95,7 @@ async function beginSession() {
   uiLog('Starting session…', 'send');
   const persona_id = _s.mode === 'investor_pitch' ? 'natalie' : 'hendrik';
   try {
-    const res = await fetch('/api/session/start', {
+    const res = await apiFetch('/api/session/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_name: _s.user.name || null, user_email: _s.user.email || null, user_role: _s.user.role || null, persona_id, mode: _s.mode || 'cold_call' }),
@@ -133,7 +156,7 @@ async function runTestSession() {
     uiLog('Creating test session…', 'send');
     const persona_id = mode === 'investor_pitch' ? 'natalie' : 'hendrik';
     try {
-      const res = await fetch('/api/session/start', {
+      const res = await apiFetch('/api/session/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_name: _s.user?.name || null, user_email: _s.user?.email || null, user_role: _s.user?.role || null, persona_id, mode }),
@@ -149,7 +172,7 @@ async function runTestSession() {
 
   uiLog('Submitting test transcript (' + transcript.length + ' turns)…', 'send');
   try {
-    const r = await fetch('/api/session/' + _s.sessionId + '/end-test', {
+    const r = await apiFetch('/api/session/' + _s.sessionId + '/end-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ transcript, duration_seconds: 90 }),
@@ -207,7 +230,7 @@ let _conversationSdkPromise = null;
 function prefetchVoiceToken() {
   if (!_s.sessionId || _voiceTokenPromise) return _voiceTokenPromise;
   uiLog('Prefetching voice token…', 'send');
-  _voiceTokenPromise = fetch('/api/session/' + _s.sessionId + '/voice-token')
+  _voiceTokenPromise = apiFetch('/api/session/' + _s.sessionId + '/voice-token')
     .then(async (r) => {
       if (!r.ok) throw new Error('Voice token HTTP ' + r.status);
       const data = await r.json();
@@ -360,7 +383,7 @@ async function _finishCall(conversationId) {
   // Fetch analysis in background (survey runs in parallel — doesn't block)
   uiLog('Ending session (duration: ' + _s.callDuration + 's)', 'send');
   try {
-    const r = await fetch('/api/session/' + _s.sessionId + '/end', {
+    const r = await apiFetch('/api/session/' + _s.sessionId + '/end', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ elevenlabs_conversation_id: conversationId || null, duration_seconds: _s.callDuration }),
     });
@@ -381,7 +404,7 @@ async function pollForResults() {
     attempts++;
     if (attempts > 45) return;
     try {
-      const res = await fetch('/api/session/' + _s.sessionId + '/status');
+      const res = await apiFetch('/api/session/' + _s.sessionId + '/status');
       const data = await res.json();
       uiLog('Poll status: ' + data.status + (data.score ? ' score=' + data.score : ''), 'recv');
       if (data.status === 'complete') {
@@ -412,7 +435,7 @@ async function finishAnalysis() {
 
 async function fetchFinishLb() {
   try {
-    const res = await fetch('/api/leaderboard');
+    const res = await apiFetch('/api/leaderboard');
     const { entries } = await res.json();
     if (entries && entries.length > 0) _s._finishLb = entries;
   } catch { /* use fallback */ }
@@ -501,7 +524,7 @@ function shareLI() {
 // ---------------------------------------------------------------------------
 async function loadLeaderboard() {
   try {
-    const res = await fetch('/api/leaderboard');
+    const res = await apiFetch('/api/leaderboard');
     const { entries } = await res.json();
     if (entries && entries.length > 0) renderLeaderboard(entries);
   } catch { /* keep static */ }
@@ -607,7 +630,7 @@ function _finishSurvey() {
 
 function _postSurvey() {
   if (!_s.sessionId) return;
-  fetch('/api/survey', {
+  apiFetch('/api/survey', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ session_id: _s.sessionId, answers: window._surveyAnswers || {} }),
   }).catch(() => {});

@@ -24,6 +24,37 @@ function renderOnboardingDots() {
 }
 
 // ---------------------------------------------------------------------------
+// Handle OAuth redirect returns (Pipedrive / GCal callback → /onboarding?x=y)
+// Called during init to auto-advance the onboarding step.
+// ---------------------------------------------------------------------------
+function handleOAuthRedirectParams() {
+  const params = new URLSearchParams(window.location.search);
+  const pipedriveConnected = params.get('pipedrive') === 'connected';
+  const gcalConnected = params.get('gcal') === 'connected';
+
+  if (pipedriveConnected || gcalConnected) {
+    // Update integration status in authUser state if available
+    if (_s.authUser) {
+      if (pipedriveConnected) _s.authUser.integrations = { ...(_s.authUser.integrations || {}), pipedrive: true };
+      if (gcalConnected) _s.authUser.integrations = { ...(_s.authUser.integrations || {}), gcal: true };
+    }
+
+    // Determine which onboarding sub-step to resume at
+    if (pipedriveConnected) {
+      _s._onboardingSubStep = 2; // Advance past Pipedrive to Google Calendar
+    } else if (gcalConnected) {
+      _s._onboardingSubStep = 3; // Advance past Calendar to Coach selection
+    }
+
+    // Clean the URL without triggering a reload
+    window.history.replaceState({}, '', window.location.pathname);
+    return true;
+  }
+
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Focus overlay + step transitions
 // ---------------------------------------------------------------------------
 var _currentStep = null;

@@ -8,6 +8,7 @@ const db = require('../db/client');
 const elevenlabs = require('../services/elevenlabs');
 const claude = require('../services/claude');
 const { calculateMetricsFromTranscript } = require('../services/metrics');
+const { requireAuth } = require('../middleware/auth');
 
 // In-memory session store — transparent fallback when DB is unavailable
 const memStore = new Map();
@@ -55,7 +56,7 @@ function normalisePersona(raw) {
 // ---------------------------------------------------------------------------
 // POST /api/session/start
 // ---------------------------------------------------------------------------
-router.post('/start', async (req, res) => {
+router.post('/start', requireAuth, async (req, res) => {
   const { user_name, user_email, user_role, persona_id = 'hendrik', mode = 'cold_call' } = req.body;
 
   if (!persona_id) {
@@ -70,13 +71,16 @@ router.post('/start', async (req, res) => {
   }
   const persona = normalisePersona(personaRaw);
 
+  // Prefer authenticated user ID over anonymous session data
+  const userId = req.user?.id || req.supabaseUser?.id || null;
+
   let sessionId;
   try {
     const result = await db.query(
-      `INSERT INTO sessions (user_name, user_email, user_role, persona_id, mode)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO sessions (user_id, user_name, user_email, user_role, persona_id, mode)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id`,
-      [user_name || null, user_email || null, user_role || null, persona_id, mode]
+      [userId, user_name || null, user_email || null, user_role || null, persona_id, mode]
     );
     sessionId = result.rows[0].id;
   } catch (err) {

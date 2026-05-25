@@ -37,6 +37,9 @@
     <div class="sb-icon locked" data-tip="Settings">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="2"/><path d="M8 2v1M8 13v1M2 8h1M13 8h1M3.5 3.5l.7.7M11.8 11.8l.7.7M3.5 12.5l.7-.7M11.8 4.2l.7-.7"/></svg>
     </div>
+    <div class="sb-icon" id="signOutBtn" data-tip="Sign out" onclick="signOut()" style="display:none;margin-top:4px;opacity:0.5">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/><polyline points="11,11 14,8 11,5"/><line x1="6" y1="8" x2="14" y2="8"/></svg>
+    </div>
   </aside>
 
   <div class="body-wrap">
@@ -161,6 +164,65 @@
 <!-- ===== TOAST ===== -->
 <div class="toast" id="toastEl"></div>
 
+<!-- ===== LOGIN PAGE — full-screen, shown before auth ===== -->
+<div class="login-page" id="loginPage" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-mark" style="width:32px;height:32px">
+        <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="6" y1="3" x2="6" y2="6"/><line x1="6" y1="6" x2="8" y2="8"/></svg>
+      </div>
+      <div style="font-size:20px;font-weight:700;letter-spacing:-0.02em">Outround</div>
+    </div>
+    <div class="login-headline">The round before it counts.</div>
+
+    <button class="login-google-btn" onclick="signInWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="login-divider"><span>or</span></div>
+
+    <div class="login-tabs">
+      <button class="login-tab active" id="loginTabSignin" onclick="loginTabSwitch('signin')">Sign in</button>
+      <button class="login-tab" id="loginTabSignup" onclick="loginTabSwitch('signup')">Create account</button>
+    </div>
+
+    <!-- Sign in form -->
+    <form id="loginFormSignin" onsubmit="handleLoginSubmit(event)">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@company.com" required autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" minlength="8">
+      </div>
+      <div class="login-error" id="loginError"></div>
+      <button type="submit" class="login-submit-btn" id="loginSubmitBtn">Sign in</button>
+    </form>
+
+    <!-- Sign up form -->
+    <form id="loginFormSignup" style="display:none" onsubmit="handleSignupSubmit(event)">
+      <div class="login-field">
+        <label>Full name</label>
+        <input type="text" id="signupName" placeholder="Alex Smith" autocomplete="name">
+      </div>
+      <div class="login-field">
+        <label>Work email</label>
+        <input type="email" id="signupEmail" placeholder="you@company.com" required autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="Min. 8 characters" required autocomplete="new-password" minlength="8">
+      </div>
+      <div class="login-error" id="signupError"></div>
+      <button type="submit" class="login-submit-btn" id="signupSubmitBtn">Create account</button>
+    </form>
+
+    <p class="login-legal">By continuing you agree to our <a href="#" onclick="return false">Terms</a> and <a href="#" onclick="return false">Privacy Policy</a>.</p>
+  </div>
+</div>
+
 <script src="/js/state.js"></script>
 <script src="/js/debug.js"></script>
 <script src="/js/utils.js"></script>
@@ -168,10 +230,36 @@
 <script src="/js/steps.js"></script>
 <script src="/js/session.js"></script>
 <script src="/js/analysis.js"></script>
+<script src="/js/auth.js"></script>
 <script>
-(function init() {
-  loadLeaderboard();
-  goToStep('onboarding');
+(async function init() {
+  const authed = await checkAuth();
+
+  if (!authed && isAuthEnabled()) {
+    showLoginPage();
+    return;
+  }
+
+  initAfterAuth();
 })();
+
+function initAfterAuth() {
+  // Show sign-out button if auth is enabled
+  if (isAuthEnabled()) {
+    const btn = document.getElementById('signOutBtn');
+    if (btn) btn.style.display = '';
+  }
+
+  // Handle OAuth callback redirects (e.g. ?pipedrive=connected)
+  const wasOAuthReturn = handleOAuthRedirectParams();
+
+  loadLeaderboard();
+
+  if (_s.onboardingDone && !wasOAuthReturn) {
+    // Returning user — go straight to the app
+  } else if (!_s.onboardingDone || wasOAuthReturn) {
+    goToStep('onboarding');
+  }
+}
 </script></body>
 </html>

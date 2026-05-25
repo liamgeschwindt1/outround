@@ -1,0 +1,1683 @@
+{
+  "product": "Outround",
+  "version": "1.0",
+  "last_updated": "2026-05-25",
+  "phases": [
+    {
+      "id": "phase_0",
+      "name": "Authentication & Onboarding",
+      "goal": "Get the user in, connected, and seeing real data.",
+      "priority": 1,
+      "status": "in_progress",
+      "completion_percentage": 85,
+      "epics": [
+        {
+          "id": "epic_0_1",
+          "name": "Authentication",
+          "status": "in_progress",
+          "tasks": [
+            {
+              "id": "task_0_1_1",
+              "story": "As a user, I can land on the Outround login page and see a clean sign-in screen with Google SSO and email/password options",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_0_1_2",
+              "story": "As a user, I can sign in with Google and be redirected to the dashboard without additional setup steps",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_0_1_1"
+              ],
+              "apis": [
+                "google_oauth"
+              ],
+              "notes": ""
+            },
+            {
+              "id": "task_0_1_3",
+              "story": "As a user, I can sign in with email and password",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "high",
+              "dependencies": [
+                "task_0_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_0_1_4",
+              "story": "As a user, I can reset my password via email",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_0_1_3"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_0_1_5",
+              "story": "As a user, my session persists across browser refreshes and tab closes",
+              "type": "backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_0_1_2"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_0_1_6",
+              "story": "As a user, I can sign out from any page",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "high",
+              "dependencies": [
+                "task_0_1_2"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_0_2",
+          "name": "Onboarding Flow",
+          "status": "in_progress",
+          "tasks": [
+            {
+              "id": "task_0_2_1",
+              "story": "As a new user, after first login I am taken through a 3-step onboarding: (1) connect Pipedrive, (2) connect Google Calendar, (3) choose my coach",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_0_1_2"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_0_2_2",
+              "story": "As a new user, I can connect my Pipedrive account via OAuth — no manual API key entry",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_0_2_1"
+              ],
+              "apis": [
+                "pipedrive_oauth"
+              ],
+              "notes": "Pipedrive OAuth 2.0. Scopes needed: deals:read, contacts:read, notes:read, activities:read"
+            },
+            {
+              "id": "task_0_2_3",
+              "story": "As a new user, I can connect my Google Calendar via OAuth",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_0_2_1"
+              ],
+              "apis": [
+                "google_calendar_oauth"
+              ],
+              "notes": "Google Calendar API. Scopes needed: calendar.readonly"
+            },
+            {
+              "id": "task_0_2_4",
+              "story": "As a new user, I can choose my coach persona from a selection of 2-3 options",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "high",
+              "dependencies": [
+                "task_0_2_1"
+              ],
+              "apis": [],
+              "notes": "Coach personas stored in DB. Each has: id, name, photo, personality description, coaching style, voice_id (ElevenLabs)"
+            },
+            {
+              "id": "task_0_2_5",
+              "story": "As a new user, I can skip onboarding steps and complete them later from settings",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "medium",
+              "dependencies": [
+                "task_0_2_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_0_2_6",
+              "story": "As a new user, once onboarding is complete I land on the dashboard with my real data already populated",
+              "type": "frontend+backend",
+              "status": "in_progress",
+              "priority": "critical",
+              "dependencies": [
+                "task_0_2_2",
+                "task_0_2_3",
+                "task_0_2_4"
+              ],
+              "apis": [
+                "pipedrive_api",
+                "google_calendar_api"
+              ],
+              "notes": "Trigger initial data sync on onboarding completion"
+            },
+            {
+              "id": "task_0_2_7",
+              "story": "As a returning user, I skip onboarding and go directly to the dashboard",
+              "type": "backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_0_2_6"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_1",
+      "name": "Dashboard & Meeting Intelligence",
+      "goal": "User opens the app and immediately sees value from their real data.",
+      "priority": 2,
+      "status": "not_started",
+      "completion_percentage": 0,
+      "epics": [
+        {
+          "id": "epic_1_1",
+          "name": "Stats Card",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_1_1_1",
+              "story": "As a user, I can see my performance stats card — overall rating as dominant number plus sub-scores for: opening hook, objection handling, talk/listen ratio, pace, closing",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_0_2_6"
+              ],
+              "apis": [],
+              "notes": "FIFA-style card. Sub-scores out of 100. Overall rating is weighted average. Dummy data acceptable at launch."
+            },
+            {
+              "id": "task_1_1_2",
+              "story": "As a user, I can see trend arrows on each stat — up (green), down (red), flat (grey) — based on movement over last 5 rounds",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_1_1_1"
+              ],
+              "apis": [],
+              "notes": "Requires session history. Arrows only shown after 2+ sessions."
+            },
+            {
+              "id": "task_1_1_3",
+              "story": "As a user, I can see how many rounds I have completed in total and this week",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_1_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_1_1_4",
+              "story": "As a user, I can see my current streak — consecutive days I have gone a round",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_1_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_1_1_5",
+              "story": "As a user, I can see my coach name and avatar in the stats card area",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "low",
+              "dependencies": [
+                "task_1_1_1",
+                "task_0_2_4"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_1_2",
+          "name": "Upcoming Meetings",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_1_2_1",
+              "story": "As a user, I can see a list of upcoming meetings pulled from Google Calendar showing: title, prospect name, company, time, deal stage from Pipedrive",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_0_2_3",
+                "task_0_2_2"
+              ],
+              "apis": [
+                "google_calendar_api",
+                "pipedrive_api"
+              ],
+              "notes": "Match calendar events to Pipedrive contacts by email. Show next 7 days."
+            },
+            {
+              "id": "task_1_2_2",
+              "story": "As a user, meetings with a linked Pipedrive contact are visually distinct from generic calendar events",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_1_2_1"
+              ],
+              "apis": [],
+              "notes": "Pipedrive-linked meetings show deal stage badge and prospect company logo if available"
+            },
+            {
+              "id": "task_1_2_3",
+              "story": "As a user, I can only interact with the next upcoming meeting — future meetings are visible but locked",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_1_2_1"
+              ],
+              "notes": "Locked meetings show a lock icon. Tooltip: 'Available when this is your next meeting.'"
+            },
+            {
+              "id": "task_1_2_4",
+              "story": "As a user, I can see at a glance whether I have already done an Outround for the next meeting",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_1_2_1"
+              ],
+              "apis": [],
+              "notes": "Green checkmark or 'Ready' badge if round completed for this meeting"
+            },
+            {
+              "id": "task_1_2_5",
+              "story": "As a user, meetings that have passed are shown in a history section below upcoming meetings",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_1_2_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_1_2_6",
+              "story": "As a user, the dashboard loads in under 2 seconds with real data",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_1_2_1"
+              ],
+              "apis": [],
+              "notes": "Cache calendar and Pipedrive data. Refresh in background every 15 minutes."
+            },
+            {
+              "id": "task_1_2_7",
+              "story": "As a user, I can see a notification if my Pipedrive or Calendar connection has an issue",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_1_2_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_2",
+      "name": "Meeting Preparation Page",
+      "goal": "User clicks their next meeting and gets everything they need to walk in ready.",
+      "priority": 3,
+      "status": "not_started",
+      "completion_percentage": 0,
+      "epics": [
+        {
+          "id": "epic_2_1",
+          "name": "Meeting Context",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_2_1_1",
+              "story": "As a user, I can click on the next meeting and see a full meeting preparation page",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_1_2_3"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_2_1_2",
+              "story": "As a user, I can see the prospect's name, title, company, LinkedIn URL, and photo placeholder",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_2_1_1"
+              ],
+              "apis": [
+                "pipedrive_api"
+              ],
+              "notes": "Pull from Pipedrive person record"
+            },
+            {
+              "id": "task_2_1_3",
+              "story": "As a user, I can see deal details from Pipedrive — deal name, stage, value, days in current stage",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_2_1_1"
+              ],
+              "apis": [
+                "pipedrive_api"
+              ],
+              "notes": ""
+            },
+            {
+              "id": "task_2_1_4",
+              "story": "As a user, I can see all CRM notes from Pipedrive for this contact, displayed chronologically",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_2_1_1"
+              ],
+              "apis": [
+                "pipedrive_api"
+              ],
+              "notes": "Pipedrive notes API. Show most recent 10, load more on scroll."
+            },
+            {
+              "id": "task_2_1_5",
+              "story": "As a user, I can see a summary of the last call or meeting with this contact",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_2_1_4"
+              ],
+              "apis": [
+                "pipedrive_api"
+              ],
+              "notes": "Pull from Pipedrive activities. If post-call analysis exists in Outround DB, use that."
+            },
+            {
+              "id": "task_2_1_6",
+              "story": "As a user, I can see open tasks and next steps from Pipedrive for this deal",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_2_1_1"
+              ],
+              "apis": [
+                "pipedrive_api"
+              ],
+              "notes": ""
+            },
+            {
+              "id": "task_2_1_7",
+              "story": "As a user, I can see AI-generated coaching notes — what to watch for in this meeting based on prospect history and my known weak spots",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_2_1_4",
+                "task_1_1_1"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Claude prompt: given prospect history + user weak spots, generate 3 coaching bullets"
+            },
+            {
+              "id": "task_2_1_8",
+              "story": "As a user, I can see a one-paragraph prospect intelligence summary generated by Claude from all available Pipedrive data",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_2_1_4"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Claude prompt: synthesise all CRM notes, activities, deal history into a single paragraph. Who is this person, how do they buy, what matters to them, what has been tried."
+            }
+          ]
+        },
+        {
+          "id": "epic_2_2",
+          "name": "Persona Assembly",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_2_2_1",
+              "story": "As a user, Outround assembles a dynamic AI persona from the Pipedrive contact data automatically when I open the meeting prep page",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_2_1_4"
+              ],
+              "apis": [
+                "claude_api",
+                "elevenlabs_api"
+              ],
+              "notes": "Claude generates system prompt from CRM data. Stored in session config. Passed to ElevenLabs as conversation override."
+            },
+            {
+              "id": "task_2_2_2",
+              "story": "As a user, I can see a summary of the assembled persona — communication style, known objections, resistance level",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_2_2_1"
+              ],
+              "apis": [],
+              "notes": "Show user-facing summary only. Never expose raw system prompt."
+            },
+            {
+              "id": "task_2_2_3",
+              "story": "As a user, if there is insufficient CRM data to build a persona, I am shown a message and offered a generic persona for the industry/role instead",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_2_2_1"
+              ],
+              "apis": [],
+              "notes": "Fallback to generic persona templates stored in DB by role type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_3",
+      "name": "The Outround Session",
+      "goal": "User goes a round against a digital twin of their actual prospect.",
+      "priority": 4,
+      "status": "in_progress",
+      "completion_percentage": 85,
+      "epics": [
+        {
+          "id": "epic_3_1",
+          "name": "Pre-Round Warm-Up with Coach",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_3_1_1",
+              "story": "As a user, I can click Get Ready from the meeting prep page to begin an Outround session",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_2_2_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_3_1_2",
+              "story": "As a user, I enter a warm-up voice conversation with my coach before the round begins",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_3_1_1"
+              ],
+              "apis": [
+                "elevenlabs_api"
+              ],
+              "notes": "Coach voice is distinct from prospect voice. Different ElevenLabs voice ID per coach persona."
+            },
+            {
+              "id": "task_3_1_3",
+              "story": "As a user, my coach greets me by name and references my recent performance",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_3_1_2"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Claude generates coach warm-up script from: user name, last 3 session scores, identified weak spots, prospect profile summary"
+            },
+            {
+              "id": "task_3_1_4",
+              "story": "As a user, my coach gives me 2-3 specific things to focus on in this round",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_3_1_3"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": ""
+            },
+            {
+              "id": "task_3_1_5",
+              "story": "As a user, I can ask my coach a question before the round — and get an answer from CRM data",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_3_1_2"
+              ],
+              "apis": [
+                "claude_api",
+                "pipedrive_api"
+              ],
+              "notes": "Coach has access to full CRM context for this prospect during warm-up"
+            },
+            {
+              "id": "task_3_1_6",
+              "story": "As a user, I can skip the warm-up and go straight to the round",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_3_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_3_2",
+          "name": "The Round",
+          "status": "complete",
+          "tasks": [
+            {
+              "id": "task_3_2_1",
+              "story": "As a user, I see a 30-second brief card — prospect name, scenario, stakes — that disappears automatically",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_3_1_1"
+              ],
+              "apis": [],
+              "notes": "Cannot be skipped. Auto-transitions after 30 seconds."
+            },
+            {
+              "id": "task_3_2_2",
+              "story": "As a user, I am in a voice conversation with the AI persona built from my prospect's Pipedrive data",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_3_2_1",
+                "task_2_2_1"
+              ],
+              "apis": [
+                "elevenlabs_api",
+                "gladia_api"
+              ],
+              "notes": "ElevenLabs Conversational Agent with dynamic system prompt. Gladia for transcription. EU data residency required."
+            },
+            {
+              "id": "task_3_2_3",
+              "story": "As a user, the AI persona can interrupt me, push back, object, disengage, and end the call",
+              "type": "backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_3_2_2"
+              ],
+              "apis": [
+                "elevenlabs_api"
+              ],
+              "notes": "System prompt instructs persona on resistance level, objection triggers, hang-up conditions"
+            },
+            {
+              "id": "task_3_2_4",
+              "story": "As a user, I can end the round at any time with an End Call button",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_3_2_2"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_3_2_5",
+              "story": "As a user, if the AI persona hangs up, the interface detects this automatically and transitions to analysis",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_3_2_3"
+              ],
+              "apis": [
+                "elevenlabs_api"
+              ],
+              "notes": "Listen for ElevenLabs disconnection event. Show 'They hung up.' message for 2 seconds then auto-transition."
+            },
+            {
+              "id": "task_3_2_6",
+              "story": "As a user, the round UI is minimal — waveform animation, duration timer, End Call button only",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "high",
+              "dependencies": [
+                "task_3_2_2"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_3_3",
+          "name": "Post-Round Analysis",
+          "status": "in_progress",
+          "tasks": [
+            {
+              "id": "task_3_3_1",
+              "story": "As a user, I see a loading screen with steps completing in sequence after the round ends",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_3_2_4"
+              ],
+              "apis": [],
+              "notes": "Steps: Transcribing → Analysing → Generating coaching → Building report"
+            },
+            {
+              "id": "task_3_3_2",
+              "story": "As a user, a 3-sentence verdict appears within 2 seconds of the round ending before the full report loads",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_3_3_1"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Stream verdict first. Full analysis populates in background."
+            },
+            {
+              "id": "task_3_3_3",
+              "story": "As a user, I see a full analysis page with: overall score, sub-scores, annotated transcript, coach commentary",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_3_3_2"
+              ],
+              "apis": [
+                "claude_api",
+                "gladia_api"
+              ],
+              "notes": "Left: annotated transcript. Right sidebar: score, sub-scores, metrics strip."
+            },
+            {
+              "id": "task_3_3_4",
+              "story": "As a user, the transcript shows my lines at full weight and prospect lines muted, with coaching feedback inline",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "high",
+              "dependencies": [
+                "task_3_3_3"
+              ],
+              "apis": [],
+              "notes": "Coaching feedback collapsed by default. Expandable on click per line."
+            },
+            {
+              "id": "task_3_3_5",
+              "story": "As a user, I can see objective acoustic metrics: pace (WPM), talk/listen ratio, longest monologue, response latency, filler word count",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "high",
+              "dependencies": [
+                "task_3_3_3"
+              ],
+              "apis": [
+                "gladia_api"
+              ],
+              "notes": "All metrics from Gladia transcript data. No emotion inference. Objective only."
+            },
+            {
+              "id": "task_3_3_6",
+              "story": "As a user, I see a one-line brutal verdict from my coach — specific, direct, impossible to misread",
+              "type": "frontend+backend",
+              "status": "complete",
+              "priority": "critical",
+              "dependencies": [
+                "task_3_3_2"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Claude prompt: generate a single sentence verdict in the voice of the chosen coach persona. Direct. No softening. Makes the user wince."
+            },
+            {
+              "id": "task_3_3_7",
+              "story": "As a user, my stats card is updated immediately after the round",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_3_3_3"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_3_3_8",
+              "story": "As a user, I can go again from the analysis page with one click",
+              "type": "frontend",
+              "status": "complete",
+              "priority": "high",
+              "dependencies": [
+                "task_3_3_3"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_4",
+      "name": "Meeting Bot & Recording",
+      "goal": "Outround joins the real call, records it, admin done automatically after.",
+      "priority": 5,
+      "status": "not_started",
+      "completion_percentage": 0,
+      "epics": [
+        {
+          "id": "epic_4_1",
+          "name": "Meeting Bot Setup",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_4_1_1",
+              "story": "As a user, I can enable the meeting bot for a specific meeting from the meeting prep page — off by default",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_2_1_1"
+              ],
+              "apis": [],
+              "notes": "Toggle with clear consent disclosure shown on enable"
+            },
+            {
+              "id": "task_4_1_2",
+              "story": "As a user, I see a clear disclosure when enabling the bot: all participants will see it in the call",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_4_1_1"
+              ],
+              "apis": [],
+              "notes": "Legal requirement. Cannot be dismissed without reading."
+            },
+            {
+              "id": "task_4_1_3",
+              "story": "As a user, the bot joins the call automatically at the scheduled start time when enabled",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_4_1_1"
+              ],
+              "apis": [
+                "meeting_bot_api"
+              ],
+              "notes": "Evaluate: Recall.ai or similar meeting bot infrastructure. Bot named 'Outround Notetaker'."
+            },
+            {
+              "id": "task_4_1_4",
+              "story": "As a user, I can disable the bot for a specific meeting after enabling it, up until the call starts",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_4_1_3"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_4_1_5",
+              "story": "As a user, I can set a default preference — bot on or off by default for all meetings with Pipedrive contacts",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_4_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_4_2",
+          "name": "Recording & Transcription",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_4_2_1",
+              "story": "As a user, the bot records the full call and produces a word-level transcript with speaker diarisation",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_4_1_3"
+              ],
+              "apis": [
+                "gladia_api"
+              ],
+              "notes": "Gladia for transcription. Speaker diarisation to separate user and prospect lines."
+            },
+            {
+              "id": "task_4_2_2",
+              "story": "As a user, the transcript is available within 5 minutes of the call ending",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_4_2_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_4_2_3",
+              "story": "As a user, raw audio is automatically deleted within 24 hours",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_4_2_1"
+              ],
+              "apis": [],
+              "notes": "GDPR requirement. Scheduled deletion job. EU storage only."
+            },
+            {
+              "id": "task_4_2_4",
+              "story": "As a user, raw transcript is automatically deleted within 30 days",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_4_2_1"
+              ],
+              "apis": [],
+              "notes": "GDPR requirement. Scheduled deletion job."
+            },
+            {
+              "id": "task_4_2_5",
+              "story": "As a user, I am notified by email when the post-call analysis is ready",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_4_2_2"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_4_3",
+          "name": "Post-Call Analysis",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_4_3_1",
+              "story": "As a user, I receive an email after every recorded call with: 3-paragraph summary, key moments, what landed and what didn't, recommended next steps",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_4_2_2"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Claude generates email from transcript. Clean, structured. Not a dashboard."
+            },
+            {
+              "id": "task_4_3_2",
+              "story": "As a user, the email includes a practice vs real performance comparison if I did an Outround before this meeting",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_4_3_1"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Compare practice session scores to real call acoustic metrics"
+            },
+            {
+              "id": "task_4_3_3",
+              "story": "As a user, I can click through from the email to the full analysis in the app",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_4_3_1"
+              ],
+              "apis": [],
+              "notes": "Unique link per call analysis. Auth-gated."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_5",
+      "name": "CRM Enrichment",
+      "goal": "Pipedrive updates itself. The user never writes a note again.",
+      "priority": 6,
+      "status": "not_started",
+      "completion_percentage": 0,
+      "epics": [
+        {
+          "id": "epic_5_1",
+          "name": "Automatic CRM Updates",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_5_1_1",
+              "story": "As a user, after every recorded call, Outround automatically pushes structured metadata to Pipedrive",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_4_2_2"
+              ],
+              "apis": [
+                "pipedrive_api",
+                "claude_api"
+              ],
+              "notes": "Fields pushed: last call summary, objections raised, decision signals, competitor mentions, agreed next steps, deal stage recommendation"
+            },
+            {
+              "id": "task_5_1_2",
+              "story": "As a user, Outround creates a new activity in Pipedrive for the call with the summary attached",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_5_1_1"
+              ],
+              "apis": [
+                "pipedrive_api"
+              ],
+              "notes": "Pipedrive activities API. Activity type: call. Duration from transcript."
+            },
+            {
+              "id": "task_5_1_3",
+              "story": "As a user, I can review what was pushed to Pipedrive from the post-call analysis page before it is confirmed",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_5_1_1"
+              ],
+              "apis": [],
+              "notes": "One-click approve or edit flow. Auto-approve after 24 hours if no action."
+            },
+            {
+              "id": "task_5_1_4",
+              "story": "As a user, I can turn off automatic CRM push and switch to manual approval mode",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_5_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_5_2",
+          "name": "Prospect Profile Enrichment",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_5_2_1",
+              "story": "As a user, the prospect's Outround profile is updated after every call — communication patterns, objections, what moves them",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_4_2_2"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Stored in Outround DB not Pipedrive. Used to build sharper personas for next session."
+            },
+            {
+              "id": "task_5_2_2",
+              "story": "As a user, the enriched prospect profile is used to build a sharper persona for the next Outround session",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_5_2_1",
+                "task_2_2_1"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Persona assembly pulls from both Pipedrive data and Outround enrichment layer"
+            },
+            {
+              "id": "task_5_2_3",
+              "story": "As a user, I can see the enriched prospect profile on the meeting prep page — gets more detailed with every call",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_5_2_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_5_3",
+          "name": "User Profile Updates",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_5_3_1",
+              "story": "As a user, my performance profile is updated after every real call — not just practice rounds",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_4_2_2"
+              ],
+              "apis": [
+                "gladia_api",
+                "claude_api"
+              ],
+              "notes": "Acoustic metrics from real calls feed into user profile alongside practice session data"
+            },
+            {
+              "id": "task_5_3_2",
+              "story": "As a user, patterns identified across multiple real calls are surfaced in my stats card and coaching notes",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_5_3_1"
+              ],
+              "apis": [
+                "claude_api"
+              ],
+              "notes": "Requires minimum 3 real calls to surface patterns"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_6",
+      "name": "Coach Agent",
+      "goal": "The coach relationship forms. User comes back even without an upcoming meeting.",
+      "priority": 7,
+      "status": "not_started",
+      "completion_percentage": 0,
+      "epics": [
+        {
+          "id": "epic_6_1",
+          "name": "Coach Personas",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_6_1_1",
+              "story": "As a new user, I choose my coach from 2-3 personas during onboarding — name, photo, personality, coaching style",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_0_2_4"
+              ],
+              "apis": [],
+              "notes": "Coach personas in DB. Each has: id, name, photo, personality, coaching_style, voice_id, system_prompt_template"
+            },
+            {
+              "id": "task_6_1_2",
+              "story": "As a user, I can change my coach from settings — with confirmation that history carries over",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_6_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_6_2",
+          "name": "Proactive Check-Ins",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_6_2_1",
+              "story": "As a user, if I haven't done a round in 5+ days, my coach sends a Slack or email nudge — personal not generic",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_6_1_1"
+              ],
+              "apis": [
+                "slack_api",
+                "claude_api"
+              ],
+              "notes": "Scheduled job checks last activity. Claude generates personalised nudge in coach voice."
+            },
+            {
+              "id": "task_6_2_2",
+              "story": "As a user, the nudge references something specific — upcoming meeting, weak spot, streak milestone",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_6_2_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_6_2_3",
+              "story": "As a user, I can respond to the nudge and go straight into a round without opening the app",
+              "type": "backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_6_2_1"
+              ],
+              "apis": [
+                "slack_api"
+              ],
+              "notes": "Slack interactive button. Deep link to session start."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_7",
+      "name": "Team & Manager Features",
+      "goal": "Individual Pro becomes trojan horse into team contracts.",
+      "priority": 8,
+      "status": "not_started",
+      "completion_percentage": 0,
+      "epics": [
+        {
+          "id": "epic_7_1",
+          "name": "Team Dashboard",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_7_1_1",
+              "story": "As a manager, I can see all reps in a single dashboard — rating, trend, rounds this week, last active",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_1_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_7_1_2",
+              "story": "As a manager, I can see team-wide weak spots — which skills are declining across the team",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_7_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_7_1_3",
+              "story": "As a manager, I can see which reps have done an Outround before their meetings this week",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_7_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_7_1_4",
+              "story": "As a manager, I can click into any rep's profile and see their full stats card and session history",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [
+                "task_7_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_7_2",
+          "name": "Team Management",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_7_2_1",
+              "story": "As an admin, I can invite team members by email",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [
+                "task_0_1_2"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_7_2_2",
+              "story": "As an admin, I can remove team members",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_7_2_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_7_2_3",
+              "story": "As an admin, I can see billing and usage across the team",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_7_2_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_8",
+      "name": "Settings & Profile",
+      "goal": "User controls their experience and can manage their account.",
+      "priority": 9,
+      "status": "not_started",
+      "completion_percentage": 0,
+      "epics": [
+        {
+          "id": "epic_8_1",
+          "name": "Integrations",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_8_1_1",
+              "story": "As a user, I can connect and disconnect Pipedrive from settings",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_0_2_2"
+              ],
+              "apis": [
+                "pipedrive_oauth"
+              ],
+              "notes": ""
+            },
+            {
+              "id": "task_8_1_2",
+              "story": "As a user, I can connect and disconnect Google Calendar from settings",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_0_2_3"
+              ],
+              "apis": [
+                "google_calendar_oauth"
+              ],
+              "notes": ""
+            },
+            {
+              "id": "task_8_1_3",
+              "story": "As a user, I can connect Slack from settings for ambient notifications",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [],
+              "apis": [
+                "slack_oauth"
+              ],
+              "notes": ""
+            },
+            {
+              "id": "task_8_1_4",
+              "story": "As a user, I can see the status of each integration — connected, disconnected, error",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_8_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "epic_8_2",
+          "name": "Account & Data",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_8_2_1",
+              "story": "As a user, I can export all my data",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "medium",
+              "dependencies": [],
+              "apis": [],
+              "notes": "GDPR right to portability"
+            },
+            {
+              "id": "task_8_2_2",
+              "story": "As a user, I can delete my account and all associated data",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [],
+              "apis": [],
+              "notes": "GDPR right to erasure. Cascade delete all user data including prospect profiles."
+            },
+            {
+              "id": "task_8_2_3",
+              "story": "As a user, I can request deletion of a specific prospect's data",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [],
+              "apis": [],
+              "notes": "GDPR Article 17. Must also delete from Pipedrive custom fields on request."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_9",
+      "name": "Internal Admin Dashboard",
+      "goal": "Founder visibility into every session and user without a code deploy.",
+      "priority": 10,
+      "status": "not_started",
+      "completion_percentage": 0,
+      "epics": [
+        {
+          "id": "epic_9_1",
+          "name": "Admin Dashboard",
+          "status": "not_started",
+          "tasks": [
+            {
+              "id": "task_9_1_1",
+              "story": "As an admin, I can see every session — who ran it, when, duration, score",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_3_3_3"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_9_1_2",
+              "story": "As an admin, I can see every user — signup date, last active, plan, sessions completed",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_0_1_2"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_9_1_3",
+              "story": "As an admin, I can view the raw transcript and grading output for any session",
+              "type": "frontend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_9_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            },
+            {
+              "id": "task_9_1_4",
+              "story": "As an admin, I can view and edit system prompts and grading prompts without a code deploy",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "critical",
+              "dependencies": [],
+              "apis": [],
+              "notes": "Config stored in DB not code. Admin UI for editing."
+            },
+            {
+              "id": "task_9_1_5",
+              "story": "As an admin, I can see all errors and failed sessions",
+              "type": "frontend+backend",
+              "status": "not_started",
+              "priority": "high",
+              "dependencies": [
+                "task_9_1_1"
+              ],
+              "apis": [],
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "api_registry": {
+    "pipedrive_oauth": {
+      "type": "oauth2",
+      "scopes": [
+        "deals:read",
+        "contacts:read",
+        "notes:read",
+        "activities:read",
+        "notes:write",
+        "activities:write",
+        "deals:write"
+      ],
+      "docs": "https://pipedrive.readme.io/docs/oauth-2"
+    },
+    "pipedrive_api": {
+      "type": "rest",
+      "base_url": "https://api.pipedrive.com/v1",
+      "docs": "https://developers.pipedrive.com/docs/api/v1"
+    },
+    "google_oauth": {
+      "type": "oauth2",
+      "scopes": [
+        "openid",
+        "email",
+        "profile"
+      ],
+      "docs": "https://developers.google.com/identity/protocols/oauth2"
+    },
+    "google_calendar_oauth": {
+      "type": "oauth2",
+      "scopes": [
+        "https://www.googleapis.com/auth/calendar.readonly"
+      ],
+      "docs": "https://developers.google.com/calendar/api/guides/auth"
+    },
+    "google_calendar_api": {
+      "type": "rest",
+      "base_url": "https://www.googleapis.com/calendar/v3",
+      "docs": "https://developers.google.com/calendar/api/v3/reference"
+    },
+    "elevenlabs_api": {
+      "type": "rest+websocket",
+      "base_url": "https://api.elevenlabs.io/v1",
+      "eu_base_url": "https://eu.residency.elevenlabs.io",
+      "docs": "https://elevenlabs.io/docs/conversational-ai/overview",
+      "notes": "Use EU residency endpoint for all European users. Conversational Agents for voice sessions."
+    },
+    "gladia_api": {
+      "type": "rest",
+      "base_url": "https://api.gladia.io",
+      "hosting": "France (AWS EU)",
+      "docs": "https://docs.gladia.io",
+      "notes": "GDPR compliant. EU hosted. Use for all transcription and acoustic metrics."
+    },
+    "claude_api": {
+      "type": "rest",
+      "base_url": "https://api.anthropic.com/v1",
+      "model": "claude-sonnet-4-20250514",
+      "docs": "https://docs.anthropic.com",
+      "notes": "Used for: briefing generation, persona assembly, grading, coaching commentary, CRM enrichment extraction"
+    },
+    "slack_api": {
+      "type": "rest+webhooks",
+      "docs": "https://api.slack.com",
+      "notes": "Used for ambient delivery — pre-meeting briefings, post-call summaries, coach nudges"
+    },
+    "slack_oauth": {
+      "type": "oauth2",
+      "scopes": [
+        "incoming-webhook",
+        "chat:write",
+        "users:read"
+      ],
+      "docs": "https://api.slack.com/authentication/oauth-v2"
+    },
+    "meeting_bot_api": {
+      "type": "rest",
+      "provider": "Recall.ai (recommended)",
+      "docs": "https://docs.recall.ai",
+      "notes": "Evaluate Recall.ai for meeting bot infrastructure. Handles Zoom, Google Meet, Teams. EU data options available."
+    }
+  },
+  "meta": {
+    "task_statuses": [
+      "not_started",
+      "in_progress",
+      "review",
+      "done",
+      "blocked"
+    ],
+    "task_priorities": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ],
+    "task_types": [
+      "frontend",
+      "backend",
+      "frontend+backend"
+    ],
+    "mvp_phases": [
+      "phase_0",
+      "phase_1",
+      "phase_2",
+      "phase_3"
+    ],
+    "phase_2_phases": [
+      "phase_4",
+      "phase_5"
+    ],
+    "phase_3_phases": [
+      "phase_6",
+      "phase_7"
+    ],
+    "total_tasks": 91
+  }
+}

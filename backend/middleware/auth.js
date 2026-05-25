@@ -1,0 +1,55 @@
+/**
+ * requireAuth middleware — verifies the Supabase JWT from:
+ *   1. Authorization: Bearer <token> header
+ *   2. sb_token httpOnly cookie (set by /auth/google/callback)
+ *
+ * Attaches req.supabaseUser (raw Supabase user) and req.user (local DB row).
+ *
+ * If SUPABASE_URL / SUPABASE_SERVICE_KEY are not configured,
+ * auth is skipped in development (pass-through with a warning).
+ */
+
+const { getUserFromToken, getOrCreateLocalUser } = require('../services/auth');
+const { getPool } = require('../db/client');
+
+async function requireAuth(req, res, next) {
+  // Auth bypass when Supabase is not configured (dev / demo environment)
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    return next();
+  }
+
+  // Extract token from header or cookie
+  let token = null;
+
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+  } else if (req.cookies && req.cookies.sb_token) {
+    token = req.cookies.sb_token;
+  }
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorised — no token provided' });
+  }
+
+  const supabaseUser = await getUserFromToken(token);
+  if (!supabaseUser) {
+    return res.status(401).json({ error: 'Unauthorised — invalid or expired token' });
+  }
+
+  req.supabaseUser = supabaseUser;
+
+  // Attach local DB user if DB is available
+  const pool = getPool();
+  if (pool) {
+    try {
+      req.user = await getOrCreateLocalUser(pool, supabaseUser);
+    } catch (err) {
+      console.error('[auth] Failed to load local user:', err.message);
+    }
+  }
+
+  next();
+}
+
+module.exports = { requireAuth };
