@@ -56,6 +56,9 @@
         Start session
       </button>
 
+      <!-- Stats card — hidden until loadStats() populates it -->
+      <div class="stats-card" id="statsCard" style="display:none"></div>
+
       <div class="grid">
         <div id="leftCol">
           <div class="empty-state" id="emptyState">
@@ -263,6 +266,8 @@ function initAfterAuth() {
   const wasOAuthReturn = handleOAuthRedirectParams();
 
   loadLeaderboard();
+  loadHistory();
+  loadStats();
 
   if (_s.onboardingDone && !wasOAuthReturn) {
     // Returning user — go straight to the app

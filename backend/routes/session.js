@@ -54,6 +54,68 @@ function normalisePersona(raw) {
 }
 
 // ---------------------------------------------------------------------------
+// GET /api/session/history — last 20 scored sessions for authenticated user
+// ---------------------------------------------------------------------------
+router.get('/history', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT id, persona_id, mode, score, score_breakdown, duration_seconds, started_at
+       FROM sessions
+       WHERE user_id = $1 AND score IS NOT NULL
+       ORDER BY started_at DESC LIMIT 20`,
+      [req.user.id]
+    );
+    res.json({ sessions: rows });
+  } catch {
+    res.json({ sessions: [] });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/session/stats — aggregated performance stats for authenticated user
+// ---------------------------------------------------------------------------
+router.get('/stats', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT
+         COUNT(*)::int AS total_sessions,
+         COUNT(*) FILTER (WHERE started_at > NOW() - INTERVAL '7 days')::int AS sessions_this_week,
+         ROUND(AVG(score))::int AS avg_score,
+         MAX(score)::int AS best_score,
+         ROUND(AVG((score_breakdown->>'opening')::numeric))::int AS avg_opening,
+         ROUND(AVG((score_breakdown->>'objections')::numeric))::int AS avg_objections,
+         ROUND(AVG((score_breakdown->>'talk_ratio')::numeric))::int AS avg_talk_ratio,
+         ROUND(AVG((score_breakdown->>'clear_ask')::numeric))::int AS avg_clear_ask
+       FROM sessions
+       WHERE user_id = $1 AND score IS NOT NULL`,
+      [req.user.id]
+    );
+    const stats = rows[0];
+
+    // Streak: consecutive days (today counts even if only 1 session today)
+    const { rows: days } = await db.query(
+      `SELECT DISTINCT DATE(started_at AT TIME ZONE 'UTC') AS day
+       FROM sessions
+       WHERE user_id = $1 AND score IS NOT NULL
+       ORDER BY day DESC`,
+      [req.user.id]
+    );
+    let streak = 0;
+    const todayMs = new Date(new Date().toISOString().slice(0, 10)).getTime();
+    for (let i = 0; i < days.length; i++) {
+      const dayMs = new Date(days[i].day).getTime();
+      const expectedMs = todayMs - i * 86400000;
+      if (dayMs === expectedMs) streak++;
+      else break;
+    }
+
+    res.json({ stats: { ...stats, streak } });
+  } catch {
+    res.json({ stats: null });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // POST /api/session/start
 // ---------------------------------------------------------------------------
 router.post('/start', requireAuth, async (req, res) => {

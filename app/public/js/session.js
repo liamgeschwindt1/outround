@@ -1,6 +1,71 @@
 'use strict';
 
 // ---------------------------------------------------------------------------
+// Load session history + stats from DB on init
+// ---------------------------------------------------------------------------
+async function loadHistory() {
+  try {
+    const res = await apiFetch('/api/session/history');
+    if (!res.ok) return;
+    const { sessions } = await res.json();
+    if (!sessions || sessions.length === 0) return;
+    _s.history = sessions.map(s => ({
+      name: s.persona_id === 'natalie' ? 'Natalie Pemberton' : 'Hendrik van der Berg',
+      role: s.persona_id === 'natalie' ? 'Partner — Baobab Capital' : 'CFO — Vandermeer Logistics',
+      score: s.score || 0,
+      date: new Date(s.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+      duration: fmtSecs(s.duration_seconds || 0),
+      mode: s.persona_id === 'natalie' ? 'investor_pitch' : 'cold_call',
+    }));
+    renderHistory();
+  } catch { /* offline or no auth — ignore */ }
+}
+
+async function loadStats() {
+  try {
+    const res = await apiFetch('/api/session/stats');
+    if (!res.ok) return;
+    const { stats } = await res.json();
+    if (!stats || stats.total_sessions === 0) return;
+    renderStatsCard(stats);
+  } catch { /* ignore */ }
+}
+
+function renderStatsCard(s) {
+  const card = document.getElementById('statsCard');
+  if (!card) return;
+  const score = s.avg_score ?? '--';
+  const best = s.best_score ?? '--';
+  const sub = [
+    { label: 'Opening',   val: s.avg_opening   ?? '--' },
+    { label: 'Objections', val: s.avg_objections ?? '--' },
+    { label: 'Talk ratio', val: s.avg_talk_ratio  ?? '--' },
+    { label: 'Clear ask',  val: s.avg_clear_ask   ?? '--' },
+  ];
+  card.innerHTML = `
+    <div class="sc-left">
+      <div class="sc-label">AVG SCORE</div>
+      <div class="sc-score">${score}</div>
+      <div class="sc-meta">Best <strong>${best}</strong></div>
+      <div class="sc-counts">
+        <span>${s.total_sessions} round${s.total_sessions !== 1 ? 's' : ''}</span>
+        <span class="sc-dot">·</span>
+        <span>${s.sessions_this_week} this week</span>
+        ${s.streak > 1 ? `<span class="sc-dot">·</span><span class="sc-streak">${s.streak}🔥</span>` : ''}
+      </div>
+    </div>
+    <div class="sc-right">
+      ${sub.map(x => `
+        <div class="sc-sub">
+          <div class="sc-sub-label">${x.label}</div>
+          <div class="sc-sub-bar"><div class="sc-sub-fill" style="width:${Math.min(x.val, 100)}%"></div></div>
+          <div class="sc-sub-val">${x.val}</div>
+        </div>`).join('')}
+    </div>`;
+  card.style.display = 'flex';
+}
+
+// ---------------------------------------------------------------------------
 // Test sample transcripts — winning calls for each mode
 // ---------------------------------------------------------------------------
 const TEST_TRANSCRIPTS = {
@@ -430,6 +495,7 @@ async function finishAnalysis() {
   document.getElementById('analysisPage').classList.remove('open');
   addToHistory();
   await fetchFinishLb();
+  loadStats(); // refresh stats card with new session data
   goToStep('finish');
 }
 
