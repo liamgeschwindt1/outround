@@ -34,7 +34,9 @@ function dbgToggle() {
 }
 
 function dbgCopy(btn) {
-  const text = _dbgLogs.map(l => l.ts + '  ' + l.msg).join('\n');
+  const notes = (document.getElementById('dbg-notes')?.value || '').trim();
+  const logsText = _dbgLogs.map(l => l.ts + '  ' + l.msg).join('\n');
+  const text = logsText + (notes ? '\n\n--- Notes ---\n' + notes : '');
   navigator.clipboard.writeText(text).then(() => {
     const orig = btn.textContent;
     btn.textContent = 'Copied!';
@@ -59,4 +61,20 @@ function dbgClear() {
   body.innerHTML = '<div class="dbg-empty" id="dbg-empty">No logs yet.</div>';
   const cnt = document.getElementById('dbg-count');
   if (cnt) cnt.textContent = '0';
+}
+
+function dbgStampTime() {
+  const ta = document.getElementById('dbg-notes');
+  if (!ta) return;
+  const now = new Date();
+  const ts = '[' + now.toTimeString().slice(0, 8) + '] ';
+  const pos = ta.selectionStart;
+  const val = ta.value;
+  const before = val.substring(0, pos);
+  const after = val.substring(pos);
+  const needNewline = before.length > 0 && !before.endsWith('\n');
+  const insert = (needNewline ? '\n' : '') + ts;
+  ta.value = before + insert + after;
+  ta.selectionStart = ta.selectionEnd = pos + insert.length;
+  ta.focus();
 }
