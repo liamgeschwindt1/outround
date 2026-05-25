@@ -139,13 +139,13 @@ function renderMeetingsPanel() {
 
 function stageColour(stage) {
   const map = {
-    'Discovery':   'background:rgba(59,130,246,0.08);color:#2563eb;border-color:rgba(59,130,246,0.2)',
-    'Demo':        'background:rgba(168,85,247,0.08);color:#7c3aed;border-color:rgba(168,85,247,0.2)',
-    'Proposal':    'background:rgba(234,179,8,0.08);color:#b45309;border-color:rgba(234,179,8,0.2)',
-    'Negotiation': 'background:rgba(249,115,22,0.08);color:#c2410c;border-color:rgba(249,115,22,0.2)',
-    'Closed Won':  'background:rgba(34,197,94,0.08);color:#15803d;border-color:rgba(34,197,94,0.2)',
+    'Discovery':   'background:rgba(96,165,250,0.08);color:#60a5fa;border-color:rgba(96,165,250,0.25)',
+    'Demo':        'background:rgba(52,211,153,0.08);color:#34d399;border-color:rgba(52,211,153,0.25)',
+    'Proposal':    'background:rgba(251,146,60,0.08);color:#fb923c;border-color:rgba(251,146,60,0.25)',
+    'Negotiation': 'background:rgba(244,114,182,0.08);color:#f472b6;border-color:rgba(244,114,182,0.25)',
+    'Closed Won':  'background:rgba(74,222,128,0.08);color:#4ade80;border-color:rgba(74,222,128,0.25)',
   };
-  return map[stage] || 'background:var(--bg);color:var(--ink-2);border-color:var(--border)';
+  return map[stage] || 'background:var(--surface-2);color:var(--ink-2);border-color:var(--border)';
 }
 
 // ---------------------------------------------------------------------------
