@@ -86,6 +86,86 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .lb-bar-w{width:36px;height:2px;background:var(--border);border-radius:2px;overflow:hidden;flex-shrink:0}
 .lb-bar-f{height:100%;background:var(--ink);border-radius:2px}
 .lb-sc{font-size:0.92rem;font-weight:800;flex-shrink:0;min-width:22px;text-align:right}
+.right-col{display:flex;flex-direction:column}
+
+/* ===== MEETINGS PANEL ===== */
+.mtg-list{display:flex;flex-direction:column}
+.mtg-row{display:flex;align-items:flex-start;gap:10px;padding:12px 18px;border-bottom:1px solid rgba(17,17,17,0.05);transition:background 0.12s;cursor:default}
+.mtg-row:last-child{border-bottom:none}
+.mtg-row.next{background:rgba(17,17,17,0.02)}
+.mtg-row.locked{opacity:0.5}
+.mtg-av{width:34px;height:34px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;margin-top:1px}
+.mtg-info{flex:1;min-width:0}
+.mtg-name{font-size:0.78rem;font-weight:700;letter-spacing:-0.01em;margin-bottom:2px}
+.mtg-meta{font-size:0.62rem;color:var(--ink-2);margin-bottom:5px}
+.mtg-bottom{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mtg-time{font-size:0.6rem;font-weight:600;color:var(--ink-3)}
+.mtg-stage{font-size:0.55rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid transparent}
+.mtg-actions{display:flex;align-items:center;flex-shrink:0;margin-top:2px}
+.mtg-cta{font-family:var(--f);font-size:0.62rem;font-weight:700;background:var(--ink);color:white;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;transition:all 0.12s;white-space:nowrap}
+.mtg-cta:hover{background:#222;transform:translateY(-1px)}
+.mtg-lock{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--ink-3)}
+.mtg-ready-badge{font-size:0.6rem;font-weight:700;color:#15803d;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:99px;padding:3px 8px}
+.mtg-footer{padding:10px 18px;font-size:0.58rem;color:var(--ink-3);border-top:1px solid var(--border)}
+
+/* ===== MEETING PREP PAGE ===== */
+.prep-scroll{flex:1;overflow-y:auto}
+.prep-inner{max-width:960px;margin:0 auto;padding:32px 40px 80px}
+.prep-back-btn{display:inline-flex;align-items:center;gap:6px;font-family:var(--f);font-size:0.72rem;font-weight:700;background:transparent;border:1px solid var(--border);border-radius:7px;padding:7px 12px;cursor:pointer;color:var(--ink-2);transition:all 0.12s}
+.prep-back-btn:hover{border-color:var(--border-h);color:var(--ink)}
+.prep-topbar-label{font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-left:14px}
+/* Header */
+.prep-header{display:flex;align-items:flex-start;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 28px;margin-bottom:24px}
+.prep-av{width:56px;height:56px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0}
+.prep-header-info{flex:1}
+.prep-name{font-size:1.4rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:3px}
+.prep-title-co{font-size:0.78rem;color:var(--ink-2);margin-bottom:10px}
+.prep-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prep-stage-badge{font-size:0.58rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 9px;border-radius:99px;border:1px solid transparent}
+.prep-deal-val{font-size:0.72rem;font-weight:700;color:var(--ink)}
+.prep-days{font-size:0.68rem;color:var(--ink-3)}
+.prep-li-link{display:inline-flex;align-items:center;gap:4px;font-size:0.62rem;color:var(--ink-3);text-decoration:none;transition:color 0.12s}
+.prep-li-link:hover{color:#2563eb}
+.prep-header-right{flex-shrink:0;text-align:right}
+.prep-meeting-label{font-size:0.56rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.prep-meeting-val{font-size:0.88rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:2px}
+.prep-meeting-title{font-size:0.68rem;color:var(--ink-2)}
+/* Two-column layout */
+.prep-cols{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
+.prep-section{margin-bottom:20px}
+.prep-section-title{font-size:0.58rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.prep-section-count{background:var(--bg);border:1px solid var(--border);border-radius:99px;font-size:0.55rem;font-weight:700;padding:1px 7px;color:var(--ink-2)}
+/* Intel box */
+.prep-intel-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;font-size:0.78rem;color:var(--ink-2);line-height:1.7}
+/* CRM notes */
+.prep-notes-list{display:flex;flex-direction:column;gap:10px}
+.prep-note{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.prep-note-meta{font-size:0.6rem;font-weight:700;color:var(--ink-3);margin-bottom:6px}
+.prep-note-body{font-size:0.76rem;color:var(--ink-2);line-height:1.65}
+/* Deal card */
+.prep-deal-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.prep-deal-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(17,17,17,0.05);font-size:0.74rem}
+.prep-deal-row:last-child{border-bottom:none}
+.prep-deal-row span{color:var(--ink-2)}
+.prep-deal-row strong{font-weight:700}
+/* Coaching */
+.prep-coach-list{display:flex;flex-direction:column;gap:10px}
+.prep-coach-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.prep-coach-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+.prep-coach-label{font-size:0.76rem;font-weight:700;letter-spacing:-0.01em;margin-bottom:4px}
+.prep-coach-body{font-size:0.72rem;color:var(--ink-2);line-height:1.6}
+/* Persona card */
+.prep-persona-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;gap:12px;align-items:flex-start}
+.prep-persona-av{font-size:1.4rem;flex-shrink:0;margin-top:2px}
+.prep-persona-name{font-size:0.84rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:2px}
+.prep-persona-role{font-size:0.66rem;color:var(--ink-2);margin-bottom:8px}
+.prep-persona-traits{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.prep-trait{font-size:0.56rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;background:var(--bg);border:1px solid var(--border);border-radius:99px;padding:3px 8px;color:var(--ink-2)}
+.prep-persona-note{font-size:0.65rem;color:var(--ink-3);line-height:1.55}
+/* CTA */
+.prep-start-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;font-family:var(--f);font-size:0.88rem;font-weight:800;background:var(--ink);color:white;border:none;border-radius:10px;padding:16px 24px;cursor:pointer;transition:all 0.13s;letter-spacing:-0.01em;margin-top:8px}
+.prep-start-btn:hover{background:#222;transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,0.18)}
+.prep-start-sub{text-align:center;font-size:0.64rem;color:var(--ink-3);margin-top:8px}
 
 /* ===== FOCUS OVERLAY — sits above dashboard, steps 1-5 and 7 ===== */
 .focus-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.42);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 200ms ease}

@@ -14,13 +14,13 @@
 <!-- ===== DASHBOARD — always the base layer ===== -->
 <div class="shell">
   <aside class="sidebar">
-    <div class="sb-icon active" data-tip="Practice">
+    <div class="sb-icon active" id="sbPractice" data-tip="Practice" onclick="openSession()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><line x1="8" y1="8" x2="10.5" y2="10.5"/></svg>
     </div>
-    <div class="sb-icon" data-tip="Sessions">
+    <div class="sb-icon" id="sbSessions" data-tip="Sessions" onclick="sbNav('sessions')">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="2"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>
     </div>
-    <div class="sb-icon" data-tip="Leaderboard">
+    <div class="sb-icon" id="sbLeaderboard" data-tip="Leaderboard" onclick="sbNav('leaderboard')">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="9" width="3" height="5" rx="1"/><rect x="6.5" y="5" width="3" height="9" rx="1"/><rect x="11" y="7" width="3" height="7" rx="1"/></svg>
     </div>
     <div class="sb-divider"></div>
@@ -69,17 +69,23 @@
           <div class="history-list" id="historyList" style="display:none"></div>
         </div>
 
-        <div class="lb-panel">
-          <div class="panel-hdr">
-            <div class="panel-title">Leaderboard</div>
-            <div class="tag" style="background:rgba(34,197,94,0.07);color:#16a34a;border-color:rgba(34,197,94,0.18)">This week</div>
-          </div>
-          <div style="padding:12px 18px" id="lbBody">
-            <div class="lb-row"><div class="lb-rank top">1</div><div class="lb-av">SR</div><div class="lb-info"><div class="lb-name">Sophie R.</div><div class="lb-role">VP Sales · Berlin</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:91%"></div></div><div class="lb-sc">91</div></div>
-            <div class="lb-row"><div class="lb-rank top">2</div><div class="lb-av">MT</div><div class="lb-info"><div class="lb-name">Marcus T.</div><div class="lb-role">AE · Amsterdam</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:88%"></div></div><div class="lb-sc">88</div></div>
-            <div class="lb-row"><div class="lb-rank top">3</div><div class="lb-av">LK</div><div class="lb-info"><div class="lb-name">Lena K.</div><div class="lb-role">SDR · Munich</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:85%"></div></div><div class="lb-sc">85</div></div>
-            <div class="lb-row"><div class="lb-rank">4</div><div class="lb-av" id="ulbav" style="background:var(--ink);color:white">LG</div><div class="lb-info"><div class="lb-name" id="ulbn">You</div><div class="lb-role">Cold Call · Amsterdam</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:79%"></div></div><div class="lb-sc">79</div></div>
-            <div class="lb-row"><div class="lb-rank">5</div><div class="lb-av">AM</div><div class="lb-info"><div class="lb-name">Ana M.</div><div class="lb-role">Head of Sales · Madrid</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:74%"></div></div><div class="lb-sc">74</div></div>
+        <div class="right-col">
+          <!-- Upcoming meetings panel -->
+          <div class="lb-panel" id="meetingsPanel"></div>
+
+          <!-- Leaderboard (below meetings) -->
+          <div class="lb-panel" style="margin-top:16px">
+            <div class="panel-hdr">
+              <div class="panel-title">Leaderboard</div>
+              <div class="tag" style="background:rgba(34,197,94,0.07);color:#16a34a;border-color:rgba(34,197,94,0.18)">This week</div>
+            </div>
+            <div style="padding:12px 18px" id="lbBody">
+              <div class="lb-row"><div class="lb-rank top">1</div><div class="lb-av">SR</div><div class="lb-info"><div class="lb-name">Sophie R.</div><div class="lb-role">VP Sales · Berlin</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:91%"></div></div><div class="lb-sc">91</div></div>
+              <div class="lb-row"><div class="lb-rank top">2</div><div class="lb-av">MT</div><div class="lb-info"><div class="lb-name">Marcus T.</div><div class="lb-role">AE · Amsterdam</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:88%"></div></div><div class="lb-sc">88</div></div>
+              <div class="lb-row"><div class="lb-rank top">3</div><div class="lb-av">LK</div><div class="lb-info"><div class="lb-name">Lena K.</div><div class="lb-role">SDR · Munich</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:85%"></div></div><div class="lb-sc">85</div></div>
+              <div class="lb-row"><div class="lb-rank">4</div><div class="lb-av" id="ulbav" style="background:var(--ink);color:white">LG</div><div class="lb-info"><div class="lb-name" id="ulbn">You</div><div class="lb-role">Cold Call · Amsterdam</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:79%"></div></div><div class="lb-sc">79</div></div>
+              <div class="lb-row"><div class="lb-rank">5</div><div class="lb-av">AM</div><div class="lb-info"><div class="lb-name">Ana M.</div><div class="lb-role">Head of Sales · Madrid</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:74%"></div></div><div class="lb-sc">74</div></div>
+            </div>
           </div>
         </div>
       </div>
@@ -117,6 +123,31 @@
     <div class="progress-dots" id="progressDots"></div>
     <div class="card-step-wrap" id="cardStepWrap">
       <!-- rendered by JS per step -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== MEETING PREP PAGE — full screen overlay ===== -->
+<div class="analysis-page" id="meetingPrepPage">
+  <div class="an-shell">
+    <aside class="an-sidebar">
+      <div class="sb-icon" data-tip="Dashboard" onclick="closeMeetingPrep()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+      </div>
+      <div class="sb-spacer"></div>
+    </aside>
+    <div class="an-body">
+      <header class="an-topbar">
+        <button class="prep-back-btn" onclick="closeMeetingPrep()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9,2 3,7 9,12"/></svg>
+          Back
+        </button>
+        <div class="prep-topbar-label">Meeting Prep</div>
+        <div class="top-spacer"></div>
+      </header>
+      <div class="prep-scroll">
+        <div class="prep-inner" id="prepContent"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -236,6 +267,7 @@
 </div>
 
 <script src="/js/state.js"></script>
+<script src="/js/meetings.js"></script>
 <script src="/js/debug.js"></script>
 <script src="/js/utils.js"></script>
 <script src="/js/router.js"></script>
@@ -268,6 +300,7 @@ function initAfterAuth() {
   loadLeaderboard();
   loadHistory();
   loadStats();
+  renderMeetingsPanel();
 
   if (_s.onboardingDone && !wasOAuthReturn) {
     // Returning user — go straight to the app

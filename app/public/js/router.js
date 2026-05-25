@@ -27,6 +27,36 @@ function renderOnboardingDots() {
 // Handle OAuth redirect returns (Pipedrive / GCal callback → /onboarding?x=y)
 // Called during init to auto-advance the onboarding step.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Sidebar navigation
+// ---------------------------------------------------------------------------
+function sbNav(view) {
+  // Set active icon
+  const icons = { sessions: 'sbSessions', leaderboard: 'sbLeaderboard', practice: 'sbPractice' };
+  document.querySelectorAll('.sidebar .sb-icon').forEach(el => el.classList.remove('active'));
+  if (icons[view]) {
+    const el = document.getElementById(icons[view]);
+    if (el) el.classList.add('active');
+  }
+
+  const leftCol = document.getElementById('leftCol');
+  const rightCol = document.querySelector('.right-col');
+
+  if (view === 'sessions') {
+    // Show history + stats, hide meetings panel
+    if (leftCol) leftCol.style.display = '';
+    if (rightCol) rightCol.style.display = 'none';
+  } else if (view === 'leaderboard') {
+    // Show leaderboard panel only
+    if (leftCol) leftCol.style.display = 'none';
+    if (rightCol) { rightCol.style.display = ''; }
+  } else {
+    // Default: show everything
+    if (leftCol) leftCol.style.display = '';
+    if (rightCol) rightCol.style.display = '';
+  }
+}
+
 function handleOAuthRedirectParams() {
   const params = new URLSearchParams(window.location.search);
   const pipedriveConnected = params.get('pipedrive') === 'connected';
