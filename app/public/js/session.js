@@ -36,15 +36,25 @@ function renderStatsCard(s) {
   if (!card) return;
   const score = s.avg_score ?? '--';
   const best = s.best_score ?? '--';
+  const trends = s.trends || {};
   const sub = [
-    { label: 'Opening',   val: s.avg_opening   ?? '--' },
-    { label: 'Objections', val: s.avg_objections ?? '--' },
-    { label: 'Talk ratio', val: s.avg_talk_ratio  ?? '--' },
-    { label: 'Clear ask',  val: s.avg_clear_ask   ?? '--' },
+    { label: 'Opening',    val: s.avg_opening    ?? '--', trend: trends.opening    },
+    { label: 'Objections', val: s.avg_objections ?? '--', trend: trends.objections },
+    { label: 'Talk ratio', val: s.avg_talk_ratio ?? '--', trend: trends.talk_ratio },
+    { label: 'Clear ask',  val: s.avg_clear_ask  ?? '--', trend: trends.clear_ask  },
   ];
+  const arrow = (t) => {
+    if (t === 'up')   return '<span class="sc-trend up" title="Trending up">▲</span>';
+    if (t === 'down') return '<span class="sc-trend down" title="Trending down">▼</span>';
+    if (t === 'flat') return '<span class="sc-trend flat" title="Flat">→</span>';
+    return '';
+  };
+  const coachBadge = s.coach && s.coach.id
+    ? `<div class="sc-coach"><div class="sc-coach-av">${s.coach.id.charAt(0).toUpperCase()}</div><div class="sc-coach-meta"><div class="sc-coach-lbl">COACH</div><div class="sc-coach-name">${escHtml(s.coach.id.charAt(0).toUpperCase() + s.coach.id.slice(1))}</div></div></div>`
+    : '';
   card.innerHTML = `
     <div class="sc-left">
-      <div class="sc-label">AVG SCORE</div>
+      <div class="sc-label">AVG SCORE ${arrow(trends.score)}</div>
       <div class="sc-score">${score}</div>
       <div class="sc-meta">Best <strong>${best}</strong></div>
       <div class="sc-counts">
@@ -53,13 +63,14 @@ function renderStatsCard(s) {
         <span>${s.sessions_this_week} this week</span>
         ${s.streak > 1 ? `<span class="sc-dot">·</span><span class="sc-streak">${s.streak}🔥</span>` : ''}
       </div>
+      ${coachBadge}
     </div>
     <div class="sc-right">
       ${sub.map(x => `
         <div class="sc-sub">
           <div class="sc-sub-label">${x.label}</div>
           <div class="sc-sub-bar"><div class="sc-sub-fill" style="width:${Math.min(x.val, 100)}%"></div></div>
-          <div class="sc-sub-val">${x.val}</div>
+          <div class="sc-sub-val">${x.val}${arrow(x.trend)}</div>
         </div>`).join('')}
     </div>`;
   card.style.display = 'flex';

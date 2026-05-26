@@ -109,7 +109,52 @@ router.get('/stats', requireAuth, async (req, res) => {
       else break;
     }
 
-    res.json({ stats: { ...stats, streak } });
+    // Trends: compare last 5 sessions vs previous 5. Only meaningful with 2+ rounds.
+    let trends = null;
+    if (stats.total_sessions >= 2) {
+      const { rows: recent } = await db.query(
+        `SELECT score, score_breakdown
+         FROM sessions
+         WHERE user_id = $1 AND score IS NOT NULL
+         ORDER BY started_at DESC LIMIT 10`,
+        [req.user.id]
+      );
+      const half = Math.min(5, Math.floor(recent.length / 2));
+      if (half >= 1) {
+        const recentHalf = recent.slice(0, half);
+        const priorHalf = recent.slice(half, half * 2);
+        const avg = (arr, key) => {
+          const vals = arr.map((r) => key ? Number(r.score_breakdown?.[key]) : Number(r.score)).filter((v) => !isNaN(v));
+          return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+        };
+        const trend = (a, b) => {
+          if (a === null || b === null) return 'flat';
+          const d = a - b;
+          if (d >= 2) return 'up';
+          if (d <= -2) return 'down';
+          return 'flat';
+        };
+        trends = {
+          score:      trend(avg(recentHalf), avg(priorHalf)),
+          opening:    trend(avg(recentHalf, 'opening'),    avg(priorHalf, 'opening')),
+          objections: trend(avg(recentHalf, 'objections'), avg(priorHalf, 'objections')),
+          talk_ratio: trend(avg(recentHalf, 'talk_ratio'), avg(priorHalf, 'talk_ratio')),
+          clear_ask:  trend(avg(recentHalf, 'clear_ask'),  avg(priorHalf, 'clear_ask')),
+        };
+      }
+    }
+
+    // Coach info — pulled from users.coach_id, joined with built-in coach list on the client
+    let coach = null;
+    try {
+      const { rows: ur } = await db.query(
+        `SELECT coach_id FROM users WHERE id = $1`,
+        [req.user.id]
+      );
+      if (ur.length && ur[0].coach_id) coach = { id: ur[0].coach_id };
+    } catch { /* users table may not exist in dev */ }
+
+    res.json({ stats: { ...stats, streak, trends, coach } });
   } catch {
     res.json({ stats: null });
   }

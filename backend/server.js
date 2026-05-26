@@ -31,6 +31,8 @@ app.use('/auth', require('./routes/auth'));
 app.use('/api/session', require('./routes/session'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
 app.use('/api/coaches', require('./routes/coaches'));
+app.use('/api', require('./routes/meetings'));
+app.use('/api', require('./routes/webhooks'));
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));

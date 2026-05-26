@@ -120,6 +120,15 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .sc-sub-bar{flex:1;height:3px;background:var(--surface-2);border-radius:99px;overflow:hidden}
 .sc-sub-fill{height:100%;background:linear-gradient(90deg,var(--a1),var(--a2));border-radius:99px;transition:width 0.5s ease}
 .sc-sub-val{font-size:0.72rem;font-weight:700;color:var(--ink);width:26px;text-align:right}
+.sc-trend{display:inline-block;font-size:0.6rem;margin-left:3px;line-height:1;vertical-align:middle}
+.sc-trend.up{color:#22c55e}
+.sc-trend.down{color:#ef4444}
+.sc-trend.flat{color:var(--ink-3)}
+.sc-coach{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.sc-coach-av{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0}
+.sc-coach-meta{display:flex;flex-direction:column;line-height:1.1}
+.sc-coach-lbl{font-size:0.52rem;font-weight:700;letter-spacing:0.1em;color:var(--ink-3)}
+.sc-coach-name{font-size:0.72rem;font-weight:600;color:var(--ink)}
 .grid{display:grid;grid-template-columns:1fr 288px;gap:20px;align-items:start}
 .empty-state{
   background:var(--surface);border:1px solid var(--border);border-radius:14px;
@@ -180,6 +189,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .mtg-bottom{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .mtg-time{font-size:0.6rem;font-weight:600;color:var(--ink-3)}
 .mtg-stage{font-size:0.55rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid transparent}
+.mtg-bot-toggle{font-family:var(--f);font-size:0.55rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--border);background:var(--surface-2);color:var(--ink-2);cursor:pointer;transition:all 0.15s}
+.mtg-bot-toggle:hover{background:var(--surface);border-color:var(--ink-3);color:var(--ink)}
+.mtg-bot-toggle.on{background:rgba(239,68,68,0.08);color:#dc2626;border-color:rgba(239,68,68,0.25)}
+.mtg-bot-toggle:disabled{opacity:0.5;cursor:wait}
+.mtg-conf{font-size:0.55rem;color:var(--ink-3);font-weight:600}
 .mtg-actions{display:flex;align-items:center;flex-shrink:0;margin-top:2px}
 .mtg-cta{
   font-family:var(--f);font-size:0.62rem;font-weight:700;

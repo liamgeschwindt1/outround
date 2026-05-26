@@ -95,28 +95,109 @@ const DUMMY_COACHING = [
 
 // ---------------------------------------------------------------------------
 // Render meetings panel (right column of dashboard)
+// Tries /api/meetings/upcoming first, falls back to dummy data so the demo
+// stays intact when no Google Calendar account is connected.
 // ---------------------------------------------------------------------------
-function renderMeetingsPanel() {
+async function renderMeetingsPanel() {
   const panel = document.getElementById('meetingsPanel');
   if (!panel) return;
 
-  const rows = DUMMY_MEETINGS.map((m, i) => {
-    const stageBg = stageColour(m.deal.stage);
-    const doneHtml = m.outround_done
-      ? `<div class="mtg-ready-badge">✓ Ready</div>`
-      : (m.locked ? '' : `<button class="mtg-cta" onclick="openMeetingPrep('${m.id}')">Get ready →</button>`);
-    const lockHtml = m.locked
-      ? `<div class="mtg-lock"><svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="10" height="7" rx="2"/><path d="M4 6V4a3 3 0 1 1 6 0v2"/></svg></div>`
-      : '';
-    return `
+  let meetings = DUMMY_MEETINGS;
+  let connected = false;
+  let botConfigured = false;
+
+  try {
+    const r = await fetch('/api/meetings/upcoming', { credentials: 'include' });
+    if (r.ok) {
+      const data = await r.json();
+      connected = !!data.connected;
+      botConfigured = !!data.bot_configured;
+      if (connected && Array.isArray(data.meetings) && data.meetings.length) {
+        meetings = data.meetings.map(adaptApiMeeting);
+      }
+    }
+  } catch { /* fallback to dummy */ }
+
+  if (window._s) _s._meetings = meetings;
+
+  const rows = meetings.map((m, i) => meetingRowHtml(m, i, botConfigured)).join('');
+
+  panel.innerHTML = `
+    <div class="panel-hdr">
+      <div class="panel-title">Upcoming meetings</div>
+      <div class="tag" style="background:rgba(59,130,246,0.07);color:#2563eb;border-color:rgba(59,130,246,0.18)">${connected ? 'GCal' : 'Demo'}</div>
+    </div>
+    <div class="mtg-list">${rows}</div>
+    <div class="mtg-footer">
+      <span>${connected ? 'Live from Google Calendar + Pipedrive' : 'Powered by Google Calendar + Pipedrive'}</span>
+    </div>`;
+}
+
+// Map a backend meeting view-model to the dashboard row shape.
+function adaptApiMeeting(m) {
+  const name = m.prospect?.name || 'Unknown';
+  const initials = name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
+  const tld = (m.prospect?.email || '').split('@')[1]?.split('.').pop() || '';
+  const flag = { nl:'🇳🇱', de:'🇩🇪', se:'🇸🇪', fr:'🇫🇷', uk:'🇬🇧', es:'🇪🇸', dk:'🇩🇰' }[tld] || '👤';
+  const when = m.starts_at ? new Date(m.starts_at) : null;
+  const time = when
+    ? when.toLocaleString([], { weekday:'short', hour:'2-digit', minute:'2-digit' })
+    : '';
+  return {
+    id: m.id,
+    title: m.title || '',
+    prospect: {
+      name,
+      first: name.split(' ')[0],
+      title: '',
+      company: m.prospect?.company || '',
+      initials,
+      flag,
+      linkedin: 'https://linkedin.com',
+    },
+    time,
+    urgency: '',
+    deal: { name: '', stage: m.deal ? 'Open' : '—', value: '', days_in_stage: 0 },
+    outround_done: m.outround_done,
+    locked: false,
+    persona_id: 'hendrik',
+    mode: 'cold_call',
+    conference: m.conference,
+    bot: m.bot,
+    bot_supported: m.bot_supported,
+  };
+}
+
+function meetingRowHtml(m, i, botConfigured) {
+  const stageBg = stageColour(m.deal.stage);
+  const doneHtml = m.outround_done
+    ? `<div class="mtg-ready-badge">✓ Ready</div>`
+    : (m.locked ? '' : `<button class="mtg-cta" onclick="openMeetingPrep('${m.id}')">Get ready →</button>`);
+  const lockHtml = m.locked
+    ? `<div class="mtg-lock"><svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="10" height="7" rx="2"/><path d="M4 6V4a3 3 0 1 1 6 0v2"/></svg></div>`
+    : '';
+
+  let botHtml = '';
+  if (m.bot_supported) {
+    if (!botConfigured) {
+      botHtml = ''; // hide entirely if Recall not configured
+    } else if (m.bot) {
+      botHtml = `<button class="mtg-bot-toggle on" onclick="toggleBot('${m.id}', event)" title="${m.bot.status}">🎙 Bot ${m.bot.status}</button>`;
+    } else {
+      botHtml = `<button class="mtg-bot-toggle" onclick="toggleBot('${m.id}', event)">+ Send bot</button>`;
+    }
+  }
+
+  return `
     <div class="mtg-row${m.locked ? ' locked' : ''}${i === 0 ? ' next' : ''}">
       <div class="mtg-av">${m.prospect.flag}</div>
       <div class="mtg-info">
         <div class="mtg-name">${escHtml(m.prospect.name)}</div>
-        <div class="mtg-meta">${escHtml(m.prospect.company)} · ${escHtml(m.title)}</div>
+        <div class="mtg-meta">${escHtml(m.prospect.company)}${m.title ? ' · ' + escHtml(m.title) : ''}</div>
         <div class="mtg-bottom">
           <span class="mtg-time">${m.time}</span>
           <span class="mtg-stage" style="${stageBg}">${m.deal.stage}</span>
+          ${botHtml}
         </div>
       </div>
       <div class="mtg-actions">
@@ -124,17 +205,34 @@ function renderMeetingsPanel() {
         ${lockHtml}
       </div>
     </div>`;
-  }).join('');
+}
 
-  panel.innerHTML = `
-    <div class="panel-hdr">
-      <div class="panel-title">Upcoming meetings</div>
-      <div class="tag" style="background:rgba(59,130,246,0.07);color:#2563eb;border-color:rgba(59,130,246,0.18)">GCal</div>
-    </div>
-    <div class="mtg-list">${rows}</div>
-    <div class="mtg-footer">
-      <span>Powered by Google Calendar + Pipedrive</span>
-    </div>`;
+async function toggleBot(meetingId, ev) {
+  ev.stopPropagation();
+  const btn = ev.currentTarget;
+  const isOn = btn.classList.contains('on');
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '…';
+  try {
+    const r = await fetch(`/api/meetings/${meetingId}/bot`, {
+      method: isOn ? 'DELETE' : 'POST',
+      credentials: 'include',
+    });
+    if (r.status === 503) {
+      const d = await r.json().catch(() => ({}));
+      alert(d.error || 'Meeting bot not configured yet');
+      btn.innerHTML = original;
+      return;
+    }
+    if (!r.ok) throw new Error(await r.text());
+    await renderMeetingsPanel();
+  } catch (e) {
+    btn.innerHTML = original;
+    alert('Could not update bot: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function stageColour(stage) {
@@ -152,7 +250,8 @@ function stageColour(stage) {
 // Meeting prep page
 // ---------------------------------------------------------------------------
 function openMeetingPrep(meetingId) {
-  const meeting = DUMMY_MEETINGS.find(m => m.id === meetingId);
+  const pool = (window._s && _s._meetings) || DUMMY_MEETINGS;
+  const meeting = pool.find(m => m.id === meetingId) || DUMMY_MEETINGS.find(m => m.id === meetingId);
   if (!meeting) return;
   _s._activeMeeting = meeting;
   renderMeetingPrepPage(meeting);

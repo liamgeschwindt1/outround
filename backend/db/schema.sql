@@ -70,3 +70,63 @@ WHERE
 GROUP BY user_name, user_role
 ORDER BY best_score DESC
 LIMIT 20;
+
+-- ---------------------------------------------------------------------------
+-- Meeting Bot (Recall.ai) — Phase 4
+-- ---------------------------------------------------------------------------
+
+-- Cached calendar events linked to a Pipedrive prospect.
+CREATE TABLE IF NOT EXISTS meetings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  source TEXT NOT NULL DEFAULT 'gcal',           -- 'gcal' | 'manual'
+  external_event_id TEXT,                        -- gcal event id
+  title TEXT,
+  starts_at TIMESTAMPTZ,
+  ends_at TIMESTAMPTZ,
+  attendees JSONB,                               -- [{email, name, organizer}]
+  conference_url TEXT,                           -- zoom / meet / teams URL
+  conference_provider TEXT,                      -- 'zoom' | 'google_meet' | 'teams'
+  prospect_email TEXT,
+  pipedrive_person_id BIGINT,
+  pipedrive_deal_id BIGINT,
+  prospect_name TEXT,
+  prospect_company TEXT,
+  outround_session_id UUID REFERENCES sessions(id) ON DELETE SET NULL,
+  outround_done BOOLEAN NOT NULL DEFAULT false,
+  raw JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, source, external_event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_meetings_user_time ON meetings (user_id, starts_at);
+
+-- Recall.ai meeting bot deployments
+CREATE TABLE IF NOT EXISTS meeting_bots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  meeting_id UUID REFERENCES meetings(id) ON DELETE CASCADE,
+  recall_bot_id TEXT UNIQUE,
+  conference_url TEXT NOT NULL,
+  join_at TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'scheduled',      -- scheduled|joining|in_call|done|failed|cancelled
+  status_detail TEXT,
+  transcript_url TEXT,
+  recording_url TEXT,
+  transcript JSONB,
+  duration_seconds INTEGER,
+  summary TEXT,
+  next_steps JSONB,
+  objections JSONB,
+  competitor_mentions JSONB,
+  acoustic_metrics JSONB,
+  pipedrive_pushed_at TIMESTAMPTZ,
+  pipedrive_note_id BIGINT,
+  pipedrive_activity_id BIGINT,
+  recording_deleted_at TIMESTAMPTZ,
+  transcript_deleted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_meeting_bots_user ON meeting_bots (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_meeting_bots_status ON meeting_bots (status);
