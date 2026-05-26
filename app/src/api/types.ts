@@ -88,3 +88,84 @@ export interface SessionStats {
   best_score: number | null;
   current_streak: number;
 }
+
+// ─── Meeting Prep ────────────────────────────────────────────────────────────
+
+export interface PipedrivePerson {
+  id: number;
+  name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  title: string | null;
+  org: string | null;
+  email: string | null;
+  phone: string | null;
+  linkedin: string | null;
+  open_deals_count: number | null;
+  closed_deals_count: number | null;
+  last_activity_date: string | null;
+  next_activity_date: string | null;
+  photo_url: string | null;
+}
+
+export interface PipedriveDeal {
+  id: number;
+  title: string;
+  stage_id: number | null;
+  stage_name: string | null;
+  value: number;
+  currency: string | null;
+  status: string;
+  probability: number | null;
+  days_in_stage: number | null;
+  expected_close_date: string | null;
+  next_activity_subject: string | null;
+  next_activity_date: string | null;
+  owner_name: string | null;
+}
+
+export interface PipedriveNote {
+  id: number;
+  content: string;
+  add_time: string;
+  user_name: string | null;
+  deal_id: number | null;
+}
+
+export interface PipedriveActivity {
+  id: number;
+  type: string | null;
+  subject: string | null;
+  done: boolean;
+  due_date: string | null;
+  due_time: string | null;
+  duration: string | null;
+  note: string;
+  add_time: string | null;
+  marked_as_done_time: string | null;
+  deal_id: number | null;
+}
+
+export interface PersonaSummary {
+  communication_style: string;
+  known_objections: string[];
+  resistance_level: number; // 1–5
+  what_moves_them: string[];
+}
+
+export interface MeetingPrepResponse {
+  cached: boolean;
+  generated_at: string;
+  meeting: UpcomingMeeting;
+  prospect: PipedrivePerson | null;
+  deal: PipedriveDeal | null;
+  notes: PipedriveNote[];
+  activities: PipedriveActivity[];
+  prospect_summary: string;
+  last_interaction: string | null;
+  open_next_steps: string[];
+  coaching_notes: string[];
+  persona_summary: PersonaSummary | null;
+  insufficient_crm_data: boolean;
+  intel_error?: string;
+}

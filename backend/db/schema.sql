@@ -130,3 +130,9 @@ CREATE TABLE IF NOT EXISTS meeting_bots (
 );
 CREATE INDEX IF NOT EXISTS idx_meeting_bots_user ON meeting_bots (user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_meeting_bots_status ON meeting_bots (status);
+
+-- Cached meeting-prep payload (Claude-generated prospect intel + persona assembly).
+-- Stored on the meeting row so the prep page is < 200ms after first visit.
+ALTER TABLE meetings ADD COLUMN IF NOT EXISTS prep_data        JSONB;
+ALTER TABLE meetings ADD COLUMN IF NOT EXISTS prep_generated_at TIMESTAMPTZ;
+ALTER TABLE meetings ADD COLUMN IF NOT EXISTS prep_persona_prompt TEXT;

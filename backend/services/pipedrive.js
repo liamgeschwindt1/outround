@@ -205,4 +205,153 @@ async function isConnected(userId) {
   return rows.length > 0;
 }
 
-module.exports = { getAuthUrl, exchangeCode, refreshToken, get, isConnected };
+/**
+ * Higher-level fetch helpers used by the meeting prep page.
+ * Each returns a normalised, view-friendly object — never the raw Pipedrive payload.
+ * All swallow per-request errors and return null/[] so a single failure can't break the page.
+ */
+
+async function getPerson(userId, personId) {
+  if (!personId) return null;
+  try {
+    const data = await get(userId, `/persons/${personId}`);
+    const p = data?.data;
+    if (!p) return null;
+    return {
+      id: p.id,
+      name: p.name,
+      first_name: p.first_name,
+      last_name: p.last_name,
+      title: p.job_title || null,
+      org: p.org_name || p.organization?.name || null,
+      org_id: p.org_id?.value || p.org_id || null,
+      email: Array.isArray(p.email) ? (p.email[0]?.value || null) : (p.email || null),
+      phone: Array.isArray(p.phone) ? (p.phone[0]?.value || null) : (p.phone || null),
+      linkedin: p.linkedin || null,
+      open_deals_count: p.open_deals_count ?? null,
+      closed_deals_count: p.closed_deals_count ?? null,
+      last_activity_date: p.last_activity_date || null,
+      next_activity_date: p.next_activity_date || null,
+      photo_url: p.picture_id?.pictures?.['512'] || null,
+    };
+  } catch (err) {
+    console.error('[pipedrive] getPerson failed:', err.message);
+    return null;
+  }
+}
+
+async function getDeal(userId, dealId) {
+  if (!dealId) return null;
+  try {
+    const data = await get(userId, `/deals/${dealId}`);
+    const d = data?.data;
+    if (!d) return null;
+    const stageChangedAt = d.stage_change_time || d.add_time;
+    const daysInStage = stageChangedAt
+      ? Math.max(0, Math.round((Date.now() - new Date(stageChangedAt).getTime()) / 86400000))
+      : null;
+    return {
+      id: d.id,
+      title: d.title,
+      stage_id: d.stage_id,
+      stage_name: d.stage_id ? `Stage ${d.stage_id}` : null,
+      value: d.value || 0,
+      currency: d.currency || null,
+      status: d.status,
+      probability: d.probability ?? null,
+      days_in_stage: daysInStage,
+      expected_close_date: d.expected_close_date || null,
+      next_activity_subject: d.next_activity_subject || null,
+      next_activity_date: d.next_activity_date || null,
+      owner_name: d.owner_name || null,
+    };
+  } catch (err) {
+    console.error('[pipedrive] getDeal failed:', err.message);
+    return null;
+  }
+}
+
+function stripHtml(html) {
+  if (!html) return '';
+  return String(html)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+async function getPersonNotes(userId, personId, limit = 25) {
+  if (!personId) return [];
+  try {
+    const data = await get(userId, `/notes?person_id=${personId}&limit=${limit}&sort=add_time%20DESC`);
+    return (data?.data || []).map(n => ({
+      id: n.id,
+      content: stripHtml(n.content),
+      add_time: n.add_time,
+      user_name: n.user?.name || null,
+      deal_id: n.deal_id || null,
+    }));
+  } catch (err) {
+    console.error('[pipedrive] getPersonNotes failed:', err.message);
+    return [];
+  }
+}
+
+async function getDealNotes(userId, dealId, limit = 25) {
+  if (!dealId) return [];
+  try {
+    const data = await get(userId, `/notes?deal_id=${dealId}&limit=${limit}&sort=add_time%20DESC`);
+    return (data?.data || []).map(n => ({
+      id: n.id,
+      content: stripHtml(n.content),
+      add_time: n.add_time,
+      user_name: n.user?.name || null,
+      deal_id: n.deal_id || null,
+    }));
+  } catch (err) {
+    console.error('[pipedrive] getDealNotes failed:', err.message);
+    return [];
+  }
+}
+
+async function getPersonActivities(userId, personId, limit = 25) {
+  if (!personId) return [];
+  try {
+    const data = await get(userId, `/persons/${personId}/activities?limit=${limit}`);
+    return (data?.data || []).map(a => ({
+      id: a.id,
+      type: a.type,
+      subject: a.subject,
+      done: !!a.done,
+      due_date: a.due_date,
+      due_time: a.due_time,
+      duration: a.duration,
+      note: stripHtml(a.note),
+      add_time: a.add_time,
+      marked_as_done_time: a.marked_as_done_time,
+      deal_id: a.deal_id,
+    }));
+  } catch (err) {
+    console.error('[pipedrive] getPersonActivities failed:', err.message);
+    return [];
+  }
+}
+
+module.exports = {
+  getAuthUrl,
+  exchangeCode,
+  refreshToken,
+  get,
+  isConnected,
+  getPerson,
+  getDeal,
+  getPersonNotes,
+  getDealNotes,
+  getPersonActivities,
+};

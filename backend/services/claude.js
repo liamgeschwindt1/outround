@@ -473,4 +473,145 @@ Return ONLY valid JSON, no markdown fences:
   }
 }
 
-module.exports = { gradeSession, gradeSessionFast, gradeSessionDeep, gradePitchFast, gradePitchDeep };
+// ---------------------------------------------------------------------------
+// Meeting prep — prospect intel, coaching notes, persona assembly
+// ---------------------------------------------------------------------------
+
+const PREP_MODEL = process.env.ANTHROPIC_PREP_MODEL || 'claude-sonnet-4-6';
+
+function buildCrmContext({ person, deal, notes, activities }) {
+  const lines = [];
+  if (person) {
+    lines.push(`PROSPECT: ${person.name || 'unknown'}${person.title ? ` — ${person.title}` : ''}${person.org ? ` at ${person.org}` : ''}`);
+    if (person.email) lines.push(`Email: ${person.email}`);
+    if (person.open_deals_count != null) lines.push(`Open deals: ${person.open_deals_count} | Closed: ${person.closed_deals_count ?? 0}`);
+    if (person.last_activity_date) lines.push(`Last activity: ${person.last_activity_date}`);
+  }
+  if (deal) {
+    lines.push('');
+    lines.push(`DEAL: ${deal.title}${deal.value ? ` — ${deal.value}${deal.currency ? ' ' + deal.currency : ''}` : ''}`);
+    if (deal.stage_name) lines.push(`Stage: ${deal.stage_name}${deal.days_in_stage != null ? ` (${deal.days_in_stage} days)` : ''}`);
+    if (deal.probability != null) lines.push(`Probability: ${deal.probability}%`);
+    if (deal.expected_close_date) lines.push(`Expected close: ${deal.expected_close_date}`);
+  }
+  const recentNotes = (notes || []).slice(0, 10);
+  if (recentNotes.length) {
+    lines.push('');
+    lines.push('CRM NOTES (most recent first):');
+    recentNotes.forEach(n => {
+      const when = n.add_time ? n.add_time.split('T')[0] : '';
+      const body = (n.content || '').slice(0, 600);
+      if (body) lines.push(`- [${when}] ${body}`);
+    });
+  }
+  const recentActivities = (activities || []).slice(0, 10);
+  if (recentActivities.length) {
+    lines.push('');
+    lines.push('ACTIVITIES (most recent first):');
+    recentActivities.forEach(a => {
+      const when = a.marked_as_done_time || a.due_date || a.add_time || '';
+      const status = a.done ? 'done' : 'open';
+      const note = a.note ? ` — ${a.note.slice(0, 200)}` : '';
+      lines.push(`- [${when}] ${a.type || 'activity'} (${status}): ${a.subject || '(no subject)'}${note}`);
+    });
+  }
+  return lines.join('\n').trim() || 'No CRM data available for this prospect.';
+}
+
+/**
+ * Generate the full meeting-prep AI payload in a single Claude call.
+ *
+ *   {
+ *     prospect_summary: string,                 // one-paragraph synthesis
+ *     last_interaction: string|null,            // one-sentence summary of most recent call/meeting
+ *     open_next_steps: string[],                // bullets — what was agreed next
+ *     coaching_notes: string[],                 // 3 bullets — what to watch for
+ *     persona: {
+ *       system_prompt: string,                  // for ElevenLabs override (NEVER returned to UI)
+ *       summary: {                              // user-facing only
+ *         communication_style: string,
+ *         known_objections: string[],
+ *         resistance_level: 1|2|3|4|5,
+ *         what_moves_them: string[],
+ *       }
+ *     }
+ *   }
+ */
+async function generateMeetingPrepIntel({ meeting, person, deal, notes, activities, user, userStats }) {
+  if (!process.env.ANTHROPIC_KEY) throw new Error('ANTHROPIC_KEY not configured');
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_KEY });
+
+  const crm = buildCrmContext({ person, deal, notes, activities });
+
+  const repWeakSpots = (() => {
+    if (!userStats || !userStats.score_breakdown) return 'No prior round data yet.';
+    const sb = userStats.score_breakdown;
+    const entries = Object.entries(sb).sort((a, b) => a[1] - b[1]).slice(0, 2);
+    return entries.map(([k, v]) => `${k}: ${v}/100`).join(', ');
+  })();
+
+  const prompt = `You are the meeting prep engine for Outround. The rep has a meeting coming up with the prospect described below. Synthesise everything we know into a single tight prep payload — and assemble a digital twin persona the rep can rehearse against.
+
+REP: ${user?.name || 'the rep'}${user?.role ? ` (${user.role})` : ''}
+REP WEAK SPOTS (lowest sub-scores from recent rounds): ${repWeakSpots}
+
+MEETING:
+- Title: ${meeting?.title || '(untitled)'}
+- When: ${meeting?.starts_at || 'TBC'}
+
+CRM DATA:
+${crm}
+
+INSTRUCTIONS:
+1. prospect_summary (1 paragraph, ~80 words): who is this person, how do they buy, what matters to them, what has been tried. Synthesise — don't list. If data is thin, say so plainly in the first sentence and base the rest on role/industry priors.
+2. last_interaction: one sentence summarising the most recent meaningful interaction (note or completed activity). null if nothing meaningful.
+3. open_next_steps: array of short strings — what was agreed but not yet done. [] if nothing open.
+4. coaching_notes: 3 short bullets — specific things to watch for in THIS meeting, given the prospect's history AND the rep's weak spots. Direct, no fluff.
+5. persona.system_prompt: a complete system prompt (300–500 words) for a voice agent playing this prospect. Include: name, role, company, communication style, current beliefs, objections they will raise, what would move them, hang-up conditions, response-length rules (short, real-CFO style — see the Outround house style: no monologues, silence is a tool). Build it from the CRM data — quote specifics where they exist. If data is thin, fall back sensibly to role-typical behaviour.
+6. persona.summary (USER-FACING — never reveals system prompt internals):
+   - communication_style: one sentence
+   - known_objections: 2–4 short strings, each phrased as the prospect would say it
+   - resistance_level: integer 1 (open) to 5 (hostile)
+   - what_moves_them: 2–3 short strings
+
+Return ONLY valid JSON, no preamble, no markdown fences:
+{
+  "prospect_summary": "...",
+  "last_interaction": "..." | null,
+  "open_next_steps": ["..."],
+  "coaching_notes": ["...", "...", "..."],
+  "persona": {
+    "system_prompt": "...",
+    "summary": {
+      "communication_style": "...",
+      "known_objections": ["..."],
+      "resistance_level": 3,
+      "what_moves_them": ["..."]
+    }
+  }
+}`;
+
+  const response = await client.messages.create({
+    model: PREP_MODEL,
+    max_tokens: 2048,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const raw = response.content[0].text.trim();
+  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch (parseErr) {
+    console.error('generateMeetingPrepIntel JSON parse failed:', raw.slice(0, 400));
+    throw new Error('Claude meeting prep returned unparseable response: ' + parseErr.message);
+  }
+}
+
+module.exports = {
+  gradeSession,
+  gradeSessionFast,
+  gradeSessionDeep,
+  gradePitchFast,
+  gradePitchDeep,
+  generateMeetingPrepIntel,
+};

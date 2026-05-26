@@ -14,6 +14,8 @@ const { requireAuth } = require('../middleware/auth');
 const { getPool } = require('../db/client');
 const calendarSync = require('../services/calendar-sync');
 const recall = require('../services/recall');
+const pipedrive = require('../services/pipedrive');
+const claude = require('../services/claude');
 
 const router = express.Router();
 
@@ -196,6 +198,158 @@ router.get('/meetings/:id/bot', requireAuth, async (req, res) => {
     [req.params.id, userId]
   );
   res.json(rows[0] || null);
+});
+
+/**
+ * GET /api/meetings/:id/prep
+ *
+ * Returns the full prep payload for a meeting: prospect, deal, recent notes,
+ * recent activities, AI prospect summary, coaching notes, and the user-facing
+ * persona summary. The raw persona system prompt is NEVER returned to the
+ * client — it lives in the meetings.prep_persona_prompt column and is only
+ * used server-side when starting a round.
+ *
+ * Caching: result is cached on the meeting row for 24h. Pass ?refresh=1 to bypass.
+ */
+router.get('/meetings/:id/prep', requireAuth, async (req, res) => {
+  const userId = req.user?.id || req.supabaseUser?.id;
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' });
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'DB not available' });
+
+  const { rows } = await pool.query(
+    `SELECT m.*, u.name AS user_name, u.role AS user_role
+       FROM meetings m
+       LEFT JOIN users u ON u.id = m.user_id
+      WHERE m.id = $1 AND m.user_id = $2`,
+    [req.params.id, userId]
+  );
+  if (!rows.length) return res.status(404).json({ error: 'Not found' });
+  const m = rows[0];
+
+  const refresh = req.query.refresh === '1';
+  const cacheAgeMs = m.prep_generated_at ? Date.now() - new Date(m.prep_generated_at).getTime() : Infinity;
+  const cacheValid = !refresh && m.prep_data && cacheAgeMs < 24 * 3600 * 1000;
+
+  if (cacheValid) {
+    return res.json({
+      cached: true,
+      generated_at: m.prep_generated_at,
+      meeting: viewModel(m, null),
+      ...m.prep_data,
+    });
+  }
+
+  // Pull CRM data (each call is best-effort — partial data is fine)
+  const personId = m.pipedrive_person_id;
+  const dealId = m.pipedrive_deal_id;
+
+  const [person, deal, personNotes, dealNotes, activities] = await Promise.all([
+    personId ? pipedrive.getPerson(userId, personId) : Promise.resolve(null),
+    dealId   ? pipedrive.getDeal(userId, dealId)     : Promise.resolve(null),
+    personId ? pipedrive.getPersonNotes(userId, personId, 25) : Promise.resolve([]),
+    dealId   ? pipedrive.getDealNotes(userId, dealId, 25)     : Promise.resolve([]),
+    personId ? pipedrive.getPersonActivities(userId, personId, 25) : Promise.resolve([]),
+  ]);
+
+  // Merge & dedupe notes by id, keep most recent first
+  const allNotes = [...dealNotes, ...personNotes];
+  const seen = new Set();
+  const notes = allNotes.filter(n => {
+    if (seen.has(n.id)) return false;
+    seen.add(n.id);
+    return true;
+  }).sort((a, b) => new Date(b.add_time) - new Date(a.add_time));
+
+  // Pull user's recent stats for coaching-note context
+  let userStats = null;
+  try {
+    const { rows: statRows } = await pool.query(
+      `SELECT score_breakdown FROM sessions
+         WHERE user_id = $1 AND score_breakdown IS NOT NULL
+         ORDER BY started_at DESC LIMIT 5`,
+      [userId]
+    );
+    if (statRows.length) {
+      // Average sub-scores across recent sessions
+      const sums = {}; const counts = {};
+      for (const r of statRows) {
+        for (const [k, v] of Object.entries(r.score_breakdown || {})) {
+          if (typeof v === 'number') {
+            sums[k] = (sums[k] || 0) + v;
+            counts[k] = (counts[k] || 0) + 1;
+          }
+        }
+      }
+      const avg = {};
+      for (const k of Object.keys(sums)) avg[k] = Math.round(sums[k] / counts[k]);
+      userStats = { score_breakdown: avg };
+    }
+  } catch (err) {
+    console.error('[meetings/prep] user stats fetch failed:', err.message);
+  }
+
+  let intel;
+  let intelError = null;
+  try {
+    intel = await claude.generateMeetingPrepIntel({
+      meeting: m,
+      person, deal, notes, activities,
+      user: { name: m.user_name, role: m.user_role },
+      userStats,
+    });
+  } catch (err) {
+    console.error('[meetings/prep] Claude intel failed:', err.message);
+    intelError = err.message;
+    intel = {
+      prospect_summary: 'Prospect intel could not be generated. Try refreshing.',
+      last_interaction: null,
+      open_next_steps: [],
+      coaching_notes: [],
+      persona: null,
+    };
+  }
+
+  const personaSummary = intel.persona?.summary || null;
+  const personaPrompt = intel.persona?.system_prompt || null;
+
+  // Strip system_prompt before persisting/returning — UI must never see it.
+  const persistable = {
+    prospect: person,
+    deal,
+    notes: notes.slice(0, 10),
+    activities: activities.slice(0, 10),
+    prospect_summary: intel.prospect_summary,
+    last_interaction: intel.last_interaction,
+    open_next_steps: intel.open_next_steps || [],
+    coaching_notes: intel.coaching_notes || [],
+    persona_summary: personaSummary,
+    insufficient_crm_data: !person && !deal && notes.length === 0,
+  };
+
+  if (!intelError) {
+    try {
+      await pool.query(
+        `UPDATE meetings
+            SET prep_data = $1,
+                prep_persona_prompt = $2,
+                prep_generated_at = NOW(),
+                updated_at = NOW()
+          WHERE id = $3`,
+        [persistable, personaPrompt, m.id]
+      );
+    } catch (err) {
+      console.error('[meetings/prep] cache write failed:', err.message);
+    }
+  }
+
+  res.json({
+    cached: false,
+    generated_at: new Date().toISOString(),
+    meeting: viewModel(m, null),
+    ...persistable,
+    ...(intelError ? { intel_error: intelError } : {}),
+  });
 });
 
 router.get('/bots', requireAuth, async (req, res) => {

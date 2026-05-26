@@ -8,6 +8,7 @@ import Welcome from './routes/Welcome';
 import Login from './routes/Login';
 import Onboarding from './routes/Onboarding';
 import Dashboard from './routes/dashboard/Dashboard';
+import MeetingPrep from './routes/MeetingPrep';
 import Stub from './routes/Stub';
 
 function LoginGate() {
@@ -107,7 +108,7 @@ export default function App() {
               element={
                 <RequireOnboarded>
                   <Shell>
-                    <Stub title="Meeting prep" body="Pre-call readiness for this specific meeting — coming next." />
+                    <MeetingPrep />
                   </Shell>
                 </RequireOnboarded>
               }
