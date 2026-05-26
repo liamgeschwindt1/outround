@@ -26,13 +26,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
-app.use('/auth', require('./routes/auth'));
-app.use('/api/session', require('./routes/session'));
-app.use('/api/leaderboard', require('./routes/leaderboard'));
-app.use('/api/coaches', require('./routes/coaches'));
-app.use('/api', require('./routes/meetings'));
-app.use('/api', require('./routes/webhooks'));
+// Routes — safeMount keeps the server up if any single route module fails to load
+function safeMount(mountPath, modulePath) {
+  try {
+    app.use(mountPath, require(modulePath));
+  } catch (err) {
+    console.error(`[server] failed to mount ${modulePath} at ${mountPath}:`, err.message);
+  }
+}
+safeMount('/auth', './routes/auth');
+safeMount('/api/session', './routes/session');
+safeMount('/api/leaderboard', './routes/leaderboard');
+safeMount('/api/coaches', './routes/coaches');
+safeMount('/api', './routes/meetings');
+safeMount('/api', './routes/webhooks');
+
+// Global error & rejection guards — never crash on a single bad request
+process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));
+process.on('uncaughtException', (err) => console.error('[uncaughtException]', err));
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));

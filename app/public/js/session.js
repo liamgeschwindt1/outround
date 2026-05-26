@@ -170,15 +170,31 @@ function finishOnboarding3Step() {
 async function beginSession() {
   uiLog('Starting session…', 'send');
   const persona_id = _s.mode === 'investor_pitch' ? 'natalie' : 'hendrik';
+  let ok = false;
   try {
     const res = await apiFetch('/api/session/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_name: _s.user.name || null, user_email: _s.user.email || null, user_role: _s.user.role || null, persona_id, mode: _s.mode || 'cold_call' }),
     });
-    if (res.ok) { const data = await res.json(); _s.sessionId = data.session_id; uiLog('Session created: ' + data.session_id, 'ok'); }
-    else { uiLog('Session start failed: HTTP ' + res.status, 'err'); }
+    if (res.ok) {
+      const data = await res.json();
+      _s.sessionId = data.session_id;
+      uiLog('Session created: ' + data.session_id, 'ok');
+      ok = true;
+    } else {
+      const body = await res.text().catch(() => '');
+      uiLog('Session start failed: HTTP ' + res.status + (body ? ' — ' + body.slice(0, 120) : ''), 'err');
+    }
   } catch (err) { uiLog('Session start error: ' + err.message, 'err'); }
+
+  if (!ok) {
+    // Don't continue into brief/call if we don't have a session — that path needs sessionId
+    if (typeof showToast === 'function') showToast('Could not start session. Check connection and try again.');
+    try { goToStep && goToStep('mode'); } catch {}
+    return;
+  }
+
   if (_s.mode === 'investor_pitch') {
     initiateCall();
   } else {
