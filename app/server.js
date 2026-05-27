@@ -28,9 +28,11 @@ function handleProxyError(err, _req, res) {
 }
 
 // Proxy API and auth calls to the backend service.
+// pathRewrite restores the prefix that Express strips before passing to the middleware.
 app.use('/api', createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
+  pathRewrite: { '^': '/api' },
   proxyTimeout: 25000,
   timeout: 25000,
   onError: handleProxyError,
@@ -39,6 +41,7 @@ app.use('/api', createProxyMiddleware({
 app.use('/auth', createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
+  pathRewrite: { '^': '/auth' },
   proxyTimeout: 25000,
   timeout: 25000,
   onError: handleProxyError,
