@@ -218,7 +218,7 @@ router.post('/dev-login', async (req, res) => {
       await pool.query(
         `INSERT INTO users (id, email, name, provider, onboarding_complete)
          VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (id) DO UPDATE SET updated_at = NOW()`,
+         ON CONFLICT (id) DO UPDATE SET updated_at = NOW(), onboarding_complete = true`,
         [DEV_USER_ID, 'dev@outround.local', 'Dev User', 'dev', true]
       );
     } catch (err) {
@@ -344,7 +344,7 @@ router.get('/me', requireAuth, async (req, res) => {
     role: user?.role || null,
     avatar_url: user?.avatar_url || supabaseUser?.user_metadata?.avatar_url || null,
     coach_id: user?.coach_id || null,
-    onboarding_complete: user?.onboarding_complete || false,
+    onboarding_complete: user?.onboarding_complete || (req.supabaseUser?.app_metadata?.provider === 'dev') || false,
     integrations: {
       pipedrive: pipedriveConnected,
       gcal: gcalConnected,
