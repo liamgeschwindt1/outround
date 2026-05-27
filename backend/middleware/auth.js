@@ -56,7 +56,13 @@ async function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Unauthorised — no token provided' });
   }
 
-  const supabaseUser = await getUserFromToken(token);
+  let supabaseUser;
+  try {
+    supabaseUser = await getUserFromToken(token);
+  } catch (err) {
+    console.error('[auth] getUserFromToken threw:', err.message);
+    return res.status(503).json({ error: 'Auth service unavailable' });
+  }
   if (!supabaseUser) {
     return res.status(401).json({ error: 'Unauthorised — invalid or expired token' });
   }

@@ -35,9 +35,14 @@ async function getUserFromToken(jwt) {
   const client = getAdminClient();
   if (!client) return null;
 
-  const { data, error } = await client.auth.getUser(jwt);
-  if (error || !data?.user) return null;
-  return data.user;
+  try {
+    const { data, error } = await client.auth.getUser(jwt);
+    if (error || !data?.user) return null;
+    return data.user;
+  } catch (err) {
+    console.error('[auth] getUser threw:', err.message);
+    return null;
+  }
 }
 
 /**
