@@ -223,7 +223,7 @@ export default function Round() {
   if (state === 'analysis') {
     const a = SEED_ANALYSIS;
     return (
-      <div style={{ height: '100%', overflowY: 'auto', padding: '20px 24px' }}>
+      <div>
         {/* Headline */}
         <div style={{ padding: '14px 20px', background: `rgba(240,90,50,0.06)`, border: `1px solid rgba(240,90,50,0.2)`, borderRadius: R.xl, marginBottom: 20, fontSize: 14, color: T.t2, fontStyle: 'italic' }}>
           "{a.headline}"
@@ -416,7 +416,7 @@ export default function Round() {
   // ── Choose ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: '20px 24px', height: '100%', overflowY: 'auto' }}>
+    <div>
       <div style={{ maxWidth: 860, margin: '0 auto' }}>
         {/* Mode tabs */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>

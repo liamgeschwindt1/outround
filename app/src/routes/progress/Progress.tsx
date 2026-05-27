@@ -96,7 +96,7 @@ export default function Progress() {
   const history = (historyRaw?.length ? historyRaw : SEED_HISTORY) as (SessionHistoryItem & { persona_name?: string })[];
 
   return (
-    <div style={{ padding: '20px 24px', height: '100%', overflowY: 'auto' }}>
+    <div>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 14 }}>
 

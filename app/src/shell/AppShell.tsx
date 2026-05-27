@@ -306,6 +306,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             flex: 1,
             overflow: 'auto',
             background: T.bg,
+            padding: '28px 32px',
           }}
         >
           {children}

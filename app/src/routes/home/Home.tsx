@@ -90,7 +90,7 @@ export default function Home() {
   const lastRound = (history.data?.length ? history.data[0] : SEED_HISTORY[0]) as { id: string; score: number; created_at: string; persona_name?: string; mode?: string; summary?: string };
 
   return (
-    <div style={{ padding: '20px 24px', height: '100%', overflowY: 'auto' }}>
+    <div>
       <div
         style={{
           display: 'grid',

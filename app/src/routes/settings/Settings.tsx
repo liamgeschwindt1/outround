@@ -216,7 +216,7 @@ export default function Settings() {
   };
 
   return (
-    <div style={{ padding: '20px 24px', height: '100%', overflowY: 'auto' }}>
+    <div>
       <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', gap: 24 }}>
         {/* Left nav */}
         <div style={{ width: 160, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
