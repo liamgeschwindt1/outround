@@ -252,11 +252,12 @@ router.get('/pipedrive', requireAuth, (req, res) => {
   const userId = req.user?.id || req.supabaseUser?.id;
   if (!userId) return res.status(401).json({ error: 'Unauthorised' });
 
+  const returnTo = req.query.return_to || '/settings';
   try {
-    res.redirect(pipedrive.getAuthUrl(userId));
+    res.redirect(pipedrive.getAuthUrl(userId, returnTo));
   } catch (err) {
     console.error('[auth] Pipedrive auth URL error:', err.message);
-    res.redirect(`${getAppUrl()}/onboarding?error=pipedrive_failed`);
+    res.redirect(`${getAppUrl()}/settings?error=pipedrive_failed`);
   }
 });
 
@@ -264,23 +265,43 @@ router.get('/pipedrive/callback', async (req, res) => {
   const { code, state, error } = req.query;
 
   if (error || !code || !state) {
-    return res.redirect(`${getAppUrl()}/onboarding?error=pipedrive_denied`);
+    return res.redirect(`${getAppUrl()}/settings?error=pipedrive_denied`);
   }
 
   let userId;
+  let returnTo = '/settings';
   try {
-    userId = Buffer.from(state, 'base64url').toString('utf8');
+    const decoded = JSON.parse(Buffer.from(state, 'base64url').toString('utf8'));
+    userId = decoded.userId;
+    returnTo = decoded.returnTo || '/settings';
   } catch {
-    return res.redirect(`${getAppUrl()}/onboarding?error=invalid_state`);
+    // Legacy: state was just the userId
+    try { userId = Buffer.from(state, 'base64url').toString('utf8'); } catch {
+      return res.redirect(`${getAppUrl()}/settings?error=invalid_state`);
+    }
   }
 
   try {
     await pipedrive.exchangeCode(code, userId);
-    res.redirect(`${getAppUrl()}/onboarding?pipedrive=connected`);
+    res.redirect(`${getAppUrl()}${returnTo}?pipedrive=connected`);
   } catch (err) {
     console.error('[auth] Pipedrive token exchange error:', err.message);
-    res.redirect(`${getAppUrl()}/onboarding?error=pipedrive_exchange_failed`);
+    res.redirect(`${getAppUrl()}${returnTo}?error=pipedrive_exchange_failed`);
   }
+});
+
+router.delete('/pipedrive', requireAuth, async (req, res) => {
+  const userId = req.user?.id || req.supabaseUser?.id;
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' });
+
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+  await pool.query(
+    `DELETE FROM oauth_tokens WHERE user_id = $1 AND provider = 'pipedrive'`,
+    [userId]
+  );
+  res.json({ ok: true });
 });
 
 // ---------------------------------------------------------------------------
