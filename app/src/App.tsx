@@ -7,7 +7,7 @@ import { AppShell } from './shell/AppShell';
 import Welcome from './routes/Welcome';
 import Login from './routes/Login';
 import Onboarding from './routes/Onboarding';
-import Home from './routes/home/Home';
+import Dashboard from './routes/dashboard/Dashboard';
 import Round from './routes/round/Round';
 import Progress from './routes/progress/Progress';
 import Team from './routes/team/Team';
@@ -47,7 +47,7 @@ export default function App() {
             <Route path="/login" element={<LoginGate />} />
             <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
 
-            <Route path="/"            element={<Guarded><Home /></Guarded>} />
+            <Route path="/"            element={<Guarded><Dashboard /></Guarded>} />
             <Route path="/round"       element={<Guarded><Round /></Guarded>} />
             <Route path="/progress"    element={<Guarded><Progress /></Guarded>} />
             <Route path="/team"        element={<Guarded><Team /></Guarded>} />
