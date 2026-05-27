@@ -13,9 +13,7 @@ interface PersonaTile {
 
 const personas: PersonaTile[] = [
   { id: 'hendrik', name: 'Hendrik', role: 'CFO · Logistics', avatar: '/hendrik.jpg', locked: false },
-  { id: 'natalie', name: 'Natalie', role: 'Partner · VC', avatar: '/natalie.jpg', locked: false },
-  { id: 'sales', name: '—', role: 'Sales calls', locked: true },
-  { id: 'discovery', name: '—', role: 'Discovery', locked: true },
+  { id: 'natalie', name: 'Natalie', role: 'Partner · VC', avatar: '/natalie.jpg', locked: true },
 ];
 
 export function PersonaLibraryCard() {
