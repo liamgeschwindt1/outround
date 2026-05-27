@@ -26,6 +26,11 @@ const { getPool } = require('../db/client');
 
 const router = express.Router();
 
+// Quick health check exposed through the /auth proxy so the frontend
+// can confirm the backend is up and read the startup timestamp.
+const STARTED_AT = new Date().toISOString();
+router.get('/health', (_req, res) => res.json({ status: 'ok', started_at: STARTED_AT }));
+
 // ---------------------------------------------------------------------------
 // Supabase public client (anon key — safe to use server-side for auth flows)
 // ---------------------------------------------------------------------------

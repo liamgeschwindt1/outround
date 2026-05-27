@@ -18,7 +18,7 @@ export default function Login() {
       .then(() => {/* already authed — LoginGate will redirect */})
       .catch(() => {});
     // Show when the backend was last started
-    fetch('/health')
+    fetch('/auth/health')
       .then(r => r.json())
       .then((d: { started_at?: string }) => setBackendTs(d.started_at ?? null))
       .catch(() => {});
@@ -173,14 +173,14 @@ export default function Login() {
         >
           Skip sign in (dev)
         </button>
-      </form>
 
-      {/* Deploy timestamp — confirms Railway has the latest build */}
-      <div style={{ marginTop: 16, fontFamily: T.mono, fontSize: 11, color: T.t4, textAlign: 'center' }}>
-        {backendTs
-          ? `backend started ${new Date(backendTs).toLocaleString()}`
-          : 'checking backend…'}
-      </div>
+        {/* Deploy timestamp — confirms Railway has the latest build */}
+        <div style={{ marginTop: 14, fontFamily: T.mono, fontSize: 11, color: T.t4, textAlign: 'center' }}>
+          {backendTs
+            ? `backend started ${new Date(backendTs).toLocaleString()}`
+            : 'checking backend…'}
+        </div>
+      </form>
     </div>
   );
 }
