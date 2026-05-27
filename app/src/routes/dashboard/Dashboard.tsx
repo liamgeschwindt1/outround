@@ -5,6 +5,7 @@ import { MeetingsScrollerCard } from './cards/MeetingsScrollerCard';
 import { LeaderboardCard } from './cards/LeaderboardCard';
 import { RecentSessionsCard } from './cards/RecentSessionsCard';
 import { PersonaLibraryCard } from './cards/PersonaLibraryCard';
+import { LogsCard } from './cards/LogsCard';
 
 export default function Dashboard() {
   const { stats, leaderboard, meetings, history } = useDashboardData();
@@ -25,6 +26,7 @@ export default function Dashboard() {
         <LeaderboardCard {...leaderboard} />
         <RecentSessionsCard {...history} />
         <PersonaLibraryCard />
+        <LogsCard />
       </div>
     </div>
   );

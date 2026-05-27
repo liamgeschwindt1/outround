@@ -38,6 +38,7 @@ safeMount('/auth', './routes/auth');
 safeMount('/api/session', './routes/session');
 safeMount('/api/leaderboard', './routes/leaderboard');
 safeMount('/api/coaches', './routes/coaches');
+safeMount('/api/debug', './routes/debug');
 safeMount('/api', './routes/meetings');
 safeMount('/api', './routes/webhooks');
 
