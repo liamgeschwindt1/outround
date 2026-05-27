@@ -9,7 +9,7 @@ interface AuthContextValue {
   error: string | null;
   refresh: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name?: string) => Promise<void>;
+  signup: (email: string, password: string, name?: string) => Promise<{ email_confirmation?: boolean }>;
   logout: () => Promise<void>;
 }
 
@@ -19,7 +19,7 @@ const Ctx = createContext<AuthContextValue>({
   error: null,
   refresh: async () => undefined,
   login: async () => undefined,
-  signup: async () => undefined,
+  signup: async () => ({}),
   logout: async () => undefined,
 });
 
@@ -51,9 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [refresh]);
 
-  const signup = useCallback(async (email: string, password: string, name?: string) => {
-    await api.post('/auth/signup', { email, password, name: name || '' });
-    await refresh();
+  const signup = useCallback(async (email: string, password: string, name?: string): Promise<{ email_confirmation?: boolean }> => {
+    const result = await api.post<{ ok: boolean; email_confirmation?: boolean }>('/auth/signup', { email, password, name: name || '' });
+    if (!result.email_confirmation) {
+      await refresh();
+    }
+    return result;
   }, [refresh]);
 
   const logout = useCallback(async () => {

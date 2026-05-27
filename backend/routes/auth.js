@@ -106,10 +106,15 @@ router.post('/signup', async (req, res) => {
       data: { full_name: name || '' },
     });
 
-    if (status >= 400 || !data.access_token) {
-      return res.status(status >= 400 ? status : 400).json({
-        error: data.error_description || data.msg || 'Signup failed'
+    if (status >= 400) {
+      return res.status(status).json({
+        error: data.error_description || data.msg || data.error || 'Signup failed'
       });
+    }
+
+    // Email confirmation required — Supabase returns user but no access_token
+    if (!data.access_token) {
+      return res.json({ ok: true, email_confirmation: true });
     }
 
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';

@@ -8,6 +8,7 @@ export default function Login() {
   const { login, signup } = useAuth();
   const nav = useNavigate();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [emailSent, setEmailSent] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,8 +21,12 @@ export default function Login() {
     setBusy(true);
     try {
       if (mode === 'signup') {
-        await signup(email, password, name);
-        nav('/onboarding');
+        const result = await signup(email, password, name);
+        if (result.email_confirmation) {
+          setEmailSent(true);
+        } else {
+          nav('/onboarding');
+        }
       } else {
         await login(email, password);
         nav('/');
@@ -84,84 +89,102 @@ export default function Login() {
           <span style={{ fontFamily: T.display, fontWeight: 700, fontSize: 15, letterSpacing: '-0.03em', color: T.t1 }}>Outround</span>
         </div>
 
-        <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: 22, letterSpacing: -0.5, marginBottom: 6, color: T.t1 }}>
-          {isSignUp ? 'Create your account.' : 'Welcome back.'}
-        </div>
-        <div style={{ fontSize: 13, color: T.t2, marginBottom: 24 }}>
-          {isSignUp ? 'The round before it counts.' : 'Sign in to continue.'}
-        </div>
-
-        {isSignUp && (
-          <label style={{ display: 'block', marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>NAME</div>
-            <input
-              type="text"
-              required
-              autoFocus={isSignUp}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your full name"
-              style={inputStyle}
-            />
-          </label>
-        )}
-
-        <label style={{ display: 'block', marginBottom: 14 }}>
-          <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>EMAIL</div>
-          <input
-            type="email"
-            required
-            autoFocus={!isSignUp}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@company.com"
-            style={inputStyle}
-          />
-        </label>
-
-        <label style={{ display: 'block', marginBottom: 20 }}>
-          <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>PASSWORD</div>
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={isSignUp ? 'At least 8 characters' : ''}
-            style={inputStyle}
-          />
-        </label>
-
-        {err && (
-          <div
-            style={{
-              padding: '10px 12px',
-              background: 'rgba(220,38,38,0.08)',
-              border: '1px solid rgba(220,38,38,0.35)',
-              color: T.red,
-              borderRadius: R.md,
-              fontSize: 12,
-              marginBottom: 16,
-            }}
-          >
-            {err}
+        {emailSent ? (
+          <div>
+            <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: 22, letterSpacing: -0.5, marginBottom: 10, color: T.t1 }}>Check your email.</div>
+            <div style={{ fontSize: 13, color: T.t2, lineHeight: 1.6, marginBottom: 24 }}>
+              We sent a confirmation link to <strong style={{ color: T.t1 }}>{email}</strong>. Click it to activate your account, then come back and sign in.
+            </div>
+            <button
+              type="button"
+              onClick={() => { setMode('signin'); setEmailSent(false); setErr(null); }}
+              style={{ width: '100%', padding: '11px 0', background: T.grad, border: 'none', borderRadius: R.md, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Back to sign in
+            </button>
           </div>
+        ) : (
+          <>
+            <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: 22, letterSpacing: -0.5, marginBottom: 6, color: T.t1 }}>
+              {isSignUp ? 'Create your account.' : 'Welcome back.'}
+            </div>
+            <div style={{ fontSize: 13, color: T.t2, marginBottom: 24 }}>
+              {isSignUp ? 'The round before it counts.' : 'Sign in to continue.'}
+            </div>
+
+            {isSignUp && (
+              <label style={{ display: 'block', marginBottom: 14 }}>
+                <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>NAME</div>
+                <input
+                  type="text"
+                  required
+                  autoFocus={isSignUp}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your full name"
+                  style={inputStyle}
+                />
+              </label>
+            )}
+
+            <label style={{ display: 'block', marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>EMAIL</div>
+              <input
+                type="email"
+                required
+                autoFocus={!isSignUp}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ display: 'block', marginBottom: 20 }}>
+              <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>PASSWORD</div>
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={isSignUp ? 'At least 8 characters' : ''}
+                style={inputStyle}
+              />
+            </label>
+
+            {err && (
+              <div
+                style={{
+                  padding: '10px 12px',
+                  background: 'rgba(220,38,38,0.08)',
+                  border: '1px solid rgba(220,38,38,0.35)',
+                  color: T.red,
+                  borderRadius: R.md,
+                  fontSize: 12,
+                  marginBottom: 16,
+                }}
+              >
+                {err}
+              </div>
+            )}
+
+            <Button variant="primary" size="lg" fullWidth type="submit" disabled={busy}>
+              {busy ? (isSignUp ? 'Creating account…' : 'Signing in…') : (isSignUp ? 'Create account →' : 'Sign in →')}
+            </Button>
+
+            <div style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: T.t3 }}>
+              {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+              <button
+                type="button"
+                onClick={() => { setMode(isSignUp ? 'signin' : 'signup'); setErr(null); }}
+                style={{ background: 'none', border: 'none', color: T.coral, fontSize: 13, cursor: 'pointer', padding: 0 }}
+              >
+                {isSignUp ? 'Sign in' : 'Create one'}
+              </button>
+            </div>
+          </>
         )}
-
-        <Button variant="primary" size="lg" fullWidth type="submit" disabled={busy}>
-          {busy ? (isSignUp ? 'Creating account…' : 'Signing in…') : (isSignUp ? 'Create account →' : 'Sign in →')}
-        </Button>
-
-        <div style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: T.t3 }}>
-          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-          <button
-            type="button"
-            onClick={() => { setMode(isSignUp ? 'signin' : 'signup'); setErr(null); }}
-            style={{ background: 'none', border: 'none', color: T.coral, fontSize: 13, cursor: 'pointer', padding: 0 }}
-          >
-            {isSignUp ? 'Sign in' : 'Create one'}
-          </button>
-        </div>
       </form>
     </div>
   );
