@@ -1,100 +1,33 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { T, R } from '../design/tokens';
 import { Button } from '../design/primitives/Button';
 
-interface LogLine { ts: string; level: string; tag: string; message: string; }
-
 export default function Login() {
-  const { login, devLogin, refresh } = useAuth();
+  const { login, signup } = useAuth();
   const nav = useNavigate();
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [backendTs, setBackendTs] = useState<string | null>(null);
-  const [logs, setLogs] = useState<LogLine[]>([]);
-  const logsEndRef = useRef<HTMLDivElement>(null);
-
-  const pushLog = useCallback((level: string, tag: string, message: string) => {
-    setLogs(prev => [...prev.slice(-49), { ts: new Date().toISOString(), level, tag, message }]);
-  }, []);
-
-  // Fetch backend logs and merge with local ones
-  const fetchLogs = useCallback(async () => {
-    try {
-      const r = await fetch('/api/debug/logs?limit=20', { credentials: 'include' });
-      if (r.ok) {
-        const data = await r.json() as { entries?: LogLine[] };
-        if (data.entries) setLogs(prev => {
-          const existing = new Set(prev.map(e => e.ts + e.message));
-          const newOnes = data.entries!.filter(e => !existing.has(e.ts + e.message));
-          return [...prev, ...newOnes].slice(-50);
-        });
-      }
-    } catch { /* no backend logs available */ }
-  }, []);
-
-  useEffect(() => {
-    fetch('/auth/me', { credentials: 'include' })
-      .then(() => {/* already authed — LoginGate will redirect */})
-      .catch(() => {});
-    // Show when the backend was last started
-    fetch('/auth/health')
-      .then(r => r.json())
-      .then((d: { started_at?: string }) => {
-        setBackendTs(d.started_at ?? null);
-        pushLog('OK', 'backend', `started_at ${d.started_at ?? 'unknown'}`);
-      })
-      .catch(() => pushLog('ERR', 'backend', 'health check failed'));
-    fetchLogs();
-    const iv = setInterval(fetchLogs, 5000);
-    return () => clearInterval(iv);
-  }, [fetchLogs, pushLog]);
-
-  // Auto-scroll logs to bottom
-  useEffect(() => {
-    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [logs]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
     setBusy(true);
-    pushLog('INFO', 'login', `attempting sign-in for ${email}`);
     try {
-      await login(email, password);
-      pushLog('OK', 'login', 'sign-in succeeded');
-      await refresh();
-      nav('/');
+      if (mode === 'signup') {
+        await signup(email, password, name);
+        nav('/onboarding');
+      } else {
+        await login(email, password);
+        nav('/');
+      }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Login failed';
-      pushLog('ERR', 'login', msg);
-      setErr(msg);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const skip = async () => {
-    setErr(null);
-    setBusy(true);
-    pushLog('INFO', 'dev', 'calling POST /auth/dev-login');
-    try {
-      await devLogin();
-      pushLog('OK', 'dev', 'devLogin() resolved — calling /auth/me');
-      await refresh();
-      pushLog('OK', 'dev', 'refresh() done — navigating to /');
-      nav('/');
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Skip failed';
-      pushLog('ERR', 'dev', msg);
-      setErr(
-        e instanceof Error
-          ? `${e.message} — set ALLOW_DEV_LOGIN=true on the backend to enable skip.`
-          : 'Skip failed'
-      );
+      setErr(e instanceof Error ? e.message : 'Something went wrong');
     } finally {
       setBusy(false);
     }
@@ -110,7 +43,10 @@ export default function Login() {
     color: T.t1,
     fontSize: 14,
     outline: 'none',
+    boxSizing: 'border-box',
   };
+
+  const isSignUp = mode === 'signup';
 
   return (
     <div
@@ -135,44 +71,63 @@ export default function Login() {
           padding: 32,
         }}
       >
-        <div
-          style={{
-            fontFamily: T.display,
-            fontWeight: 700,
-            fontSize: 24,
-            letterSpacing: -0.6,
-            marginBottom: 6,
-          }}
-        >
-          Welcome back.
-        </div>
-        <div style={{ fontSize: 13, color: T.t2, marginBottom: 24 }}>
-          One round before it counts.
+        {/* Logo mark */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+          <div style={{ padding: 1.5, background: T.grad, borderRadius: R.sm }}>
+            <div style={{ width: 28, height: 28, borderRadius: R.sm - 1, background: T.bgCard, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 12V4.5L7 2l5 2.5V12" stroke={T.coral} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M5 12V8.5h4V12" stroke={T.sky} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+          <span style={{ fontFamily: T.display, fontWeight: 700, fontSize: 15, letterSpacing: '-0.03em', color: T.t1 }}>Outround</span>
         </div>
 
+        <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: 22, letterSpacing: -0.5, marginBottom: 6, color: T.t1 }}>
+          {isSignUp ? 'Create your account.' : 'Welcome back.'}
+        </div>
+        <div style={{ fontSize: 13, color: T.t2, marginBottom: 24 }}>
+          {isSignUp ? 'The round before it counts.' : 'Sign in to continue.'}
+        </div>
+
+        {isSignUp && (
+          <label style={{ display: 'block', marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>NAME</div>
+            <input
+              type="text"
+              required
+              autoFocus={isSignUp}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your full name"
+              style={inputStyle}
+            />
+          </label>
+        )}
+
         <label style={{ display: 'block', marginBottom: 14 }}>
-          <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>
-            EMAIL
-          </div>
+          <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>EMAIL</div>
           <input
             type="email"
             required
-            autoFocus
+            autoFocus={!isSignUp}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@company.com"
             style={inputStyle}
           />
         </label>
 
         <label style={{ display: 'block', marginBottom: 20 }}>
-          <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>
-            PASSWORD
-          </div>
+          <div style={{ fontSize: 11, color: T.t3, marginBottom: 6, letterSpacing: 0.4 }}>PASSWORD</div>
           <input
             type="password"
             required
+            minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder={isSignUp ? 'At least 8 characters' : ''}
             style={inputStyle}
           />
         </label>
@@ -194,94 +149,20 @@ export default function Login() {
         )}
 
         <Button variant="primary" size="lg" fullWidth type="submit" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
+          {busy ? (isSignUp ? 'Creating account…' : 'Signing in…') : (isSignUp ? 'Create account →' : 'Sign in →')}
         </Button>
 
-        <button
-          type="button"
-          onClick={skip}
-          disabled={busy}
-          style={{
-            display: 'block',
-            width: '100%',
-            marginTop: 12,
-            padding: '10px 12px',
-            background: 'transparent',
-            border: `1px solid ${T.borderMd}`,
-            borderRadius: R.md,
-            color: T.t2,
-            fontSize: 13,
-            cursor: busy ? 'not-allowed' : 'pointer',
-          }}
-        >
-          Skip sign in (dev)
-        </button>
-
-        {/* Deploy timestamp — confirms Railway has the latest build */}
-        <div style={{ marginTop: 14, fontFamily: T.mono, fontSize: 11, color: T.t4, textAlign: 'center' }}>
-          {backendTs
-            ? `backend started ${new Date(backendTs).toLocaleString()}`
-            : 'checking backend…'}
+        <div style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: T.t3 }}>
+          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+          <button
+            type="button"
+            onClick={() => { setMode(isSignUp ? 'signin' : 'signup'); setErr(null); }}
+            style={{ background: 'none', border: 'none', color: T.coral, fontSize: 13, cursor: 'pointer', padding: 0 }}
+          >
+            {isSignUp ? 'Sign in' : 'Create one'}
+          </button>
         </div>
       </form>
-
-      {/* Debug logs widget */}
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 520,
-          marginTop: 16,
-          background: '#0d0d0d',
-          border: `1px solid ${T.borderMd}`,
-          borderRadius: R.lg,
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            padding: '6px 12px',
-            background: T.bgSub,
-            borderBottom: `1px solid ${T.borderMd}`,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <span style={{ fontFamily: T.mono, fontSize: 10, color: T.t3, letterSpacing: 0.5 }}>
-            LOGS
-          </span>
-          <span style={{ fontFamily: T.mono, fontSize: 10, color: T.t4 }}>
-            {logs.length} entries · live
-          </span>
-        </div>
-        <div
-          style={{
-            height: 180,
-            overflowY: 'auto',
-            padding: '8px 12px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}
-        >
-          {logs.length === 0 && (
-            <span style={{ fontFamily: T.mono, fontSize: 11, color: T.t4 }}>waiting…</span>
-          )}
-          {logs.map((e, i) => {
-            const lvlColor = e.level === 'ERR' ? '#f87171' : e.level === 'WARN' ? '#fbbf24' : e.level === 'OK' ? '#4ade80' : '#94a3b8';
-            const time = e.ts ? new Date(e.ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '??:??:??';
-            return (
-              <div key={i} style={{ display: 'flex', gap: 8, fontFamily: T.mono, fontSize: 11, lineHeight: 1.5 }}>
-                <span style={{ color: T.t4, flexShrink: 0 }}>{time}</span>
-                <span style={{ color: lvlColor, flexShrink: 0, width: 28 }}>{e.level}</span>
-                <span style={{ color: '#7dd3fc', flexShrink: 0 }}>[{e.tag}]</span>
-                <span style={{ color: '#e2e8f0', wordBreak: 'break-all' }}>{e.message}</span>
-              </div>
-            );
-          })}
-          <div ref={logsEndRef} />
-        </div>
-      </div>
     </div>
   );
 }

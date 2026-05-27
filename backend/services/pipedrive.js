@@ -16,7 +16,7 @@ const { getPool } = require('../db/client');
 
 const PIPEDRIVE_AUTH_URL = 'https://oauth.pipedrive.com/oauth/authorize';
 const PIPEDRIVE_TOKEN_URL = 'https://oauth.pipedrive.com/oauth/token';
-const SCOPES = 'deals:read contacts:read notes:read activities:read';
+const SCOPES = 'deals:read deals:write contacts:read activities:read activities:write notes:read notes:write base';
 
 function getRedirectUri() {
   return process.env.PIPEDRIVE_REDIRECT_URI || `${process.env.BACKEND_URL || ''}/auth/pipedrive/callback`;

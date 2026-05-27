@@ -9,7 +9,7 @@ interface AuthContextValue {
   error: string | null;
   refresh: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  devLogin: () => Promise<void>;
+  signup: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -19,7 +19,7 @@ const Ctx = createContext<AuthContextValue>({
   error: null,
   refresh: async () => undefined,
   login: async () => undefined,
-  devLogin: async () => undefined,
+  signup: async () => undefined,
   logout: async () => undefined,
 });
 
@@ -51,8 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [refresh]);
 
-  const devLogin = useCallback(async () => {
-    await api.post('/auth/dev-login');
+  const signup = useCallback(async (email: string, password: string, name?: string) => {
+    await api.post('/auth/signup', { email, password, name: name || '' });
     await refresh();
   }, [refresh]);
 
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => { void refresh(); }, [refresh]);
 
   return (
-    <Ctx.Provider value={{ user, loading, error, refresh, login, devLogin, logout }}>
+    <Ctx.Provider value={{ user, loading, error, refresh, login, signup, logout }}>
       {children}
     </Ctx.Provider>
   );

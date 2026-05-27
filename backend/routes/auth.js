@@ -314,11 +314,12 @@ router.get('/gcal', requireAuth, (req, res) => {
   const userId = req.user?.id || req.supabaseUser?.id;
   if (!userId) return res.status(401).json({ error: 'Unauthorised' });
 
+  const returnTo = req.query.return_to || '/onboarding';
   try {
-    res.redirect(gcal.getAuthUrl(userId));
+    res.redirect(gcal.getAuthUrl(userId, returnTo));
   } catch (err) {
     console.error('[auth] GCal auth URL error:', err.message);
-    res.redirect(`${getAppUrl()}/onboarding?error=gcal_failed`);
+    res.redirect(`${getAppUrl()}/settings?error=gcal_failed`);
   }
 });
 
@@ -326,23 +327,43 @@ router.get('/gcal/callback', async (req, res) => {
   const { code, state, error } = req.query;
 
   if (error || !code || !state) {
-    return res.redirect(`${getAppUrl()}/onboarding?error=gcal_denied`);
+    return res.redirect(`${getAppUrl()}/settings?error=gcal_denied`);
   }
 
   let userId;
+  let returnTo = '/onboarding';
   try {
-    userId = Buffer.from(state, 'base64url').toString('utf8');
+    const decoded = JSON.parse(Buffer.from(state, 'base64url').toString('utf8'));
+    userId = decoded.userId;
+    returnTo = decoded.returnTo || '/onboarding';
   } catch {
-    return res.redirect(`${getAppUrl()}/onboarding?error=invalid_state`);
+    // Legacy: state was just the userId
+    try { userId = Buffer.from(state, 'base64url').toString('utf8'); } catch {
+      return res.redirect(`${getAppUrl()}/settings?error=invalid_state`);
+    }
   }
 
   try {
     await gcal.exchangeCode(code, userId);
-    res.redirect(`${getAppUrl()}/onboarding?gcal=connected`);
+    res.redirect(`${getAppUrl()}${returnTo}?gcal=connected`);
   } catch (err) {
     console.error('[auth] GCal token exchange error:', err.message);
-    res.redirect(`${getAppUrl()}/onboarding?error=gcal_exchange_failed`);
+    res.redirect(`${getAppUrl()}${returnTo}?error=gcal_exchange_failed`);
   }
+});
+
+router.delete('/gcal', requireAuth, async (req, res) => {
+  const userId = req.user?.id || req.supabaseUser?.id;
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' });
+
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+  await pool.query(
+    `DELETE FROM oauth_tokens WHERE user_id = $1 AND provider = 'gcal'`,
+    [userId]
+  );
+  res.json({ ok: true });
 });
 
 // ---------------------------------------------------------------------------

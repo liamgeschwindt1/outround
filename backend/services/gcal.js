@@ -26,11 +26,12 @@ function getRedirectUri() {
  * Build the OAuth authorisation URL for a given user.
  * state = base64(userId)
  */
-function getAuthUrl(userId) {
+function getAuthUrl(userId, returnTo = '/onboarding') {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) throw new Error('GOOGLE_CLIENT_ID is not set');
 
-  const state = Buffer.from(userId).toString('base64url');
+  const stateData = JSON.stringify({ userId, returnTo });
+  const state = Buffer.from(stateData).toString('base64url');
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: getRedirectUri(),

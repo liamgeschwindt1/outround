@@ -147,28 +147,39 @@ function BillingTab() {
 }
 
 function IntegrationsTab() {
-  const { data: user } = useApi<User>('/auth/me');
+  const { data: user, refetch } = useApi<User>('/auth/me');
   const pipedrive = user?.integrations?.pipedrive ?? false;
   const gcal = user?.integrations?.gcal ?? false;
+
+  const disconnectPipedrive = async () => {
+    await fetch('/auth/pipedrive', { method: 'DELETE', credentials: 'include' });
+    refetch?.();
+  };
+
+  const disconnectGcal = async () => {
+    await fetch('/auth/gcal', { method: 'DELETE', credentials: 'include' });
+    refetch?.();
+  };
+
   return (
     <div style={{ maxWidth: 540 }}>
       <Card style={{ marginBottom: 14 }}>
         <CardHead kicker="CRM" title="" />
-        <IntegrationRow label="HubSpot" connected={false} onConnect={() => {}} />
         <IntegrationRow
           label="Pipedrive"
           connected={pipedrive}
-          onConnect={() => { window.location.href = '/auth/pipedrive'; }}
-          onDisconnect={() => {}}
+          onConnect={() => { window.location.href = '/auth/pipedrive?return_to=/settings'; }}
+          onDisconnect={disconnectPipedrive}
         />
+        <IntegrationRow label="HubSpot" connected={false} locked lockLabel="coming soon" />
       </Card>
       <Card style={{ marginBottom: 14 }}>
         <CardHead kicker="Calendar" title="" />
         <IntegrationRow
           label="Google Calendar"
           connected={gcal}
-          onConnect={() => { window.location.href = '/auth/gcal'; }}
-          onDisconnect={() => {}}
+          onConnect={() => { window.location.href = '/auth/gcal?return_to=/settings'; }}
+          onDisconnect={disconnectGcal}
         />
       </Card>
       <Card style={{ marginBottom: 14 }}>
@@ -177,7 +188,7 @@ function IntegrationsTab() {
       </Card>
       <Card>
         <CardHead kicker="Slack" title="" />
-        <IntegrationRow label="Coach nudges" connected={false} onConnect={() => {}} />
+        <IntegrationRow label="Coach nudges" connected={false} locked lockLabel="coming soon" />
       </Card>
     </div>
   );
