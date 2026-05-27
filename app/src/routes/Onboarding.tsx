@@ -105,7 +105,7 @@ export default function Onboarding() {
             padding: 40,
           }}
         >
-          {step === 1 && <StepPipedrive />}
+          {step === 1 && <StepPipedrive onSkip={() => setStep(2)} />}
           {step === 2 && <StepGCal onSkip={() => setStep(3)} />}
           {step === 3 && (
             <StepCoach
@@ -153,7 +153,7 @@ function StepHeader({ kicker, title, body }: { kicker: string; title: string; bo
   );
 }
 
-function StepPipedrive() {
+function StepPipedrive({ onSkip }: { onSkip: () => void }) {
   return (
     <>
       <StepHeader
@@ -166,7 +166,7 @@ function StepPipedrive() {
           variant="primary"
           size="lg"
           fullWidth
-          onClick={() => { window.location.href = '/auth/pipedrive'; }}
+          onClick={() => { window.location.href = '/auth/pipedrive?return_to=/onboarding'; }}
         >
           Connect Pipedrive
         </Button>
@@ -174,7 +174,7 @@ function StepPipedrive() {
           variant="ghost"
           size="md"
           fullWidth
-          onClick={() => { window.location.href = '/onboarding?pipedrive=skipped'; }}
+          onClick={onSkip}
         >
           Skip for now
         </Button>
@@ -196,7 +196,7 @@ function StepGCal({ onSkip }: { onSkip: () => void }) {
           variant="primary"
           size="lg"
           fullWidth
-          onClick={() => { window.location.href = '/auth/gcal'; }}
+          onClick={() => { window.location.href = '/auth/gcal?return_to=/onboarding'; }}
         >
           Connect Google Calendar
         </Button>
