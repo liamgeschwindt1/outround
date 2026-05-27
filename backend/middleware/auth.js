@@ -12,6 +12,9 @@
 const { getUserFromToken, getOrCreateLocalUser } = require('../services/auth');
 const { getPool } = require('../db/client');
 
+const DEV_USER_ID = '00000000-0000-0000-0000-000000000001';
+const DEV_TOKEN_PREFIX = 'dev:';
+
 async function requireAuth(req, res, next) {
   // Auth bypass when Supabase is not configured (dev / demo environment)
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
@@ -30,6 +33,27 @@ async function requireAuth(req, res, next) {
 
   if (!token) {
     return res.status(401).json({ error: 'Unauthorised — no token provided' });
+  }
+
+  // Dev login bypass — only when explicitly enabled
+  if (token.startsWith(DEV_TOKEN_PREFIX) && process.env.ALLOW_DEV_LOGIN === 'true') {
+    const devId = token.slice(DEV_TOKEN_PREFIX.length) || DEV_USER_ID;
+    req.supabaseUser = {
+      id: devId,
+      email: 'dev@outround.local',
+      user_metadata: { full_name: 'Dev User' },
+      app_metadata: { provider: 'dev' },
+    };
+    const pool = getPool();
+    if (pool) {
+      try {
+        const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [devId]);
+        req.user = rows[0] || null;
+      } catch (err) {
+        console.error('[auth] dev-login user load failed:', err.message);
+      }
+    }
+    return next();
   }
 
   const supabaseUser = await getUserFromToken(token);
@@ -52,4 +76,4 @@ async function requireAuth(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth };
+module.exports = { requireAuth, DEV_USER_ID, DEV_TOKEN_PREFIX };

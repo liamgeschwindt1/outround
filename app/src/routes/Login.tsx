@@ -5,7 +5,7 @@ import { T, R } from '../design/tokens';
 import { Button } from '../design/primitives/Button';
 
 export default function Login() {
-  const { login, refresh } = useAuth();
+  const { login, devLogin, refresh } = useAuth();
   const nav = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +22,24 @@ export default function Login() {
       nav('/');
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Login failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const skip = async () => {
+    setErr(null);
+    setBusy(true);
+    try {
+      await devLogin();
+      await refresh();
+      nav('/');
+    } catch (e) {
+      setErr(
+        e instanceof Error
+          ? `${e.message} — set ALLOW_DEV_LOGIN=true on the backend to enable skip.`
+          : 'Skip failed'
+      );
     } finally {
       setBusy(false);
     }
@@ -123,6 +141,26 @@ export default function Login() {
         <Button variant="primary" size="lg" fullWidth type="submit" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}
         </Button>
+
+        <button
+          type="button"
+          onClick={skip}
+          disabled={busy}
+          style={{
+            display: 'block',
+            width: '100%',
+            marginTop: 12,
+            padding: '10px 12px',
+            background: 'transparent',
+            border: `1px solid ${T.borderMd}`,
+            borderRadius: R.md,
+            color: T.t2,
+            fontSize: 13,
+            cursor: busy ? 'not-allowed' : 'pointer',
+          }}
+        >
+          Skip sign in (dev)
+        </button>
       </form>
     </div>
   );

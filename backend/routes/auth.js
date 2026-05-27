@@ -201,6 +201,43 @@ router.post('/logout', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Dev login — bypass Supabase entirely. Only enabled when
+// ALLOW_DEV_LOGIN=true on the backend. Creates/refreshes a single dev user
+// and sets a synthetic sb_token cookie that requireAuth recognises.
+// ---------------------------------------------------------------------------
+router.post('/dev-login', async (req, res) => {
+  if (process.env.ALLOW_DEV_LOGIN !== 'true') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  const DEV_USER_ID = '00000000-0000-0000-0000-000000000001';
+  const pool = getPool();
+
+  if (pool) {
+    try {
+      await pool.query(
+        `INSERT INTO users (id, email, name, provider, onboarding_complete)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (id) DO UPDATE SET updated_at = NOW()`,
+        [DEV_USER_ID, 'dev@outround.local', 'Dev User', 'dev', true]
+      );
+    } catch (err) {
+      console.error('[auth] dev-login user upsert failed:', err.message);
+    }
+  }
+
+  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  res.cookie('sb_token', `dev:${DEV_USER_ID}`, {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.json({ ok: true, dev: true, user_id: DEV_USER_ID });
+});
+
+// ---------------------------------------------------------------------------
 // Pipedrive OAuth
 // ---------------------------------------------------------------------------
 router.get('/pipedrive', requireAuth, (req, res) => {
@@ -289,7 +326,7 @@ router.get('/me', requireAuth, async (req, res) => {
   const user = req.user;
   const supabaseUser = req.supabaseUser;
 
-  if (!supabaseUser) {
+  if (!supabaseUser && !user) {
     return res.status(401).json({ error: 'Unauthorised' });
   }
 
@@ -302,10 +339,10 @@ router.get('/me', requireAuth, async (req, res) => {
 
   res.json({
     id: userId,
-    email: user?.email || supabaseUser.email,
-    name: user?.name || supabaseUser.user_metadata?.full_name || null,
+    email: user?.email || supabaseUser?.email || null,
+    name: user?.name || supabaseUser?.user_metadata?.full_name || null,
     role: user?.role || null,
-    avatar_url: user?.avatar_url || supabaseUser.user_metadata?.avatar_url || null,
+    avatar_url: user?.avatar_url || supabaseUser?.user_metadata?.avatar_url || null,
     coach_id: user?.coach_id || null,
     onboarding_complete: user?.onboarding_complete || false,
     integrations: {
