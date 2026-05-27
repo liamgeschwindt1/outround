@@ -66,6 +66,31 @@ async function supabaseAuthRequest(path, body) {
   return { status: resp.status, data: await resp.json() };
 }
 
+// POST /auth/confirm — exchange a Supabase access_token from a hash redirect
+// (email confirmation links land here via the frontend, which extracts the token
+// from window.location.hash and POSTs it here to set the HTTP-only cookie)
+router.post('/confirm', async (req, res) => {
+  const { access_token } = req.body;
+  if (!access_token || typeof access_token !== 'string') {
+    return res.status(400).json({ error: 'access_token required' });
+  }
+
+  // Basic sanity: must look like a JWT (three base64url segments)
+  if ((access_token.match(/\./g) || []).length !== 2) {
+    return res.status(400).json({ error: 'Invalid token format' });
+  }
+
+  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  res.cookie('sb_token', access_token, {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.json({ ok: true });
+});
+
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });

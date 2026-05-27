@@ -64,7 +64,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    // Supabase email confirmation links redirect to {SITE_URL}#access_token=...
+    // Extract the token, send it to the backend to set the HTTP-only cookie, then
+    // clear the hash so it doesn't stick around or confuse the router.
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token=')) {
+      const params = new URLSearchParams(hash.slice(1));
+      const token = params.get('access_token');
+      if (token) {
+        api.post('/auth/confirm', { access_token: token })
+          .then(() => {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            return refresh();
+          })
+          .catch(() => {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            void refresh();
+          });
+        return;
+      }
+    }
+    void refresh();
+  }, [refresh]);
 
   return (
     <Ctx.Provider value={{ user, loading, error, refresh, login, signup, logout }}>
