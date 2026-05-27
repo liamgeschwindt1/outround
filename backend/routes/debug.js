@@ -1,51 +1,66 @@
 'use strict';
 
 /**
- * GET /api/debug/logs
+ * Debug / LogBook endpoints
  *
- * Synthesises a real-time activity feed from DB tables + in-process
- * event buffer. Returns the 50 most-recent log entries across:
- *   - session lifecycle (started, scored, failed)
- *   - meeting sync events
- *   - auth events (captured by this module)
- *   - server startup info
+ *   GET /api/debug/logs    — merged feed: DB rows + ring buffer (sessions, meetings, auth, http, errors)
+ *   GET /api/debug/status  — system health snapshot (DB, Supabase config, env, memory, uptime)
  */
 
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
 const db = require('../db/client');
 
 // ---------------------------------------------------------------------------
-// In-process event ring buffer (max 200 entries, cleared on restart)
+// In-process event ring buffer — 500 entries, survives route reloads
 // ---------------------------------------------------------------------------
-const RING_MAX = 200;
+const RING_MAX = 500;
 const ring = [];
 
 function pushEvent(level, tag, message, meta = {}) {
-  ring.push({ ts: new Date().toISOString(), level, tag, message, meta });
+  ring.push({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    ts: new Date().toISOString(),
+    level,
+    tag,
+    message: String(message).slice(0, 500),
+    meta,
+  });
   if (ring.length > RING_MAX) ring.shift();
 }
 
-// Capture startup time
-pushEvent('info', 'server', 'Backend process started', { pid: process.pid, node: process.version });
+// Capture startup
+pushEvent('info', 'server', 'Backend process started', {
+  pid: process.pid,
+  node: process.version,
+  env: process.env.NODE_ENV || 'development',
+  supabase: !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY),
+  db: !!process.env.DATABASE_URL,
+  dev_login: process.env.ALLOW_DEV_LOGIN === 'true',
+});
 
-// Expose so other modules can push events
+// Export early so server.js can import before routes are mounted
 module.exports.pushEvent = pushEvent;
 
-// Patch console.error to capture [tag] prefixed messages into the ring
+// Patch console.error + console.warn to feed into ring
 const _origError = console.error.bind(console);
+const _origWarn  = console.warn.bind(console);
 console.error = (...args) => {
   _origError(...args);
   const str = args.map(a => (a instanceof Error ? a.stack : String(a))).join(' ');
-  pushEvent('error', 'backend', str.slice(0, 300));
+  pushEvent('error', 'backend', str.slice(0, 500));
+};
+console.warn = (...args) => {
+  _origWarn(...args);
+  const str = args.map(a => String(a)).join(' ');
+  pushEvent('warn', 'backend', str.slice(0, 500));
 };
 
 // ---------------------------------------------------------------------------
-// GET /api/debug/logs
+// GET /api/debug/logs  — no requireAuth so it works even when auth is broken
 // ---------------------------------------------------------------------------
-router.get('/logs', requireAuth, async (req, res) => {
-  const limit = Math.min(Number(req.query.limit) || 50, 200);
+router.get('/logs', async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 100, 500);
   const entries = [];
 
   // 1. DB: recent sessions
@@ -54,96 +69,97 @@ router.get('/logs', requireAuth, async (req, res) => {
     if (pool) {
       const { rows } = await pool.query(
         `SELECT
-           id,
-           started_at   AS ts,
-           ended_at,
-           persona_id,
-           mode,
-           score,
-           user_name,
-           user_email,
-           duration_seconds
+           id, started_at AS ts, ended_at, persona_id, mode, score,
+           user_name, user_email, user_role, duration_seconds
          FROM sessions
-         ORDER BY started_at DESC
-         LIMIT 30`
+         ORDER BY started_at DESC LIMIT 50`
       );
-
       for (const r of rows) {
-        if (r.ended_at && r.score !== null) {
-          entries.push({
-            ts: r.ended_at,
-            level: r.score >= 70 ? 'success' : r.score >= 50 ? 'warn' : 'info',
-            tag: 'session',
-            message: `Round complete — ${r.persona_id || 'unknown'} — score ${r.score}`,
-            meta: {
-              id: r.id,
-              mode: r.mode,
-              user: r.user_name || r.user_email || 'anon',
-              duration: r.duration_seconds,
-              score: r.score,
-            },
-          });
-        } else if (r.started_at) {
-          entries.push({
-            ts: r.started_at,
-            level: 'info',
-            tag: 'session',
-            message: `Round started — ${r.persona_id || 'unknown'}`,
-            meta: {
-              id: r.id,
-              mode: r.mode,
-              user: r.user_name || r.user_email || 'anon',
-            },
-          });
-        }
-      }
-
-      // 2. DB: recent meeting syncs
-      const { rows: mtgs } = await pool.query(
-        `SELECT
-           id,
-           title,
-           starts_at,
-           created_at  AS ts,
-           updated_at,
-           outround_done,
-           source
-         FROM meetings
-         ORDER BY updated_at DESC
-         LIMIT 20`
-      );
-
-      for (const m of mtgs) {
         entries.push({
-          ts: m.ts,
-          level: 'info',
-          tag: 'meeting',
-          message: `Meeting synced — ${m.title || 'Untitled'} — ${new Date(m.starts_at).toLocaleDateString()}`,
-          meta: { id: m.id, source: m.source, outround_done: m.outround_done },
+          id: `sess-${r.id}`,
+          ts: r.ended_at || r.ts,
+          level: r.score == null ? 'info' : r.score >= 70 ? 'success' : r.score >= 50 ? 'warn' : 'error',
+          tag: 'session',
+          message: r.ended_at && r.score != null
+            ? `Round scored ${r.score}/100 — ${r.persona_id || '?'} — ${r.user_name || r.user_email || 'anon'}`
+            : `Round started — ${r.persona_id || '?'} — ${r.user_name || r.user_email || 'anon'}`,
+          meta: {
+            session_id: r.id,
+            user: r.user_name || r.user_email || 'anon',
+            role: r.user_role,
+            persona: r.persona_id,
+            mode: r.mode,
+            score: r.score,
+            duration_s: r.duration_seconds,
+            started: r.ts,
+            ended: r.ended_at,
+          },
         });
       }
+
+      // 2. DB: recent users
+      const { rows: users } = await pool.query(
+        `SELECT id, email, name, role, provider, onboarding_complete, created_at, updated_at
+         FROM users ORDER BY updated_at DESC LIMIT 20`
+      );
+      for (const u of users) {
+        entries.push({
+          id: `user-${u.id}`,
+          ts: u.updated_at || u.created_at,
+          level: 'info',
+          tag: 'auth',
+          message: `User record — ${u.email} (${u.provider}) onboarding=${u.onboarding_complete}`,
+          meta: {
+            user_id: u.id,
+            email: u.email,
+            name: u.name,
+            role: u.role,
+            provider: u.provider,
+            onboarding_complete: u.onboarding_complete,
+            created: u.created_at,
+          },
+        });
+      }
+
+      // 3. DB: recent meetings
+      try {
+        const { rows: mtgs } = await pool.query(
+          `SELECT id, title, starts_at, created_at AS ts, updated_at, outround_done, source
+           FROM meetings ORDER BY updated_at DESC LIMIT 30`
+        );
+        for (const m of mtgs) {
+          entries.push({
+            id: `mtg-${m.id}`,
+            ts: m.ts,
+            level: 'info',
+            tag: 'meeting',
+            message: `Meeting — ${m.title || 'Untitled'} — ${new Date(m.starts_at).toLocaleDateString()}`,
+            meta: { id: m.id, source: m.source, outround_done: m.outround_done, starts_at: m.starts_at },
+          });
+        }
+      } catch { /* meetings table may not exist */ }
+
     }
   } catch (err) {
     entries.push({
+      id: `dberr-${Date.now()}`,
       ts: new Date().toISOString(),
       level: 'error',
       tag: 'db',
       message: `DB query failed: ${err.message}`,
-      meta: {},
+      meta: { error: err.message },
     });
   }
 
-  // 3. In-process ring buffer
-  for (const e of ring) {
-    entries.push(e);
-  }
+  // 4. In-process ring buffer (includes http requests, auth events, errors)
+  for (const e of ring) entries.push(e);
 
-  // Sort by ts desc, dedupe by ts+message, take limit
+  // Sort newest-first, dedupe by id, respect limit
   entries.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
   const seen = new Set();
   const deduped = [];
   for (const e of entries) {
-    const key = `${e.ts}|${e.tag}|${e.message}`;
+    const key = e.id || `${e.ts}|${e.tag}|${e.message}`;
     if (!seen.has(key)) {
       seen.add(key);
       deduped.push(e);
@@ -151,7 +167,61 @@ router.get('/logs', requireAuth, async (req, res) => {
     if (deduped.length >= limit) break;
   }
 
-  res.json({ logs: deduped, generated_at: new Date().toISOString() });
+  res.json({ logs: deduped, total: deduped.length, generated_at: new Date().toISOString() });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/debug/status  — system health snapshot, no auth required
+// ---------------------------------------------------------------------------
+router.get('/status', async (req, res) => {
+  const pool = db.getPool ? db.getPool() : null;
+  let dbStatus = 'not_configured';
+  let dbMs = null;
+
+  if (pool) {
+    const t0 = Date.now();
+    try {
+      await pool.query('SELECT 1');
+      dbStatus = 'ok';
+      dbMs = Date.now() - t0;
+    } catch (err) {
+      dbStatus = `error: ${err.message}`;
+    }
+  }
+
+  const mem = process.memoryUsage();
+  const upSecs = Math.floor(process.uptime());
+
+  res.json({
+    ts: new Date().toISOString(),
+    uptime_seconds: upSecs,
+    uptime_human: `${Math.floor(upSecs / 3600)}h ${Math.floor((upSecs % 3600) / 60)}m ${upSecs % 60}s`,
+    env: process.env.NODE_ENV || 'development',
+    node_version: process.version,
+    pid: process.pid,
+    db: { status: dbStatus, response_ms: dbMs },
+    auth: {
+      supabase_url_set: !!process.env.SUPABASE_URL,
+      supabase_service_key_set: !!process.env.SUPABASE_SERVICE_KEY,
+      supabase_anon_key_set: !!process.env.SUPABASE_ANON_KEY,
+      allow_dev_login: process.env.ALLOW_DEV_LOGIN === 'true',
+    },
+    integrations: {
+      elevenlabs: !!process.env.ELEVENLABS_API_KEY,
+      assemblyai: !!process.env.ASSEMBLYAI_API_KEY,
+      vapi: !!process.env.VAPI_API_KEY,
+      claude: !!process.env.CLAUDE_API_KEY || !!process.env.ANTHROPIC_API_KEY,
+      recall: !!process.env.RECALL_API_KEY,
+      pipedrive: !!process.env.PIPEDRIVE_CLIENT_ID,
+      gcal: !!process.env.GOOGLE_CLIENT_ID,
+    },
+    memory: {
+      rss_mb: Math.round(mem.rss / 1024 / 1024),
+      heap_used_mb: Math.round(mem.heapUsed / 1024 / 1024),
+      heap_total_mb: Math.round(mem.heapTotal / 1024 / 1024),
+    },
+    ring_buffer: { size: ring.length, capacity: RING_MAX },
+  });
 });
 
 module.exports = router;

@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { T, R } from '../design/tokens';
 import { Button } from '../design/primitives/Button';
 
 export default function Login() {
-  const { login, signup } = useAuth();
+  const { login, signup, refresh } = useAuth();
   const nav = useNavigate();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [emailSent, setEmailSent] = useState(false);
@@ -14,6 +14,34 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [shellAvailable, setShellAvailable] = useState(false);
+  const [shellBusy, setShellBusy] = useState(false);
+
+  // Check if shell login is available
+  useEffect(() => {
+    fetch('/auth/shell-config', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.shell_available) setShellAvailable(true); })
+      .catch(() => {});
+  }, []);
+
+  const shellLogin = async () => {
+    setShellBusy(true);
+    setErr(null);
+    try {
+      const r = await fetch('/auth/dev-login', { method: 'POST', credentials: 'include' });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.error || `Shell unavailable (${r.status}) — set ALLOW_DEV_LOGIN=true or SHELL_MODE=true on backend`);
+      }
+      await refresh();
+      nav('/');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Shell login failed');
+    } finally {
+      setShellBusy(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,6 +211,34 @@ export default function Login() {
                 {isSignUp ? 'Sign in' : 'Create one'}
               </button>
             </div>
+
+            {/* Shell access — visible when ALLOW_DEV_LOGIN or SHELL_MODE is enabled on backend */}
+            {shellAvailable && (
+              <div style={{ marginTop: 24, borderTop: `1px solid ${T.border}`, paddingTop: 20 }}>
+                <div style={{ fontSize: 11, color: T.t4, textAlign: 'center', marginBottom: 10, letterSpacing: 0.3 }}>
+                  SHELL ACCESS
+                </div>
+                <button
+                  type="button"
+                  onClick={shellLogin}
+                  disabled={shellBusy}
+                  style={{
+                    width: '100%',
+                    padding: '10px 0',
+                    background: 'transparent',
+                    border: `1px solid ${T.borderMd}`,
+                    borderRadius: R.md,
+                    color: T.t2,
+                    fontSize: 13,
+                    fontFamily: T.mono,
+                    cursor: shellBusy ? 'not-allowed' : 'pointer',
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  {shellBusy ? 'entering shell…' : '$ enter shell — no auth'}
+                </button>
+              </div>
+            )}
           </>
         )}
       </form>

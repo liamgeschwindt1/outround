@@ -24,6 +24,9 @@ const gcal = require('../services/gcal');
 const { requireAuth } = require('../middleware/auth');
 const { getPool } = require('../db/client');
 
+let pushEvent = () => {};
+try { pushEvent = require('./debug').pushEvent; } catch {}
+
 const router = express.Router();
 
 // Quick health check exposed through the /auth proxy so the frontend
@@ -95,6 +98,8 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
+  pushEvent('info', 'auth', `Login attempt — ${email}`, { email });
+
   try {
     const { status, data } = await supabaseAuthRequest(
       '/token?grant_type=password',
@@ -102,6 +107,7 @@ router.post('/login', async (req, res) => {
     );
 
     if (status !== 200 || !data.access_token) {
+      pushEvent('warn', 'auth', `Login failed — ${email}`, { email, status, reason: data.error_description });
       return res.status(401).json({ error: data.error_description || 'Invalid credentials' });
     }
 
@@ -113,8 +119,10 @@ router.post('/login', async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    pushEvent('success', 'auth', `Login success — ${email}`, { email });
     res.json({ ok: true });
   } catch (err) {
+    pushEvent('error', 'auth', `Login error — ${email}: ${err.message}`, { email, error: err.message });
     console.error('[auth] Email login error:', err.message);
     res.status(503).json({ error: 'Auth service unavailable' });
   }
@@ -236,29 +244,37 @@ router.post('/logout', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Dev login — bypass Supabase entirely. Only enabled when
-// ALLOW_DEV_LOGIN=true on the backend. Creates/refreshes a single dev user
-// and sets a synthetic sb_token cookie that requireAuth recognises.
+// Dev / Shell login — bypass Supabase entirely.
+// Enabled when ALLOW_DEV_LOGIN=true or SHELL_MODE=true.
+// Creates/refreshes a single dev user and sets a synthetic sb_token cookie
+// that requireAuth recognises.
 // ---------------------------------------------------------------------------
+function shellAllowed() {
+  return process.env.ALLOW_DEV_LOGIN === 'true' || process.env.SHELL_MODE === 'true';
+}
+
+const DEV_USER_ID = '00000000-0000-0000-0000-000000000001';
+
+async function upsertDevUser(pool) {
+  if (!pool) return;
+  await pool.query(
+    `INSERT INTO users (id, email, name, provider, onboarding_complete)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (id) DO UPDATE SET updated_at = NOW(), onboarding_complete = true`,
+    [DEV_USER_ID, 'dev@outround.local', 'Dev User', 'dev', true]
+  );
+}
+
 router.post('/dev-login', async (req, res) => {
-  if (process.env.ALLOW_DEV_LOGIN !== 'true') {
+  if (!shellAllowed()) {
     return res.status(404).json({ error: 'Not found' });
   }
 
-  const DEV_USER_ID = '00000000-0000-0000-0000-000000000001';
   const pool = getPool();
-
-  if (pool) {
-    try {
-      await pool.query(
-        `INSERT INTO users (id, email, name, provider, onboarding_complete)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (id) DO UPDATE SET updated_at = NOW(), onboarding_complete = true`,
-        [DEV_USER_ID, 'dev@outround.local', 'Dev User', 'dev', true]
-      );
-    } catch (err) {
-      console.error('[auth] dev-login user upsert failed:', err.message);
-    }
+  try {
+    await upsertDevUser(pool);
+  } catch (err) {
+    console.error('[auth] dev-login user upsert failed:', err.message);
   }
 
   const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
@@ -269,7 +285,13 @@ router.post('/dev-login', async (req, res) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
+  pushEvent('success', 'auth', 'Dev login — shell access granted', { user_id: DEV_USER_ID });
   res.json({ ok: true, dev: true, user_id: DEV_USER_ID });
+});
+
+// GET /auth/shell-config — tells frontend whether shell mode is available
+router.get('/shell-config', (_req, res) => {
+  res.json({ shell_available: shellAllowed() });
 });
 
 // ---------------------------------------------------------------------------

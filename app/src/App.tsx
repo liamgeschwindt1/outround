@@ -45,6 +45,7 @@ import Leaderboard from './routes/leaderboard/Leaderboard';
 import Settings from './routes/settings/Settings';
 import MeetingPrep from './routes/MeetingPrep';
 import Stub from './routes/Stub';
+import LogBook from './routes/LogBook';
 
 function LoginGate() {
   const { user, loading } = useAuth();
@@ -103,6 +104,7 @@ export default function App() {
               element={<Guarded><MeetingPrep /></Guarded>}
             />
             <Route path="/meetings"    element={<Guarded><Stub title="Meetings" body="Meeting bot — Phase 2." /></Guarded>} />
+            <Route path="/logbook"     element={<Guarded><LogBook /></Guarded>} />
 
             <Route path="*" element={<RootRedirect />} />
           </Routes>

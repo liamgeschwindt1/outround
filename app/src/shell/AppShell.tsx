@@ -56,6 +56,13 @@ function IconSettings() {
     </svg>
   );
 }
+function IconLogs() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>
+    </svg>
+  );
+}
 
 // ─── Nav structure ────────────────────────────────────────────────────────────
 
@@ -72,6 +79,7 @@ const NAV: NavEntry[] = [
   'divider',
   { to: '/meetings',    label: 'Meetings',    Icon: IconMeetings,    locked: 'Phase 2' },
   'spacer',
+  { to: '/logbook',     label: 'LogBook',     Icon: IconLogs },
   { to: '/settings',    label: 'Settings',    Icon: IconSettings },
 ];
 

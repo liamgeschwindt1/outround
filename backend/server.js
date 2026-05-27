@@ -26,6 +26,30 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Request logger ─────────────────────────────────────────────────────────
+// Loads debug module first so we can push to its ring buffer immediately.
+let pushEvent = () => {};
+try {
+  const debug = require('./routes/debug');
+  pushEvent = debug.pushEvent;
+} catch { /* debug route failed to load — ignore */ }
+
+app.use((req, res, next) => {
+  const start = Date.now();
+  const { method, path: reqPath, ip } = req;
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    const status = res.statusCode;
+    const level = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
+    pushEvent(level, 'http', `${method} ${reqPath} → ${status} (${ms}ms)`, {
+      method, path: reqPath, status, ms,
+      ip: req.headers['x-forwarded-for'] || ip || '?',
+      user: req.user?.email || req.supabaseUser?.email || null,
+    });
+  });
+  next();
+});
+
 // Routes — safeMount keeps the server up if any single route module fails to load
 function safeMount(mountPath, modulePath) {
   try {
