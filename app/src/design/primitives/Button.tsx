@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { T, R } from '../tokens';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline-gradient';
 type Size = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -44,7 +44,43 @@ export function Button({
     cursor: 'pointer',
   } as const;
 
-  const variants: Record<Variant, React.CSSProperties> = {
+  if (variant === 'outline-gradient') {
+    return (
+      <button
+        {...rest}
+        style={{
+          ...base,
+          border: 'none',
+          padding: undefined,
+          background: `linear-gradient(135deg, ${T.coral}, ${T.sky})`,
+          borderRadius: R.md,
+          ...style,
+        }}
+      >
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            width: '100%',
+            height: s.h - 2,
+            padding: s.pad,
+            margin: 1,
+            background: '#18181b',
+            borderRadius: R.md - 1,
+            color: '#fff',
+            fontSize: s.fs,
+            fontWeight: 500,
+          }}
+        >
+          {children}
+        </span>
+      </button>
+    );
+  }
+
+  const variants: Record<Exclude<Variant, 'outline-gradient'>, React.CSSProperties> = {
     primary: { background: T.grad, color: '#fff' },
     secondary: { background: T.bgElevate, color: T.t1, borderColor: T.borderMd },
     ghost: { background: 'transparent', color: T.t2, borderColor: T.border },
