@@ -46,8 +46,9 @@ safeMount('/api', './routes/webhooks');
 process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));
 process.on('uncaughtException', (err) => console.error('[uncaughtException]', err));
 
-// Health check
-app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+// Health check — includes startup time so you can confirm a fresh deploy
+const STARTED_AT = new Date().toISOString();
+app.get('/health', (_req, res) => res.json({ status: 'ok', started_at: STARTED_AT }));
 
 const PORT = process.env.PORT || 3001;
 // Bind to :: so Railway's private network (IPv6) can reach us.

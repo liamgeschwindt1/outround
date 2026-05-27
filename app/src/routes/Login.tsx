@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { T, R } from '../design/tokens';
@@ -11,6 +11,18 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [backendTs, setBackendTs] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/auth/me', { credentials: 'include' })
+      .then(() => {/* already authed — LoginGate will redirect */})
+      .catch(() => {});
+    // Show when the backend was last started
+    fetch('/health')
+      .then(r => r.json())
+      .then((d: { started_at?: string }) => setBackendTs(d.started_at ?? null))
+      .catch(() => {});
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,6 +174,13 @@ export default function Login() {
           Skip sign in (dev)
         </button>
       </form>
+
+      {/* Deploy timestamp — confirms Railway has the latest build */}
+      <div style={{ marginTop: 16, fontFamily: T.mono, fontSize: 11, color: T.t4, textAlign: 'center' }}>
+        {backendTs
+          ? `backend started ${new Date(backendTs).toLocaleString()}`
+          : 'checking backend…'}
+      </div>
     </div>
   );
 }
