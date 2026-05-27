@@ -7,12 +7,16 @@ import { AppShell } from './shell/AppShell';
 import Welcome from './routes/Welcome';
 import Login from './routes/Login';
 import Onboarding from './routes/Onboarding';
-import Dashboard from './routes/dashboard/Dashboard';
+import Home from './routes/home/Home';
+import Round from './routes/round/Round';
+import Progress from './routes/progress/Progress';
+import Team from './routes/team/Team';
+import Leaderboard from './routes/leaderboard/Leaderboard';
+import Settings from './routes/settings/Settings';
 import MeetingPrep from './routes/MeetingPrep';
 import Stub from './routes/Stub';
 
 function LoginGate() {
-  // If user is already authed, send them past login.
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) {
@@ -25,6 +29,14 @@ function Shell({ children }: { children: React.ReactNode }) {
   return <AppShell>{children}</AppShell>;
 }
 
+function Guarded({ children }: { children: React.ReactNode }) {
+  return (
+    <RequireOnboarded>
+      <Shell>{children}</Shell>
+    </RequireOnboarded>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -33,88 +45,30 @@ export default function App() {
           <Routes>
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/login" element={<LoginGate />} />
-            <Route
-              path="/onboarding"
-              element={
-                <RequireAuth>
-                  <Onboarding />
-                </RequireAuth>
-              }
-            />
+            <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
+
+            <Route path="/"            element={<Guarded><Home /></Guarded>} />
+            <Route path="/round"       element={<Guarded><Round /></Guarded>} />
+            <Route path="/progress"    element={<Guarded><Progress /></Guarded>} />
+            <Route path="/team"        element={<Guarded><Team /></Guarded>} />
+            <Route path="/leaderboard" element={<Guarded><Leaderboard /></Guarded>} />
+            <Route path="/settings"    element={<Guarded><Settings /></Guarded>} />
+            <Route path="/settings/billing" element={<Guarded><Settings /></Guarded>} />
+
+            <Route path="/practice"    element={<Guarded><Round /></Guarded>} />
+            <Route path="/sessions"    element={<Guarded><Progress /></Guarded>} />
+            <Route path="/analytics"   element={<Guarded><Progress /></Guarded>} />
 
             <Route
-              path="/"
-              element={
-                <RequireOnboarded>
-                  <Shell><Dashboard /></Shell>
-                </RequireOnboarded>
-              }
-            />
-            <Route
-              path="/practice"
-              element={
-                <RequireOnboarded>
-                  <Shell>
-                    <Stub
-                      title="Practice"
-                      body="The live call experience is being ported into the new shell. Until then, the previous flow is still available — refresh the page won't kick you out anymore."
-                    />
-                  </Shell>
-                </RequireOnboarded>
-              }
-            />
-            <Route
-              path="/sessions"
-              element={
-                <RequireOnboarded>
-                  <Shell>
-                    <Stub title="Sessions" body="Full history with filters and replays — coming next." />
-                  </Shell>
-                </RequireOnboarded>
-              }
-            />
-            <Route
-              path="/leaderboard"
-              element={
-                <RequireOnboarded>
-                  <Shell>
-                    <Stub title="Leaderboard" body="Weekly board with team and global views — coming next." />
-                  </Shell>
-                </RequireOnboarded>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <RequireOnboarded>
-                  <Shell>
-                    <Stub title="Settings" body="Profile, coach, integrations." />
-                  </Shell>
-                </RequireOnboarded>
-              }
-            />
-            <Route
               path="/analysis/:id"
-              element={
-                <RequireOnboarded>
-                  <Shell>
-                    <Stub title="Round analysis" body="Detailed scoring and beats — being ported." />
-                  </Shell>
-                </RequireOnboarded>
-              }
+              element={<Guarded><Stub title="Round analysis" body="Detailed scoring — full view coming next." /></Guarded>}
             />
             <Route
               path="/meeting/:id"
-              element={
-                <RequireOnboarded>
-                  <Shell>
-                    <MeetingPrep />
-                  </Shell>
-                </RequireOnboarded>
-              }
+              element={<Guarded><MeetingPrep /></Guarded>}
             />
+            <Route path="/meetings"    element={<Guarded><Stub title="Meetings" body="Meeting bot — Phase 2." /></Guarded>} />
 
-            {/* Default: send strangers to welcome, signed-in users to dashboard via RequireOnboarded */}
             <Route path="*" element={<RootRedirect />} />
           </Routes>
         </ToastProvider>
@@ -126,9 +80,7 @@ export default function App() {
 function RootRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) {
-    const welcomed = localStorage.getItem('outround_welcomed') === '1';
-    return <Navigate to={welcomed ? '/login' : '/welcome'} replace />;
-  }
-  return <Navigate to={user.onboarding_complete ? '/' : '/onboarding'} replace />;
+  if (!user) return <Navigate to="/welcome" replace />;
+  if (!user.onboarding_complete) return <Navigate to="/onboarding" replace />;
+  return <Navigate to="/" replace />;
 }
