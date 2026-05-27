@@ -16,11 +16,6 @@ const DEV_USER_ID = '00000000-0000-0000-0000-000000000001';
 const DEV_TOKEN_PREFIX = 'dev:';
 
 async function requireAuth(req, res, next) {
-  // Auth bypass when Supabase is not configured (dev / demo environment)
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-    return next();
-  }
-
   // Extract token from header or cookie
   let token = null;
 
@@ -31,12 +26,8 @@ async function requireAuth(req, res, next) {
     token = req.cookies.sb_token;
   }
 
-  if (!token) {
-    return res.status(401).json({ error: 'Unauthorised — no token provided' });
-  }
-
-  // Dev login bypass — only when explicitly enabled
-  if (token.startsWith(DEV_TOKEN_PREFIX) && process.env.ALLOW_DEV_LOGIN === 'true') {
+  // Dev login bypass — check before Supabase so it works even without Supabase configured
+  if (token && token.startsWith(DEV_TOKEN_PREFIX) && process.env.ALLOW_DEV_LOGIN === 'true') {
     const devId = token.slice(DEV_TOKEN_PREFIX.length) || DEV_USER_ID;
     req.supabaseUser = {
       id: devId,
@@ -54,6 +45,15 @@ async function requireAuth(req, res, next) {
       }
     }
     return next();
+  }
+
+  // Auth bypass when Supabase is not configured (dev / demo environment)
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    return next();
+  }
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorised — no token provided' });
   }
 
   const supabaseUser = await getUserFromToken(token);
