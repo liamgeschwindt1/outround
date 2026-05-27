@@ -49,6 +49,9 @@ process.on('uncaughtException', (err) => console.error('[uncaughtException]', er
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Outround backend running on port ${PORT}`);
+// Bind to :: so Railway's private network (IPv6) can reach us.
+// Node's default 0.0.0.0 only binds IPv4, which makes *.railway.internal
+// hostnames hang and surface as 504s at the edge.
+app.listen(PORT, '::', () => {
+  console.log(`Outround backend running on port ${PORT} (binding ::)`);
 });

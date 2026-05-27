@@ -15,15 +15,33 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 const DIST_DIR = path.join(__dirname, 'dist');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
+// Shared proxy error handler — surface real failures instead of hanging
+// until the edge returns a generic 504.
+function handleProxyError(err, _req, res) {
+  console.error(`[proxy] ${err.code || 'ERROR'} → ${BACKEND_URL}:`, err.message);
+  if (res.headersSent) return;
+  res.status(502).json({
+    error: 'Backend unreachable',
+    code: err.code || 'PROXY_ERROR',
+    target: BACKEND_URL,
+  });
+}
+
 // Proxy API and auth calls to the backend service.
 app.use('/api', createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
+  proxyTimeout: 25000,
+  timeout: 25000,
+  onError: handleProxyError,
 }));
 
 app.use('/auth', createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
+  proxyTimeout: 25000,
+  timeout: 25000,
+  onError: handleProxyError,
   onProxyRes(proxyRes) {
     const setCookie = proxyRes.headers['set-cookie'];
     if (setCookie) {
