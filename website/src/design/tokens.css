@@ -1,0 +1,76 @@
+/* Outround design tokens — CSS custom properties */
+/* These are the source of truth for the website. */
+
+:root {
+  /* Backgrounds */
+  --bg:        #0a0a0b;
+  --bg-sub:    #111113;
+  --bg-card:   #18181b;
+  --bg-hover:  #1f1f24;
+
+  /* Borders */
+  --border:    rgba(255, 255, 255, 0.07);
+  --border-md: rgba(255, 255, 255, 0.11);
+
+  /* Text */
+  --text-primary: #f2f1ef;
+  --text-sub:     rgba(242, 241, 239, 0.55);
+  --text-muted:   rgba(242, 241, 239, 0.30);
+
+  /* Brand */
+  --coral:       #f26b45;
+  --sky:         #4ba3e3;
+  --gradient:    linear-gradient(135deg, #f26b45 0%, #4ba3e3 100%);
+  --grad-border: linear-gradient(135deg, rgba(242,107,69,0.4), rgba(75,163,227,0.4));
+
+  /* Semantic */
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red:   #ef4444;
+
+  /* Typography */
+  --font-display: 'Cabinet Grotesk', 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Base reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Gradient text utility */
+.grad-text {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Orbit animation for Scene 8 satellites */
+@keyframes orbit {
+  from { transform: rotate(var(--orbit-start)) translateX(var(--orbit-radius)) rotate(calc(-1 * var(--orbit-start))); }
+  to   { transform: rotate(calc(var(--orbit-start) + 360deg)) translateX(var(--orbit-radius)) rotate(calc(-1 * (var(--orbit-start) + 360deg))); }
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
