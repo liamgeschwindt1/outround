@@ -1,25 +1,25 @@
-import { useRef } from 'react';
 import HeroDotGrid from './HeroDotGrid';
 import Hero from './sections/Hero';
+import RevenueCalculator from './sections/RevenueCalculator';
+import WhatYouNeverSaw from './sections/WhatYouNeverSaw';
 import HowItWorks from './sections/HowItWorks';
-import DemoSection from './sections/DemoSection';
+import OrbSection from './sections/OrbSection';
+import ManagerDashboard from './sections/ManagerDashboard';
+import FinalCTA from './sections/FinalCTA';
 
 export default function HomePage() {
-  const demoRef = useRef(null);
-
   return (
     <main>
-      {/* Hero */}
       <section style={{ position: 'relative' }}>
         <HeroDotGrid />
-        <Hero demoRef={demoRef} />
+        <Hero />
       </section>
-
-      {/* How it works */}
+      <RevenueCalculator />
+      <WhatYouNeverSaw />
       <HowItWorks />
-
-      {/* Interactive demo */}
-      <DemoSection sectionRef={demoRef} />
+      <OrbSection />
+      <ManagerDashboard />
+      <FinalCTA />
     </main>
   );
 }

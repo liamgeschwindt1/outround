@@ -1,13 +1,8 @@
 import { motion } from 'framer-motion';
-import StatCard from '../components/StatCard';
 
-const EASE_OUT = { duration: 0.5, ease: [0.0, 0.0, 0.2, 1] };
+const EASE = { duration: 0.5, ease: [0.0, 0.0, 0.2, 1] };
 
-export default function Hero({ demoRef }) {
-  function scrollToDemo() {
-    demoRef?.current?.scrollIntoView({ behavior: 'smooth' });
-  }
-
+export default function Hero() {
   return (
     <section
       style={{
@@ -21,112 +16,97 @@ export default function Hero({ demoRef }) {
         overflow: 'hidden',
       }}
     >
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 800, textAlign: 'center' }}>
-        {/* Eyebrow */}
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 740, textAlign: 'center' }}>
+        {/* Badge */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
           style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            color: 'var(--text-muted)',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            marginBottom: 28,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'rgba(242,107,69,0.08)',
+            border: '0.5px solid rgba(242,107,69,0.4)',
+            borderRadius: 999,
+            padding: '5px 14px',
+            marginBottom: 32,
           }}
         >
-          For sales leaders
+          <span style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: 'var(--coral)',
+            display: 'inline-block',
+            flexShrink: 0,
+          }} />
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--coral)',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+          }}>
+            Automated Customer Intelligence
+          </span>
         </motion.div>
 
-        {/* Tagline */}
+        {/* Headline */}
         <motion.h1
           initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ ...EASE_OUT, delay: 0.8 }}
+          transition={{ ...EASE, delay: 0.6 }}
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(32px, 5.5vw, 52px)',
+            fontSize: 'clamp(30px, 5.5vw, 54px)',
             fontWeight: 700,
-            lineHeight: 1.12,
+            lineHeight: 1.1,
             color: 'var(--text-primary)',
-            marginBottom: 40,
-            letterSpacing: '-0.02em',
-            maxWidth: 720,
-            margin: '0 auto 40px',
+            letterSpacing: '-0.025em',
+            margin: '0 auto 28px',
+            maxWidth: 680,
           }}
         >
-          Your reps spend 31% of their week on admin and prep.
+          Your sales engine is leaking revenue.
           <br />
-          <span style={{ color: 'var(--text-sub)' }}>Your CRM is a mess. Your coaching is guesswork.</span>
-          <br />
-          <span style={{ color: 'var(--text-sub)' }}>And when a rep leaves, everything they knew walks out with them.</span>
+          <span style={{ color: 'var(--text-sub)' }}>You can't see where.</span>
         </motion.h1>
 
-        {/* Stat row */}
+        {/* Sub-copy */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 1.2 }}
-          style={{
-            display: 'flex',
-            gap: 16,
-            marginBottom: 40,
-            flexWrap: 'wrap',
-          }}
-        >
-          <StatCard
-            number="6.8h"
-            line1="wasted per rep per week"
-            line2="on CRM admin"
-            delay={1.2}
-          />
-          <StatCard
-            number="5.6h"
-            line1="wasted per rep per week"
-            line2="on call prep"
-            delay={1.32}
-          />
-          <StatCard
-            number="0"
-            line1="competitors who can tell you"
-            line2='why you keep losing to Salesforce'
-            delay={1.44}
-          />
-        </motion.div>
-
-        {/* Sub-copy */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 1.6 }}
+          transition={{ duration: 0.5, delay: 0.9 }}
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 'clamp(15px, 2vw, 18px)',
+            fontSize: 'clamp(15px, 1.9vw, 18px)',
             color: 'var(--text-sub)',
-            maxWidth: 560,
-            margin: '0 auto 36px',
-            lineHeight: 1.7,
+            maxWidth: 520,
+            margin: '0 auto 44px',
+            lineHeight: 1.75,
           }}
         >
-          Outround captures every sales conversation, eliminates the admin, and turns what your team learns into intelligence that stays.
-        </motion.p>
+          It's not what you forget. It's what you never saw.
+          <br />
+          Every conversation your team has contains signal. Most of it disappears the moment the call ends.
+        </motion.div>
 
         {/* CTA */}
         <motion.button
-          initial={{ y: 12, opacity: 0 }}
+          initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 28, delay: 1.9 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 28, delay: 1.1 }}
           whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
           whileTap={{ scale: 0.98 }}
-          onClick={scrollToDemo}
+          onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
           style={{
             background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
             color: '#0a0a0b',
             fontFamily: 'var(--font-body)',
             fontSize: 15,
             fontWeight: 700,
-            padding: '14px 32px',
+            padding: '14px 36px',
             borderRadius: 999,
             border: 'none',
             cursor: 'pointer',
@@ -134,7 +114,7 @@ export default function Hero({ demoRef }) {
             minHeight: 44,
           }}
         >
-          See it in action →
+          See what it's costing you
         </motion.button>
       </div>
     </section>
