@@ -86,18 +86,18 @@ function StepCard({ icon, title, body, delay, isInView }) {
 const STEPS = [
   {
     icon: <WaveformIcon />,
-    title: 'Every conversation captured.',
-    body: 'Sales calls, discovery interviews, investor pitches.\nTranscribed and structured automatically.\nNo manual input. Nothing missed.',
+    title: 'Before the call',
+    body: 'A brief lands in your rep\'s Slack 15 minutes before every meeting. Built from everything known about this person — their company, previous conversations, what matters to them. No research required.',
   },
   {
     icon: <NodeGraphIcon />,
-    title: 'Your data becomes answers.',
-    body: 'Rep patterns. Client signals. Deal risk.\nObjections your team keeps losing to.\nBuilt from your actual conversations.',
+    title: 'During the call',
+    body: 'Outround joins automatically and captures everything. Your rep stays focused on the conversation. Nothing changes on their end.',
   },
   {
     icon: <LightningIcon />,
-    title: 'In the tools you already use.',
-    body: 'CRM updated automatically. Slack briefings before calls.\nAsk it anything. Get answers from your own data.\nCoaching prescribed from real patterns, not guesswork.',
+    title: 'After the call',
+    body: 'The CRM updates itself. The rep gets a debrief. The manager gets a brief before their next 1:1. The intelligence compounds with every call.',
   },
 ];
 
@@ -121,10 +121,21 @@ export default function HowItWorks() {
             color: 'var(--text-muted)',
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            marginBottom: 48,
+            marginBottom: 12,
           }}
         >
           How it works
+        </div>
+        <div
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 14,
+            fontStyle: 'italic',
+            color: 'var(--text-muted)',
+            marginBottom: 48,
+          }}
+        >
+          Three moments. Fully automatic. Nothing to configure.
         </div>
 
         {/* Steps */}
@@ -171,7 +182,23 @@ export default function HowItWorks() {
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.5, delay: 0.6 }}
           style={{
-            marginTop: 48,
+            marginTop: 40,
+            textAlign: 'center',
+            fontFamily: 'var(--font-body)',
+            fontSize: 13,
+            color: 'var(--text-muted)',
+          }}
+        >
+          Works with HubSpot, Pipedrive, and Slack. Set up in under 10 minutes.
+        </motion.div>
+
+        {/* Demo bridge */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.5, delay: 0.75 }}
+          style={{
+            marginTop: 16,
             textAlign: 'center',
             fontFamily: 'var(--font-body)',
             fontSize: 14,

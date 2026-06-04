@@ -29,14 +29,14 @@ export default function Hero({ demoRef }) {
           transition={{ duration: 0.6, delay: 0.6 }}
           style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 13,
+            fontSize: 11,
             color: 'var(--text-muted)',
-            letterSpacing: '0.12em',
+            letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            marginBottom: 24,
+            marginBottom: 28,
           }}
         >
-          Every conversation your company has.
+          For sales leaders
         </motion.div>
 
         {/* Tagline */}
@@ -46,17 +46,21 @@ export default function Hero({ demoRef }) {
           transition={{ ...EASE_OUT, delay: 0.8 }}
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(40px, 7vw, 64px)',
+            fontSize: 'clamp(32px, 5.5vw, 52px)',
             fontWeight: 700,
-            lineHeight: 1.05,
+            lineHeight: 1.12,
             color: 'var(--text-primary)',
             marginBottom: 40,
             letterSpacing: '-0.02em',
+            maxWidth: 720,
+            margin: '0 auto 40px',
           }}
         >
-          Stop forgetting
+          Your reps spend 31% of their week on admin and prep.
           <br />
-          what your customers tell you.
+          <span style={{ color: 'var(--text-sub)' }}>Your CRM is a mess. Your coaching is guesswork.</span>
+          <br />
+          <span style={{ color: 'var(--text-sub)' }}>And when a rep leaves, everything they knew walks out with them.</span>
         </motion.h1>
 
         {/* Stat row */}
@@ -72,21 +76,21 @@ export default function Hero({ demoRef }) {
           }}
         >
           <StatCard
-            number="47%"
-            line1="of sales knowledge"
-            line2="leaves with the rep"
+            number="6.8h"
+            line1="wasted per rep per week"
+            line2="on CRM admin"
             delay={1.2}
           />
           <StatCard
-            number="23h"
-            line1="wasted per rep per month"
-            line2="on manual CRM updates"
+            number="5.6h"
+            line1="wasted per rep per week"
+            line2="on call prep"
             delay={1.32}
           />
           <StatCard
             number="0"
-            line1="competitors can answer:"
-            line2='"Why do we keep losing to Salesforce?"'
+            line1="competitors who can tell you"
+            line2='why you keep losing to Salesforce'
             delay={1.44}
           />
         </motion.div>
@@ -105,8 +109,7 @@ export default function Hero({ demoRef }) {
             lineHeight: 1.7,
           }}
         >
-          Outround captures every conversation, structures it into intelligence,
-          and puts it where your team needs it — automatically.
+          Outround captures every sales conversation, eliminates the admin, and turns what your team learns into intelligence that stays.
         </motion.p>
 
         {/* CTA */}
