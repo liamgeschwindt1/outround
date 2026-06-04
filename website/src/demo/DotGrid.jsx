@@ -1,7 +1,7 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 
 const SPACING = 28;
-const DOT_RADIUS = 2;
+const DOT_RADIUS = 1;
 const PULSE_MIN = 0.10;
 const PULSE_MAX = 0.20;
 const PULSE_PERIOD = 3000;

@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { orbAnswers, QUESTIONS, ORBIT_CONFIG } from '../data/orbQuestions';
+import { orbAnswers, QUESTIONS } from '../data/orbQuestions';
 import EUBadge from '../components/EUBadge';
 import AnswerCard from '../components/AnswerCard';
 
-// ─── Orb Canvas ───────────────────────────────────────────────────────────────
+// ─── Orb Canvas — dot sphere ─────────────────────────────────────────────────
+// The orb is made entirely of small dots arranged on a sphere surface.
+// They drift, breathe, and shift colour — no solid fill.
 
-function OrbCanvas({ size, flash, pulse }) {
+function OrbCanvas({ size, flash }) {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
 
@@ -23,19 +25,31 @@ function OrbCanvas({ size, flash, pulse }) {
 
     const cx = size / 2;
     const cy = size / 2;
-    const r = size / 2 - 4;
+    const sphereR = size / 2 - 8;
 
-    // Particles
-    const particles = Array.from({ length: 40 }, (_, i) => ({
-      angle: (i / 40) * Math.PI * 2,
-      radius: 110 + Math.random() * 30,
-      speed: (0.0002 + Math.random() * 0.0003) * (Math.random() > 0.5 ? 1 : -1),
-      size: 1 + Math.random() * 1.5,
-      opacity: 0.3 + Math.random() * 0.4,
-    }));
+    // Build dots on a sphere using Fibonacci lattice for even distribution
+    const DOT_COUNT = 320;
+    const dots = Array.from({ length: DOT_COUNT }, (_, i) => {
+      const golden = Math.PI * (3 - Math.sqrt(5));
+      const y = 1 - (i / (DOT_COUNT - 1)) * 2;
+      const radius = Math.sqrt(1 - y * y);
+      const theta = golden * i;
+      return {
+        // 3D coords on unit sphere
+        nx: Math.cos(theta) * radius,
+        ny: y,
+        nz: Math.sin(theta) * radius,
+        // drift phase offset per dot
+        phase: Math.random() * Math.PI * 2,
+        driftSpeed: 0.0003 + Math.random() * 0.0004,
+        driftAmp: 0.008 + Math.random() * 0.012,
+      };
+    });
 
+    // Slow rotation axes
+    let rotY = 0;
+    let rotX = 0;
     let startTime = null;
-    let glowPhase = 0; // 0=coral, 1=sky
 
     function draw(ts) {
       if (!startTime) startTime = ts;
@@ -43,75 +57,78 @@ function OrbCanvas({ size, flash, pulse }) {
 
       ctx.clearRect(0, 0, size, size);
 
-      // Gradient cycle: coral→sky over 8s
+      // Colour cycle coral→sky
       const gradT = (Math.sin((elapsed / 8000) * Math.PI * 2) + 1) / 2;
-      const r1 = Math.round(242 - (242 - 75) * gradT);
-      const g1 = Math.round(107 - (107 - 163) * gradT);
-      const b1 = Math.round(69  - (69  - 227) * gradT);
+      const cr = Math.round(242 - (242 - 75) * gradT);
+      const cg = Math.round(107 - (107 - 163) * gradT);
+      const cb = Math.round(69  - (69  - 227) * gradT);
 
-      // Core radial gradient
-      const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r);
-      grad.addColorStop(0, `rgba(${r1},${g1},${b1},0.35)`);
-      grad.addColorStop(0.5, `rgba(${r1},${g1},${b1},0.15)`);
-      grad.addColorStop(1, `rgba(10,10,11,0.6)`);
+      // Slow rotation
+      rotY = elapsed * 0.00022;
+      rotX = elapsed * 0.00009;
 
-      // Pulse ring scale
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+      // Outer pulse ring
       const pulseT = (Math.sin((elapsed / 3000) * Math.PI * 2) + 1) / 2;
-      const pScale = 1 + 0.08 * pulseT;
-
-      // Draw outer pulse ring
+      const pScale = 1 + 0.06 * pulseT;
       ctx.save();
       ctx.translate(cx, cy);
       ctx.scale(pScale, pScale);
-      ctx.translate(-cx, -cy);
       ctx.beginPath();
-      ctx.arc(cx, cy, r + 6, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(${r1},${g1},${b1},0.2)`;
+      ctx.arc(0, 0, sphereR + 8, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.15)`;
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.restore();
 
-      // Gradient border ring
-      const borderGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-      borderGrad.addColorStop(0, 'rgba(242,107,69,0.8)');
-      borderGrad.addColorStop(1, 'rgba(75,163,227,0.8)');
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.strokeStyle = borderGrad;
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      // Project and draw each dot
+      const projected = dots.map((d, i) => {
+        // Apply drift — tiny wobble on unit sphere surface
+        const drift = Math.sin(elapsed * d.driftSpeed + d.phase) * d.driftAmp;
+        let nx = d.nx + drift;
+        let ny = d.ny + Math.cos(elapsed * d.driftSpeed + d.phase) * d.driftAmp * 0.5;
+        let nz = d.nz;
+        // Normalise back onto sphere
+        const len = Math.sqrt(nx*nx + ny*ny + nz*nz);
+        nx /= len; ny /= len; nz /= len;
 
-      // Core fill
-      ctx.beginPath();
-      ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
+        // Rotate Y
+        const x1 = nx * cosY + nz * sinY;
+        const z1 = -nx * sinY + nz * cosY;
+        // Rotate X
+        const y2 = ny * cosX - z1 * sinX;
+        const z2 = ny * sinX + z1 * cosX;
 
-      // Depth: centre lighter
-      const centerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 0.6);
-      centerGrad.addColorStop(0, `rgba(${r1},${g1},${b1},0.12)`);
-      centerGrad.addColorStop(1, 'transparent');
-      ctx.beginPath();
-      ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);
-      ctx.fillStyle = centerGrad;
-      ctx.fill();
+        const sx = cx + x1 * sphereR;
+        const sy = cy + y2 * sphereR;
+        const depth = (z2 + 1) / 2; // 0=back, 1=front
+        return { sx, sy, depth };
+      });
 
-      // Particles
-      particles.forEach(p => {
-        p.angle += p.speed * (ts - startTime > 0 ? 1 : 0);
-        const px = cx + Math.cos(p.angle) * p.radius;
-        const py = cy + Math.sin(p.angle) * p.radius;
+      // Sort by depth so front dots draw on top
+      projected.sort((a, b) => a.depth - b.depth);
+
+      projected.forEach(({ sx, sy, depth }) => {
+        const opacity = 0.08 + depth * 0.65;
+        const dotSize = 0.6 + depth * 1.0;
+        // Back dots: coral tint, front dots: sky tint
+        const mixT = depth;
+        const dr = Math.round(242 * (1 - mixT * 0.3));
+        const dg = Math.round(cg);
+        const db = Math.round(cb + (227 - cb) * mixT * 0.4);
         ctx.beginPath();
-        ctx.arc(px, py, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r1},${g1},${b1},${p.opacity})`;
+        ctx.arc(sx, sy, dotSize, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${dr},${dg},${db},${opacity})`;
         ctx.fill();
       });
 
       // Flash overlay
       if (flash > 0) {
         ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${flash * 0.3})`;
+        ctx.arc(cx, cy, sphereR, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${flash * 0.25})`;
         ctx.fill();
       }
 
@@ -127,69 +144,67 @@ function OrbCanvas({ size, flash, pulse }) {
       ref={canvasRef}
       style={{
         display: 'block',
-        borderRadius: '50%',
-        filter: 'drop-shadow(0 0 24px rgba(242,107,69,0.3))',
+        filter: 'drop-shadow(0 0 20px rgba(242,107,69,0.25))',
       }}
     />
   );
 }
 
-// ─── Orbit Satellite ─────────────────────────────────────────────────────────
+// ─── Fixed Question Card ──────────────────────────────────────────────────────
+// Cards are placed in a fixed 2-column grid around the orb, no CSS animation.
+// The orb itself provides all the motion.
 
-function OrbitCard({ question, config, onSelect, answered, idx }) {
-  const { radius, duration, startDeg } = config;
-  const [paused, setPaused] = useState(false);
+// 6 fixed positions relative to the orb centre (percentage of container)
+// Left column: 3 cards. Right column: 3 cards.
+const CARD_POSITIONS = [
+  { side: 'left',  top: '18%' },
+  { side: 'left',  top: '44%' },
+  { side: 'left',  top: '70%' },
+  { side: 'right', top: '18%' },
+  { side: 'right', top: '44%' },
+  { side: 'right', top: '70%' },
+];
+
+function QuestionCard({ question, onSelect, answered, idx }) {
+  const pos = CARD_POSITIONS[idx] || { side: 'left', top: '50%' };
+  const isLeft = pos.side === 'left';
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, x: isLeft ? -12 : 12 }}
+      animate={{ opacity: answered ? 0.35 : 1, x: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35, delay: idx * 0.08 }}
+      onClick={e => { e.stopPropagation(); if (!answered) onSelect(question); }}
+      whileHover={!answered ? { scale: 1.03, borderColor: 'rgba(242,107,69,0.9)' } : {}}
       style={{
         position: 'absolute',
-        top: '50%',
-        left: '50%',
-        width: 180,
-        height: 0,
-        // Use CSS custom properties for orbit keyframe
-        '--orbit-radius': `${radius}px`,
-        '--orbit-start': `${startDeg}deg`,
-        animation: paused ? 'none' : `orbit ${duration}s linear infinite`,
-        pointerEvents: 'auto',
+        top: pos.top,
+        ...(isLeft ? { left: 16 } : { right: 16 }),
+        width: 172,
+        background: 'var(--bg-card)',
+        border: '0.5px solid rgba(242,107,69,0.35)',
+        borderRadius: 8,
+        padding: '11px 14px',
+        cursor: answered ? 'default' : 'pointer',
+        fontSize: 12,
+        fontFamily: 'var(--font-body)',
+        color: 'var(--text-sub)',
+        lineHeight: 1.45,
+        textAlign: isLeft ? 'right' : 'left',
+        minHeight: 44,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: isLeft ? 'flex-end' : 'flex-start',
+        transition: 'opacity 0.3s',
+        userSelect: 'none',
       }}
     >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3, delay: idx * 0.1 }}
-        onClick={e => { e.stopPropagation(); onSelect(question); }}
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        whileHover={{ scale: 1.05 }}
-        style={{
-          position: 'absolute',
-          transform: 'translate(-50%, -50%)',
-          width: 180,
-          background: 'var(--bg-card)',
-          border: `0.5px solid rgba(242,107,69,${paused ? 0.8 : 0.4})`,
-          borderRadius: 8,
-          padding: '12px 16px',
-          cursor: 'pointer',
-          fontSize: 13,
-          fontFamily: 'var(--font-body)',
-          color: 'var(--text-sub)',
-          lineHeight: 1.4,
-          textAlign: 'center',
-          boxShadow: paused ? '0 4px 20px rgba(242,107,69,0.15)' : 'none',
-          transition: 'border-color 0.2s, box-shadow 0.2s',
-          minHeight: 44,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: answered ? 0.5 : 1,
-        }}
-      >
-        {question}
-      </motion.div>
-    </div>
+      {answered && (
+        <span style={{ color: 'var(--coral)', marginRight: isLeft ? 0 : 6, marginLeft: isLeft ? 6 : 0, order: isLeft ? 1 : -1, fontSize: 11 }}>✓</span>
+      )}
+      {question}
+    </motion.div>
   );
 }
 
@@ -436,26 +451,22 @@ export default function Scene8_IntelligenceOrb({ isActive, sound, dotGridRef }) 
         )}
       </div>
 
-      {/* Orbit satellites */}
+      {/* Fixed question cards */}
       <AnimatePresence>
         {phase === 'active' && (
           <div
             style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
           >
-            {QUESTIONS.map((q, i) => {
-              const answered = answeredQ.has(q);
-              const isSelected = selectedQ === q;
-              return !isSelected ? (
-                <OrbitCard
-                  key={q}
+            {QUESTIONS.map((q, i) => (
+              <div key={q} style={{ pointerEvents: 'auto' }}>
+                <QuestionCard
                   question={q}
-                  config={ORBIT_CONFIG[i]}
                   onSelect={handleSelectQ}
-                  answered={answered}
+                  answered={answeredQ.has(q)}
                   idx={i}
                 />
-              ) : null;
-            })}
+              </div>
+            ))}
           </div>
         )}
       </AnimatePresence>
