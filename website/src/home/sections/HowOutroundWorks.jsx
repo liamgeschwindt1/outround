@@ -191,8 +191,13 @@ export default function HowOutroundWorks() {
     } catch (_) {}
   }, []);
 
-  const EASE       = { duration: 0.45, ease: [0.0, 0.0, 0.2, 1] };
-  const monthlyCost = (numReps || 10) * 149;
+  const EASE        = { duration: 0.45, ease: [0.0, 0.0, 0.2, 1] };
+  const hasUserData = pipeline !== null;
+  // Defaults model a 10-rep team if the calculator has not been run yet
+  const dispReps        = numReps          || 10;
+  const dispMissedCycle = missedCallsCycle || 480;  // 10 reps × ~48 missed/cycle
+  const dispPipeline    = pipeline         || 4600000;
+  const monthlyCost     = dispReps * 149;
 
   return (
     <section
@@ -471,7 +476,7 @@ export default function HowOutroundWorks() {
               maxWidth: 640,
             }}
           >
-            The same team, with 93% more selling time.
+            30 minutes of admin per call. Down to 2.
           </motion.h2>
 
           <div
@@ -512,13 +517,13 @@ export default function HowOutroundWorks() {
                 tone="muted"
               />
               <ImpactStat
-                value={missedCallsCycle ? fmtNum(missedCallsCycle) : '\u2014'}
+                value={fmtNum(dispMissedCycle)}
                 label="conversations missed every sales cycle"
                 tone="muted"
               />
               <div style={{ height: '0.5px', background: 'var(--border)', margin: '4px 0' }} />
               <ImpactStat
-                value={pipeline ? fmtEur(pipeline) : '\u2014'}
+                value={fmtEur(dispPipeline)}
                 label="annual pipeline at risk"
                 tone="muted"
                 big
@@ -570,7 +575,7 @@ export default function HowOutroundWorks() {
               </div>
               <ImpactStat
                 value="2 min"
-                label="per rep, per week to confirm what was captured"
+                label="per call to confirm what was captured"
                 tone="primary"
               />
               <ImpactStat
@@ -580,8 +585,8 @@ export default function HowOutroundWorks() {
               />
               <div style={{ height: '0.5px', background: 'rgba(242,107,69,0.2)', margin: '4px 0' }} />
               <ImpactStat
-                value={pipeline ? fmtEur(pipeline) : '\u2014'}
-                label="annual pipeline recovered for your team"
+                value={fmtEur(dispPipeline)}
+                label="your team now has time to create"
                 tone="coral"
                 big
               />
@@ -616,29 +621,56 @@ export default function HowOutroundWorks() {
               margin: 0,
               maxWidth: 880,
             }}>
-              {pipeline ? (
+              {hasUserData ? (
                 <>
-                  Outround returns{' '}
-                  <span style={{ color: 'var(--coral)', fontWeight: 700 }}>{fmtEur(pipeline)}</span>
-                  {' '}of pipeline to your team every year &mdash; for{' '}
+                  Outround gives your team{' '}
+                  <span style={{ color: 'var(--coral)', fontWeight: 700 }}>{fmtEur(dispPipeline)}</span>
+                  {' '}of selling time back every year. For{' '}
                   <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
                     {'\u20ac' + fmtNum(monthlyCost) + '/month'}
                   </span>
                   .
                 </>
               ) : (
-                <>The pipeline you are losing is the pipeline Outround returns. Run the calculator above to see your figure.</>
+                <>The selling time you are losing is the selling time Outround gives back. Run the calculator above to see your figure.</>
               )}
             </p>
-            {pipeline && (
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11,
+              color: 'var(--text-muted)', letterSpacing: '0.06em',
+              marginTop: 14,
+            }}>
+              {hasUserData
+                ? (dispReps + ' seats \u00b7 \u20ac149/seat/month')
+                : '/* sample: 10-rep team. Run the calculator above for your numbers. */'}
+            </div>
+
+            {/* Quality bridge */}
+            <div style={{
+              marginTop: 40,
+              paddingTop: 28,
+              borderTop: '0.5px solid var(--border)',
+              maxWidth: 760,
+            }}>
               <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 11,
-                color: 'var(--text-muted)', letterSpacing: '0.06em',
-                marginTop: 14,
+                fontFamily: 'var(--font-mono)', fontSize: 10,
+                color: 'var(--text-muted)', letterSpacing: '0.12em',
+                textTransform: 'uppercase', marginBottom: 14,
+                opacity: 0.75,
               }}>
-                {(numReps || 10) + ' seats \u00b7 \u20ac149/seat/month \u00b7 pays back in week one'}
+                {'/* what this number does not capture */'}
               </div>
-            )}
+              <p style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'clamp(14px, 1.5vw, 16px)',
+                color: 'var(--text-sub)',
+                lineHeight: 1.7,
+                margin: 0,
+                fontStyle: 'italic',
+              }}>
+                This calculation only accounts for time. It says nothing about what happens when your reps walk into every call better prepared, and your pipeline intelligence compounds with every conversation. We will let your numbers prove that part.
+              </p>
+            </div>
           </motion.div>
         </div>
 

@@ -221,21 +221,21 @@ export default function FinalCTA() {
               lineHeight: 0.95,
               letterSpacing: '-0.03em',
             }}>
-              13<span style={{ color: 'var(--text-muted)', fontSize: '0.55em', fontWeight: 600 }}>/25</span>
+              25<span style={{ color: 'var(--text-muted)', fontSize: '0.45em', fontWeight: 600, marginLeft: 6 }}>seats</span>
             </div>
             <div style={{
               fontFamily: 'var(--font-mono)', fontSize: 11,
               color: 'var(--text-muted)', letterSpacing: '0.08em',
               marginTop: 8,
             }}>
-              seats remaining
+              first cohort, opens Q3 2026
             </div>
           </div>
           <div style={{ height: '0.5px', background: 'var(--border)' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <RailStat label="First-year price"      value="\u20ac99/seat/mo" />
-            <RailStat label="Onboarding window"     value="48 hours"     />
-            <RailStat label="Direct line to founders" value="Always"     />
+            <RailStat label="First-year price"        value="\u20ac99/seat/mo" />
+            <RailStat label="Onboarding window"       value="48 hours"          />
+            <RailStat label="Direct line to founders" value="Always"            />
           </div>
         </motion.div>
       </div>
@@ -259,16 +259,17 @@ export default function FinalCTA() {
             border: 'none',
             cursor: 'pointer',
             fontFamily: 'var(--font-body)',
-            fontSize: 13,
-            color: 'var(--text-muted)',
+            fontSize: 14,
+            color: 'var(--text-sub)',
             lineHeight: 1.5,
             padding: 0,
             textDecoration: 'underline',
-            textDecorationColor: 'rgba(242,241,239,0.2)',
-            textUnderlineOffset: 3,
+            textDecorationColor: 'rgba(242,107,69,0.45)',
+            textUnderlineOffset: 4,
+            fontWeight: 500,
           }}
         >
-          Want to understand the thinking behind this?
+          {whyOpen ? 'Hide' : 'Why Outround?'}
         </button>
 
         <AnimatePresence>
@@ -296,7 +297,7 @@ export default function FinalCTA() {
                   Sales teams are losing a third of their selling time to work that could be automated. The calls happen. The insight exists. It is just never structured, stored, or made queryable.
                 </p>
                 <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.75, margin: 0 }}>
-                  Outround does not change how your team works. It captures what is already happening and makes it permanent &mdash; searchable, structured, and available to the next rep before their next call.
+                  Outround does not change how your team works. It captures what is already happening and makes it permanent. Searchable, structured, and available to the next rep before their next call.
                 </p>
                 <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.75, margin: 0 }}>
                   The gap between your best rep and your average rep is not talent. It is information. One person remembers what works. Outround makes the whole team remember.
