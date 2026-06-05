@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const DEAL_OPTIONS = ['Under €5k', '€5k to €25k', '€25k to €100k', 'Over €100k'];
-const TEAM_OPTIONS = ['1 to 5', '6 to 15', '16 to 30', '30 or more'];
+const CYCLE_OPTIONS = ['Under 30 days', '30 to 90 days', '90 to 180 days', 'Over 180 days'];
 
 const DEAL_VALUES = {
   'Under €5k': 3000,
@@ -10,8 +10,16 @@ const DEAL_VALUES = {
   '€25k to €100k': 60000,
   'Over €100k': 150000,
 };
-const TEAM_SIZES = { '1 to 5': 3, '6 to 15': 10, '16 to 30': 22, '30 or more': 35 };
-const OUTROUND_COSTS = { '1 to 5': 149, '6 to 15': 490, '16 to 30': 1078, '30 or more': 1715 };
+
+// Average cycle in months — used to compute pipeline at risk per cycle
+const CYCLE_MONTHS = {
+  'Under 30 days': 0.75,
+  '30 to 90 days': 2,
+  '90 to 180 days': 4,
+  'Over 180 days': 7,
+};
+
+const OUTROUND_PER_REP = 149;
 
 function fmtEur(n) {
   if (n >= 100000) return `€${Math.round(n / 1000)}k`;
@@ -19,16 +27,17 @@ function fmtEur(n) {
   return `€${n}`;
 }
 
-function calc(dealLabel, teamLabel) {
+function calc(dealLabel, cycleLabel, numReps) {
   const dealVal = DEAL_VALUES[dealLabel];
-  const numReps = TEAM_SIZES[teamLabel];
+  const cycleLen = CYCLE_MONTHS[cycleLabel];
   const adminHrs = Math.round(6.8 * numReps);
   const researchHrs = Math.round(6 * numReps);
   const missedCalls = Math.round((adminHrs + researchHrs) / 1.5);
   const pipelinePerCall = Math.round(dealVal * 0.15);
   const monthlyLeak = missedCalls * 4 * pipelinePerCall;
-  const outroundCost = OUTROUND_COSTS[teamLabel];
-  return { adminHrs, researchHrs, missedCalls, pipelinePerCall, monthlyLeak, outroundCost };
+  const cycleRisk = Math.round(monthlyLeak * cycleLen);
+  const outroundCost = numReps * OUTROUND_PER_REP;
+  return { adminHrs, researchHrs, missedCalls, pipelinePerCall, monthlyLeak, cycleRisk, outroundCost, cycleLabel };
 }
 
 function ChoiceButton({ label, onClick }) {
@@ -66,30 +75,54 @@ const STEP_SPRING = { type: 'spring', stiffness: 260, damping: 28 };
 export default function RevenueCalculator() {
   const [step, setStep] = useState('deal');
   const [dealLabel, setDealLabel] = useState(null);
-  const [teamLabel, setTeamLabel] = useState(null);
+  const [cycleLabel, setCycleLabel] = useState(null);
+  const [teamInput, setTeamInput] = useState('');
+  const [teamError, setTeamError] = useState('');
+  const [numReps, setNumReps] = useState(null);
   const [revealedLines, setRevealedLines] = useState(0);
   const [showCTA, setShowCTA] = useState(false);
   const intervalRef = useRef(null);
+  const teamInputRef = useRef(null);
 
   function selectDeal(label) {
     setDealLabel(label);
+    setTimeout(() => setStep('cycle'), 280);
+  }
+
+  function selectCycle(label) {
+    setCycleLabel(label);
     setTimeout(() => setStep('team'), 280);
   }
 
-  function selectTeam(label) {
-    setTeamLabel(label);
+  function submitTeam(e) {
+    e?.preventDefault();
+    const n = parseInt(teamInput, 10);
+    if (!n || n < 1 || n > 999) {
+      setTeamError('Please enter a number between 1 and 999.');
+      return;
+    }
+    setTeamError('');
+    setNumReps(n);
     setTimeout(() => setStep('results'), 280);
   }
+
+  // Focus input when team step loads
+  useEffect(() => {
+    if (step === 'team') {
+      setTimeout(() => teamInputRef.current?.focus(), 350);
+    }
+  }, [step]);
 
   useEffect(() => {
     if (step !== 'results') return;
     setRevealedLines(0);
     setShowCTA(false);
     let count = 0;
+    const total = 9; // lines including separator
     intervalRef.current = setInterval(() => {
       count++;
       setRevealedLines(count);
-      if (count >= 8) {
+      if (count >= total) {
         clearInterval(intervalRef.current);
         setTimeout(() => setShowCTA(true), 500);
       }
@@ -97,7 +130,7 @@ export default function RevenueCalculator() {
     return () => clearInterval(intervalRef.current);
   }, [step]);
 
-  const c = dealLabel && teamLabel ? calc(dealLabel, teamLabel) : null;
+  const c = dealLabel && cycleLabel && numReps ? calc(dealLabel, cycleLabel, numReps) : null;
 
   function buildLines(c) {
     return [
@@ -114,6 +147,9 @@ export default function RevenueCalculator() {
       },
       {
         text: <>At your deal size, each missed call costs <strong>{fmtEur(c.pipelinePerCall)}</strong> in pipeline.</>,
+      },
+      {
+        text: <>At a {c.cycleLabel.toLowerCase()} sales cycle, that is <strong>{fmtEur(c.cycleRisk)} in pipeline at risk</strong> per cycle.</>,
       },
       {
         text: (
@@ -158,6 +194,8 @@ export default function RevenueCalculator() {
     >
       <div style={{ width: '100%', maxWidth: 540 }}>
         <AnimatePresence mode="wait">
+
+          {/* Step 1: Deal size */}
           {step === 'deal' && (
             <motion.div
               key="deal"
@@ -167,7 +205,7 @@ export default function RevenueCalculator() {
               transition={STEP_SPRING}
             >
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator · 1 of 2
+                The revenue leak calculator · 1 of 3
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 What is your average deal size?
@@ -178,6 +216,28 @@ export default function RevenueCalculator() {
             </motion.div>
           )}
 
+          {/* Step 2: Sales cycle */}
+          {step === 'cycle' && (
+            <motion.div
+              key="cycle"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={STEP_SPRING}
+            >
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
+                The revenue leak calculator · 2 of 3
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
+                How long is your average sales cycle?
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {CYCLE_OPTIONS.map(opt => <ChoiceButton key={opt} label={opt} onClick={() => selectCycle(opt)} />)}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Team size (free text) */}
           {step === 'team' && (
             <motion.div
               key="team"
@@ -187,17 +247,72 @@ export default function RevenueCalculator() {
               transition={STEP_SPRING}
             >
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator · 2 of 2
+                The revenue leak calculator · 3 of 3
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 How many salespeople on your team?
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {TEAM_OPTIONS.map(opt => <ChoiceButton key={opt} label={opt} onClick={() => selectTeam(opt)} />)}
-              </div>
+              <form onSubmit={submitTeam} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    ref={teamInputRef}
+                    type="number"
+                    min="1"
+                    max="999"
+                    value={teamInput}
+                    onChange={e => { setTeamInput(e.target.value); setTeamError(''); }}
+                    onKeyDown={e => { if (e.key === 'Enter') submitTeam(); }}
+                    placeholder="e.g. 12"
+                    style={{
+                      width: '100%',
+                      background: 'var(--bg-card)',
+                      border: `0.5px solid ${teamError ? '#ef4444' : 'rgba(242,107,69,0.45)'}`,
+                      borderRadius: 10,
+                      padding: '16px 20px',
+                      color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-display)',
+                      fontSize: 'clamp(28px, 5vw, 40px)',
+                      fontWeight: 700,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      appearance: 'textfield',
+                      MozAppearance: 'textfield',
+                      WebkitAppearance: 'none',
+                    }}
+                  />
+                </div>
+                {teamError && (
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#ef4444' }}>{teamError}</div>
+                )}
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.015, boxShadow: '0 0 36px rgba(242,107,69,0.35)' }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{
+                    background: teamInput ? 'linear-gradient(135deg, #f26b45, #4ba3e3)' : 'var(--bg-hover)',
+                    color: teamInput ? '#0a0a0b' : 'var(--text-muted)',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 15,
+                    fontWeight: 700,
+                    padding: '14px 32px',
+                    borderRadius: 999,
+                    border: 'none',
+                    cursor: teamInput ? 'pointer' : 'default',
+                    minHeight: 44,
+                    transition: 'background 0.2s, color 0.2s',
+                    alignSelf: 'flex-start',
+                  }}
+                >
+                  Calculate the leak →
+                </motion.button>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
+                  €{OUTROUND_PER_REP}/seat/month — no hidden fees
+                </div>
+              </form>
             </motion.div>
           )}
 
+          {/* Step 4: Results */}
           {step === 'results' && c && (
             <motion.div
               key="results"
@@ -283,8 +398,10 @@ export default function RevenueCalculator() {
               </AnimatePresence>
             </motion.div>
           )}
+
         </AnimatePresence>
       </div>
     </section>
   );
 }
+

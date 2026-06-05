@@ -37,6 +37,44 @@ const REPS = [
   },
 ];
 
+// Flat-top hexagon via clip-path
+function HexAvatar({ initial, gradient }) {
+  return (
+    <div style={{ position: 'relative', width: 46, height: 40, flexShrink: 0 }}>
+      {/* Outer hex (border) */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: gradient,
+        clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+      }} />
+      {/* Inner hex (bg fill) */}
+      <div style={{
+        position: 'absolute',
+        inset: 2,
+        background: 'var(--bg-card)',
+        clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 16,
+          fontWeight: 700,
+          background: gradient,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          lineHeight: 1,
+        }}>
+          {initial}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function RepCard({ rep, delay, isInView }) {
   return (
     <motion.div
@@ -55,22 +93,7 @@ function RepCard({ rep, delay, isInView }) {
     >
       {/* Avatar + name */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-        <div style={{
-          width: 40,
-          height: 40,
-          borderRadius: '50%',
-          background: rep.gradient,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: 'var(--font-display)',
-          fontSize: 17,
-          fontWeight: 700,
-          color: '#fff',
-          flexShrink: 0,
-        }}>
-          {rep.initial}
-        </div>
+        <HexAvatar initial={rep.initial} gradient={rep.gradient} />
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
             {rep.name}
