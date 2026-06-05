@@ -87,7 +87,7 @@ export default function Hero() {
             lineHeight: 1.75,
           }}
         >
-          Every conversation your team has contain signal. Most of it disappears the moment the call ends.
+          Every conversation your team has contains signal. Most of it disappears the moment the call ends.
         </motion.div>
 
         {/* CTA */}

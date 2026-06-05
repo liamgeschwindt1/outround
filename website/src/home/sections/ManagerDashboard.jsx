@@ -227,8 +227,12 @@ function RepCard({ rep, delay, isInView }) {
         color: rep.insightColor,
         lineHeight: 1.5,
         textAlign: 'center',
+        marginBottom: 6,
       }}>
         {rep.insight}
+      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.06em', textAlign: 'center', opacity: 0.7 }}>
+        sample · connect Outround for real data
       </div>
     </motion.div>
   );
@@ -262,21 +266,48 @@ export default function ManagerDashboard() {
           Every rep. Every pattern. Every call.
         </div>
 
+        {/* Demo disclaimer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'rgba(242,107,69,0.06)',
+            border: '0.5px solid rgba(242,107,69,0.25)',
+            borderRadius: 6,
+            padding: '6px 12px',
+            marginBottom: 28,
+          }}
+        >
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--coral)', opacity: 0.7, flexShrink: 0, display: 'inline-block' }} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
+            Sample data — integrate Outround to see your real team
+          </span>
+        </motion.div>
+
         {/* Rep cards — same level */}
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'stretch', marginBottom: 48 }}>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'stretch', marginBottom: 24 }}>
           {REPS.map((rep, i) => (
             <RepCard key={rep.name} rep={rep} delay={i * 0.14} isInView={isInView} />
           ))}
         </div>
 
-        {/* Callout stat */}
+        {/* Callout stat + disclaimer */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.4, delay: 0.48 }}
-          style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px, 3vw, 26px)', fontWeight: 700, color: 'var(--coral)', marginBottom: 40 }}
+          style={{ marginBottom: 40 }}
         >
-          Team close rate this week: +12% vs last week
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px, 3vw, 26px)', fontWeight: 700, color: 'var(--coral)', marginBottom: 8 }}>
+            Team close rate this week: +12% vs last week
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', fontStyle: 'italic' }}>
+            Illustrative. Your numbers update automatically once connected.
+          </div>
         </motion.div>
 
         {/* CTA */}

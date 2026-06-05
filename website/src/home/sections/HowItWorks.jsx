@@ -14,7 +14,7 @@ const LAYERS = [
   },
   {
     num: '03',
-    title: 'Interrogation',
+    title: 'Query',
     body: 'Ask your data anything. The answers come from your own conversations, not a generic model.',
   },
 ];
