@@ -181,14 +181,29 @@ export default function HowOutroundWorks() {
   const [missedCallsCycle, setMissedCallsCycle] = useState(null);
 
   useEffect(() => {
-    try {
-      const v = localStorage.getItem('outround_pipeline');
-      if (v) setPipeline(parseFloat(v));
-      const r = localStorage.getItem('outround_reps');
-      if (r) setNumReps(parseInt(r, 10));
-      const m = localStorage.getItem('outround_missed_cycle');
-      if (m) setMissedCallsCycle(parseFloat(m));
-    } catch (_) {}
+    const read = () => {
+      try {
+        const v = localStorage.getItem('outround_pipeline');
+        if (v) setPipeline(parseFloat(v));
+        const r = localStorage.getItem('outround_reps');
+        if (r) setNumReps(parseInt(r, 10));
+        const m = localStorage.getItem('outround_missed_cycle');
+        if (m) setMissedCallsCycle(parseFloat(m));
+      } catch (_) {}
+    };
+    read();
+    const onCalc = (e) => {
+      if (!e.detail) return read();
+      setPipeline(e.detail.pipeline);
+      setNumReps(e.detail.reps);
+      setMissedCallsCycle(e.detail.missedCycle);
+    };
+    window.addEventListener('outround:calc', onCalc);
+    window.addEventListener('storage', read);
+    return () => {
+      window.removeEventListener('outround:calc', onCalc);
+      window.removeEventListener('storage', read);
+    };
   }, []);
 
   const EASE        = { duration: 0.45, ease: [0.0, 0.0, 0.2, 1] };

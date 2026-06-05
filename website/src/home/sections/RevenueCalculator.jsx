@@ -241,6 +241,13 @@ export default function RevenueCalculator() {
         localStorage.setItem('outround_pipeline',     String(c.annualPipeline));
         localStorage.setItem('outround_reps',         String(c.numReps));
         localStorage.setItem('outround_missed_cycle', String(c.missedCallsCycle));
+        window.dispatchEvent(new CustomEvent('outround:calc', {
+          detail: {
+            pipeline: c.annualPipeline,
+            reps: c.numReps,
+            missedCycle: c.missedCallsCycle,
+          },
+        }));
       } catch (_) {}
     }
   }, [c]);
