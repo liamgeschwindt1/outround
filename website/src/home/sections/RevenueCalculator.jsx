@@ -438,33 +438,6 @@ export default function RevenueCalculator() {
                   }}>
                     This calculation reflects only the pipeline impact of time lost to admin and research. It does not account for the increase in close rate resulting from improved call quality and intelligence — which Outround also delivers.
                   </div>
-
-                  <div style={{
-                    padding: '12px 16px',
-                    borderLeft: '2px solid var(--border)',
-                  }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10, opacity: 0.6 }}>
-                      Sources
-                    </div>
-                    {[
-                      'Salesforce State of Sales, 2025 — 17% of selling time spent on CRM data entry',
-                      'Forrester Activity Study, 2025 — 15% of selling time spent on pre-call prospect research',
-                      'Chorus / ZoomInfo Sales Benchmark Report — average B2B sales call duration 30 minutes',
-                      'Belkins B2B Outbound Benchmarks, 2024 — conservative European outbound call-to-opportunity conversion rate 5%',
-                      'Standard EU working week — 40 hours',
-                    ].map((s, i) => (
-                      <div key={i} style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 9,
-                        color: 'var(--text-muted)',
-                        lineHeight: 1.6,
-                        marginBottom: 5,
-                        opacity: 0.65,
-                      }}>
-                        [{i + 1}] {s}
-                      </div>
-                    ))}
-                  </div>
                 </motion.div>
               )}
 
