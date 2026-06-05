@@ -22,8 +22,8 @@ function OrbCanvas({ size }) {
 
     const cx = size / 2;
     const cy = size / 2;
-    const sphereR = size / 2 - 8;
-    const DOT_COUNT = 320;
+    const sphereR = size / 2 - 14;
+    const DOT_COUNT = 560;
 
     const dots = Array.from({ length: DOT_COUNT }, (_, i) => {
       const golden = Math.PI * (3 - Math.sqrt(5));
@@ -57,14 +57,34 @@ function OrbCanvas({ size }) {
       const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
       const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
 
-      // Outer pulse ring
+      // Inner radial glow (depth + presence)
+      const glow = ctx.createRadialGradient(cx, cy, sphereR * 0.15, cx, cy, sphereR * 1.05);
+      glow.addColorStop(0,   `rgba(${cr},${cg},${cb},0.22)`);
+      glow.addColorStop(0.55,`rgba(${cr},${cg},${cb},0.06)`);
+      glow.addColorStop(1,   `rgba(${cr},${cg},${cb},0)`);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, sphereR * 1.15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Outer pulse rings (layered for depth)
       const pulseT = (Math.sin((elapsed / 3000) * Math.PI * 2) + 1) / 2;
+      const pulseT2 = (Math.sin((elapsed / 3000) * Math.PI * 2 + Math.PI) + 1) / 2;
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.scale(1 + 0.06 * pulseT, 1 + 0.06 * pulseT);
+      ctx.scale(1 + 0.05 * pulseT, 1 + 0.05 * pulseT);
       ctx.beginPath();
-      ctx.arc(0, 0, sphereR + 8, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.15)`;
+      ctx.arc(0, 0, sphereR + 10, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.18 - 0.10 * pulseT})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1 + 0.10 * pulseT2, 1 + 0.10 * pulseT2);
+      ctx.beginPath();
+      ctx.arc(0, 0, sphereR + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.10 - 0.07 * pulseT2})`;
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.restore();
@@ -92,10 +112,20 @@ function OrbCanvas({ size }) {
 
       projected.sort((a, b) => a.depth - b.depth);
       projected.forEach(({ sx, sy, depth }) => {
+        // Stronger depth: tiny + faint at back, big + bright at front
+        const r = 0.5 + Math.pow(depth, 1.6) * 2.2;
+        const alpha = 0.05 + Math.pow(depth, 1.4) * 0.85;
         ctx.beginPath();
-        ctx.arc(sx, sy, 0.6 + depth * 1.0, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${cr},${cg},${cb},${0.08 + depth * 0.65})`;
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
         ctx.fill();
+        // Specular highlight on closest dots
+        if (depth > 0.82) {
+          ctx.beginPath();
+          ctx.arc(sx, sy, r * 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,238,228,${(depth - 0.82) * 2.2})`;
+          ctx.fill();
+        }
       });
 
       rafRef.current = requestAnimationFrame(draw);
@@ -108,7 +138,10 @@ function OrbCanvas({ size }) {
   return (
     <canvas
       ref={canvasRef}
-      style={{ display: 'block', filter: 'drop-shadow(0 0 20px rgba(242,107,69,0.25))' }}
+      style={{
+        display: 'block',
+        filter: 'drop-shadow(0 0 48px rgba(242,107,69,0.32)) drop-shadow(0 0 120px rgba(75,163,227,0.18))',
+      }}
     />
   );
 }
@@ -221,7 +254,7 @@ export default function OrbSection() {
   const [orbVisible, setOrbVisible] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
   const ref = useRef(null);
-  const orbSize = isNarrow ? 140 : 200;
+  const orbSize = isNarrow ? 260 : 420;
 
   useEffect(() => {
     const check = () => setIsNarrow(window.innerWidth < 720);
@@ -318,7 +351,7 @@ export default function OrbSection() {
         gap: 32,
       }}>
         {/* Left column */}
-        <div style={{ position: 'relative', width: 176, flexShrink: 0, height: 360, display: isNarrow ? 'none' : 'block' }}>
+        <div style={{ position: 'relative', width: 176, flexShrink: 0, height: 460, display: isNarrow ? 'none' : 'block' }}>
           {orbVisible && QUESTIONS.slice(0, 3).map((q, i) => (
             <QuestionCard
               key={q}
@@ -366,7 +399,7 @@ export default function OrbSection() {
         </div>
 
         {/* Right column */}
-        <div style={{ position: 'relative', width: 176, flexShrink: 0, height: 360, display: isNarrow ? 'none' : 'block' }}>
+        <div style={{ position: 'relative', width: 176, flexShrink: 0, height: 460, display: isNarrow ? 'none' : 'block' }}>
           {orbVisible && QUESTIONS.slice(3).map((q, i) => (
             <QuestionCard
               key={q}
