@@ -257,18 +257,48 @@ export default function OrbSection() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 'clamp(64px, 10vw, 100px) 24px',
+        padding: 'clamp(72px, 9vw, 110px) clamp(20px, 4vw, 56px)',
+        position: 'relative',
       }}
     >
+      {/* Corner metadata */}
+      <div style={{
+        width: '100%',
+        maxWidth: 1100,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 'clamp(40px, 6vw, 64px)',
+        gap: 24,
+      }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 10,
+          fontFamily: 'var(--font-mono)', fontSize: 11,
+          color: 'var(--text-muted)', letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+        }}>
+          <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
+          04 / Query
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 10,
+          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65,
+          whiteSpace: 'nowrap',
+        }}>
+          {'/* powered by your own calls */'}
+        </div>
+      </div>
+
       {/* Eyebrow */}
-      <div style={{ textAlign: 'center', marginBottom: 52 }}>
+      <div style={{ textAlign: 'center', marginBottom: 52, maxWidth: 720 }}>
         <div style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 'clamp(22px, 3.5vw, 30px)',
+          fontSize: 'clamp(28px, 4.4vw, 44px)',
           fontWeight: 700,
           color: 'var(--text-primary)',
-          letterSpacing: '-0.015em',
-          marginBottom: 12,
+          letterSpacing: '-0.025em',
+          lineHeight: 1.1,
+          marginBottom: 14,
         }}>
           Ask your pipeline anything.
         </div>
@@ -281,11 +311,11 @@ export default function OrbSection() {
       <div style={{
         position: 'relative',
         width: '100%',
-        maxWidth: 860,
+        maxWidth: 980,
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        gap: 24,
+        gap: 32,
       }}>
         {/* Left column */}
         <div style={{ position: 'relative', width: 176, flexShrink: 0, height: 360, display: isNarrow ? 'none' : 'block' }}>

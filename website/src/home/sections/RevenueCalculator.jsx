@@ -236,7 +236,13 @@ export default function RevenueCalculator() {
   const c = dealLabel && cycleLabel && numReps ? calc(dealLabel, cycleLabel, numReps) : null;
 
   useEffect(() => {
-    if (c) { try { localStorage.setItem('outround_pipeline', String(c.annualPipeline)); } catch (_) {} }
+    if (c) {
+      try {
+        localStorage.setItem('outround_pipeline',     String(c.annualPipeline));
+        localStorage.setItem('outround_reps',         String(c.numReps));
+        localStorage.setItem('outround_missed_cycle', String(c.missedCallsCycle));
+      } catch (_) {}
+    }
   }, [c]);
 
   const proofRows = c ? [
@@ -272,6 +278,8 @@ export default function RevenueCalculator() {
     setTeamInput(''); setNumReps(null);
   }
 
+  const isResults = step === 'results' && c;
+
   return (
     <section
       id="calculator"
@@ -282,10 +290,43 @@ export default function RevenueCalculator() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 'clamp(64px, 10vw, 100px) 24px',
+        padding: 'clamp(72px, 9vw, 110px) clamp(20px, 4vw, 56px)',
+        position: 'relative',
       }}
     >
-      <div style={{ width: '100%', maxWidth: 580 }}>
+      {/* Corner metadata */}
+      <div style={{
+        width: '100%',
+        maxWidth: 1200,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 'clamp(32px, 5vw, 56px)',
+        gap: 24,
+      }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 10,
+          fontFamily: 'var(--font-mono)', fontSize: 11,
+          color: 'var(--text-muted)', letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+        }}>
+          <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
+          02 / The leak
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 10,
+          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65,
+          whiteSpace: 'nowrap',
+        }}>
+          {'/* live model \u00b7 sources cited */'}
+        </div>
+      </div>
+
+      <div style={{
+        width: '100%',
+        maxWidth: isResults ? 1200 : 580,
+        transition: 'max-width 0.4s ease',
+      }}>
         <AnimatePresence mode="wait">
 
           {step === 'deal' && (
@@ -364,83 +405,137 @@ export default function RevenueCalculator() {
 
           {step === 'results' && c && (
             <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 32 }}>
-                Your numbers
+
+              <div
+                className="calc-results-grid"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)',
+                  gap: 'clamp(40px, 6vw, 88px)',
+                  alignItems: 'start',
+                }}
+              >
+                {/* LEFT — dominant number + outcome + CTA */}
+                <div>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 11,
+                    color: 'var(--text-muted)', letterSpacing: '0.12em',
+                    textTransform: 'uppercase', marginBottom: 24,
+                  }}>
+                    Your numbers
+                  </div>
+
+                  <AnimatePresence>
+                    {showBigNum && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, ease: [0.0, 0.0, 0.2, 1] }}
+                      >
+                        <div style={{
+                          fontFamily: 'var(--font-display)',
+                          fontSize: 'clamp(64px, 10vw, 128px)',
+                          fontWeight: 700,
+                          color: 'var(--coral)',
+                          lineHeight: 0.95,
+                          letterSpacing: '-0.04em',
+                          marginBottom: 16,
+                        }}>
+                          <CountingNumber target={c.annualPipeline} duration={1400} />
+                        </div>
+                        <div style={{
+                          fontFamily: 'var(--font-mono)', fontSize: 12,
+                          color: 'var(--text-muted)', letterSpacing: '0.1em',
+                          textTransform: 'uppercase', marginBottom: 36,
+                        }}>
+                          Annual pipeline at risk \u00b7 {c.numReps} rep{c.numReps > 1 ? 's' : ''}
+                        </div>
+
+                        <p style={{
+                          fontFamily: 'var(--font-display)',
+                          fontSize: 'clamp(18px, 2.2vw, 26px)',
+                          fontWeight: 500,
+                          color: 'var(--text-primary)',
+                          lineHeight: 1.4,
+                          letterSpacing: '-0.015em',
+                          margin: '0 0 40px',
+                          maxWidth: 480,
+                        }}>
+                          That is the revenue your team is losing every year to admin and research time that Outround eliminates in{' '}
+                          <span style={{ color: 'var(--coral)' }}>2 minutes</span>.
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <AnimatePresence>
+                    {showCTA && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+                      >
+                        <motion.button
+                          whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => { const el = document.getElementById('how'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
+                          style={{
+                            background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
+                            color: '#0a0a0b', fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
+                            padding: '14px 36px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                            boxShadow: '0 0 28px rgba(242,107,69,0.25)', minHeight: 44,
+                            marginBottom: 18, display: 'block',
+                          }}
+                        >
+                          See how Outround recovers this.
+                        </motion.button>
+                        <button
+                          onClick={reset}
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)',
+                            letterSpacing: '0.06em', padding: 0,
+                          }}
+                        >
+                          Recalculate with different numbers
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* RIGHT — proof rail */}
+                {revealedRows > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                    style={{
+                      background: 'rgba(255,255,255,0.015)',
+                      border: '0.5px solid var(--border)',
+                      borderRadius: 14,
+                      padding: 'clamp(20px, 2.5vw, 32px)',
+                    }}
+                  >
+                    <div style={{
+                      fontFamily: 'var(--font-mono)', fontSize: 10,
+                      color: 'var(--text-muted)', letterSpacing: '0.1em',
+                      textTransform: 'uppercase', marginBottom: 14,
+                    }}>
+                      How we get there
+                    </div>
+                    {proofRows.slice(0, revealedRows).map((row, i) => (
+                      <CollapsibleStep key={i} num={i + 1} summary={row.summary} working={row.working} source={row.source} delay={0} />
+                    ))}
+                  </motion.div>
+                )}
               </div>
 
-              <AnimatePresence>
-                {showBigNum && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: [0.0, 0.0, 0.2, 1] }}
-                    style={{ marginBottom: 8 }}
-                  >
-                    <div style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: 'clamp(52px, 10vw, 88px)',
-                      fontWeight: 700,
-                      color: 'var(--coral)',
-                      lineHeight: 1,
-                      letterSpacing: '-0.03em',
-                    }}>
-                      <CountingNumber target={c.annualPipeline} duration={1400} />
-                    </div>
-                    <div style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-muted)',
-                      letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 10, marginBottom: 40,
-                    }}>
-                      Annual pipeline at risk
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {revealedRows > 0 && (
-                <div style={{ marginBottom: 36 }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>
-                    How we get there
-                  </div>
-                  {proofRows.slice(0, revealedRows).map((row, i) => (
-                    <CollapsibleStep key={i} num={i + 1} summary={row.summary} working={row.working} source={row.source} delay={0} />
-                  ))}
-                </div>
-              )}
-
-              <AnimatePresence>
-                {showCTA && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-                  >
-                    <motion.button
-                      whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => { const el = document.getElementById('how'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
-                      style={{
-                        background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
-                        color: '#0a0a0b', fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
-                        padding: '14px 36px', borderRadius: 999, border: 'none', cursor: 'pointer',
-                        boxShadow: '0 0 28px rgba(242,107,69,0.25)', minHeight: 44,
-                        marginBottom: 18, display: 'block',
-                      }}
-                    >
-                      See how Outround recovers this.
-                    </motion.button>
-                    <button
-                      onClick={reset}
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)',
-                        letterSpacing: '0.06em', padding: 0,
-                      }}
-                    >
-                      Recalculate with different numbers
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <style>{`
+                @media (max-width: 880px) {
+                  .calc-results-grid { grid-template-columns: 1fr !important; }
+                }
+              `}</style>
             </motion.div>
           )}
 
