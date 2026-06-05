@@ -472,12 +472,71 @@ export default function HowOutroundWorks() {
               color: 'var(--text-primary)',
               lineHeight: 1.1,
               letterSpacing: '-0.025em',
-              margin: '0 0 48px',
+              margin: '0 0 16px',
               maxWidth: 640,
             }}
           >
             30 minutes of admin per call. Down to 2.
           </motion.h2>
+
+          {/* Calculator gate */}
+          {!hasUserData && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={isInView ? { opacity: 1 } : {}}
+              transition={{ ...EASE, delay: 0.2 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                flexWrap: 'wrap',
+                padding: '14px 18px',
+                marginBottom: 36,
+                background: 'rgba(242,107,69,0.06)',
+                border: '0.5px solid rgba(242,107,69,0.35)',
+                borderRadius: 10,
+                maxWidth: 720,
+              }}
+            >
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: 10,
+                color: 'var(--coral)', letterSpacing: '0.14em',
+                textTransform: 'uppercase', whiteSpace: 'nowrap',
+              }}>
+                Your numbers first
+              </span>
+              <span style={{
+                fontFamily: 'var(--font-body)', fontSize: 14,
+                color: 'var(--text-sub)', lineHeight: 1.5, flex: 1, minWidth: 220,
+              }}>
+                Run the calculator above to see this section calibrated to your team.
+              </span>
+              <button
+                onClick={() => {
+                  const el = document.getElementById('calculator');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  else window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                style={{
+                  background: 'var(--coral)', color: '#0a0a0b',
+                  fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 700,
+                  padding: '8px 16px', borderRadius: 999, border: 'none',
+                  cursor: 'pointer', whiteSpace: 'nowrap', minHeight: 36,
+                }}
+              >
+                Run calculator ↑
+              </button>
+            </motion.div>
+          )}
+          {hasUserData && (
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 10,
+              color: 'var(--coral)', letterSpacing: '0.14em',
+              textTransform: 'uppercase', marginBottom: 36, opacity: 0.85,
+            }}>
+              {'\u2713 Calibrated to your ' + dispReps + '-rep team'}
+            </div>
+          )}
 
           <div
             className="impact-grid"
@@ -487,6 +546,11 @@ export default function HowOutroundWorks() {
               gap: 'clamp(16px, 2.5vw, 32px)',
               alignItems: 'stretch',
               marginBottom: 48,
+              position: 'relative',
+              filter: hasUserData ? 'none' : 'blur(3px) saturate(0.7)',
+              opacity: hasUserData ? 1 : 0.55,
+              pointerEvents: hasUserData ? 'auto' : 'none',
+              transition: 'filter 0.4s ease, opacity 0.4s ease',
             }}
           >
             {/* BEFORE */}
@@ -642,7 +706,7 @@ export default function HowOutroundWorks() {
             }}>
               {hasUserData
                 ? (dispReps + ' seats \u00b7 \u20ac149/seat/month')
-                : '/* sample: 10-rep team. Run the calculator above for your numbers. */'}
+                : '/* numbers appear once you run the calculator above */'}
             </div>
 
             {/* Quality bridge */}
