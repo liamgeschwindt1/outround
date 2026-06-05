@@ -154,7 +154,7 @@ const REPS = [
     calls: 39,
     scores: [8.4, 7.2, 7.8, 6.9, 8.1, 6.3],
     strokeColor: '#f26b45',
-    insight: 'Strong opener — discovery score 8.4/10',
+    insight: 'Strong opener: discovery score 8.4/10',
     insightColor: 'var(--green)',
   },
   {
@@ -284,7 +284,7 @@ export default function ManagerDashboard() {
         >
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--coral)', opacity: 0.7, flexShrink: 0, display: 'inline-block' }} />
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
-            Sample data — integrate Outround to see your real team
+            Sample data - integrate Outround to see your real team
           </span>
         </motion.div>
 

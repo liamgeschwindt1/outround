@@ -318,7 +318,7 @@ export default function RevenueCalculator() {
                   Calculate the leak →
                 </motion.button>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
-                  €{OUTROUND_PER_REP_MONTH}/seat/month — no hidden fees
+                  €{OUTROUND_PER_REP_MONTH}/seat/month - no hidden fees
                 </div>
               </form>
             </motion.div>
@@ -356,7 +356,7 @@ export default function RevenueCalculator() {
                   num="3"
                   label="Missed calls per week (30 min average call)"
                   value={`${fmtNum(c.totalHoursLostWeek)}h ÷ 0.5h = ${fmtNum(c.missedCallsWeek)} calls`}
-                  source="Chorus / ZoomInfo Sales Benchmark Report — average B2B sales call 30 minutes"
+                  source="Chorus / ZoomInfo Sales Benchmark Report - average B2B sales call 30 minutes"
                 />
               )}
 
@@ -375,7 +375,7 @@ export default function RevenueCalculator() {
                   num="5"
                   label={`Pipeline at risk per cycle (5% conversion × ${fmtEur(c.dealMidpoint)} deal)`}
                   value={`${fmtNum(c.missedCallsCycle)} × 5% × ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.pipelinePerCycle)}`}
-                  source="Belkins B2B Outbound Benchmarks, 2024 — conservative European outbound call-to-opportunity rate"
+                  source="Belkins B2B Outbound Benchmarks, 2024 - conservative European outbound call-to-opportunity rate"
                 />
               )}
 
@@ -436,7 +436,7 @@ export default function RevenueCalculator() {
                     lineHeight: 1.65,
                     marginBottom: 20,
                   }}>
-                    This calculation reflects only the pipeline impact of time lost to admin and research. It does not account for the increase in close rate resulting from improved call quality and intelligence — which Outround also delivers.
+                    This calculation reflects only the pipeline impact of time lost to admin and research. It does not account for the increase in close rate resulting from improved call quality and intelligence - which Outround also delivers.
                   </div>
                 </motion.div>
               )}

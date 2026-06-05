@@ -130,7 +130,7 @@ const ANSWERS = {
     source: 'Based on 847 conversations · Updated 2 hours ago',
   },
   'Which rep struggles most on pricing?': {
-    answer: 'Daan loses frame on pricing in 68% of his deals — the highest on the team. The pattern: he drops price before the prospect asks. Top performers wait for explicit pushback.',
+    answer: 'Daan loses frame on pricing in 68% of his deals - the highest on the team. The pattern: he drops price before the prospect asks. Top performers wait for explicit pushback.',
     source: 'Based on 312 rep interactions · Updated 4 hours ago',
   },
   'What do our best clients have in common?': {
