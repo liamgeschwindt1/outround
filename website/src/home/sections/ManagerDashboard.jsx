@@ -302,8 +302,26 @@ export default function ManagerDashboard() {
           transition={{ duration: 0.4, delay: 0.48 }}
           style={{ marginBottom: 40 }}
         >
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px, 3vw, 26px)', fontWeight: 700, color: 'var(--coral)', marginBottom: 8 }}>
-            Team close rate this week: +12% vs last week
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(15px, 2vw, 18px)', fontWeight: 500, color: 'var(--text-sub)', marginBottom: 6 }}>
+            Team close rate this week
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 8 }}>
+            <span style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(52px, 8vw, 80px)',
+              fontWeight: 800,
+              lineHeight: 1,
+              background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.03em',
+            }}>
+              +12%
+            </span>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(14px, 1.8vw, 17px)', color: 'var(--text-sub)', fontWeight: 400 }}>
+              vs last week
+            </span>
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', fontStyle: 'italic' }}>
             Illustrative. Your numbers update automatically once connected.
