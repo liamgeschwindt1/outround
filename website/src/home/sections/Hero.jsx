@@ -82,12 +82,12 @@ export default function Hero() {
             fontFamily: 'var(--font-body)',
             fontSize: 'clamp(15px, 1.9vw, 18px)',
             color: 'var(--text-sub)',
-            maxWidth: 520,
+            maxWidth: 560,
             margin: '0 auto 44px',
             lineHeight: 1.75,
           }}
         >
-          Every conversation your team has contains signal. Most of it disappears the moment the call ends.
+          Outround captures every sales conversation, updates your CRM automatically, and turns your pipeline into a queryable intelligence layer.
         </motion.div>
 
         {/* CTA */}

@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const BTN = {
   background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
@@ -28,6 +29,7 @@ const BTN_OUTLINE = {
 };
 
 export default function FinalCTA() {
+  const [whyOpen, setWhyOpen] = useState(false);
   return (
     <section
       id="cta"
@@ -116,10 +118,75 @@ export default function FinalCTA() {
             fontSize: 11,
             color: 'var(--text-muted)',
             letterSpacing: '0.08em',
+            marginBottom: 64,
           }}
         >
           EU hosted · GDPR native · No visible bot · Your data stays yours
         </motion.div>
+
+        {/* ── Not convinced ─────────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+          style={{ textAlign: 'center' }}
+        >
+          <button
+            onClick={() => setWhyOpen(o => !o)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-body)',
+              fontSize: 13,
+              color: 'var(--text-muted)',
+              lineHeight: 1.5,
+              padding: 0,
+              textDecoration: 'underline',
+              textDecorationColor: 'rgba(242,241,239,0.2)',
+              textUnderlineOffset: 3,
+            }}
+          >
+            Want to understand the thinking behind this?
+          </button>
+
+          <AnimatePresence>
+            {whyOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.28, ease: [0.0, 0.0, 0.2, 1] }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div style={{
+                  maxWidth: 520,
+                  margin: '24px auto 0',
+                  padding: '24px 24px 20px',
+                  background: 'var(--bg-card)',
+                  border: '0.5px solid var(--border)',
+                  borderRadius: 10,
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 14,
+                }}>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.75, margin: 0 }}>
+                    Sales teams are losing a third of their selling time to work that could be automated. The calls happen. The insight exists. It is just never structured, stored, or made queryable.
+                  </p>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.75, margin: 0 }}>
+                    Outround does not change how your team works. It captures what is already happening and makes it permanent &mdash; searchable, structured, and available to the next rep before their next call.
+                  </p>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.75, margin: 0 }}>
+                    The gap between your best rep and your average rep is not talent. It is information. One person remembers what works. Outround makes the whole team remember.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
       </div>
     </section>
   );

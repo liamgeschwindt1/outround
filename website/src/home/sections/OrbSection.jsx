@@ -262,8 +262,15 @@ export default function OrbSection() {
     >
       {/* Eyebrow */}
       <div style={{ textAlign: 'center', marginBottom: 52 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 10 }}>
-          Your company's conversations, queryable in plain language
+        <div style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'clamp(22px, 3.5vw, 30px)',
+          fontWeight: 700,
+          color: 'var(--text-primary)',
+          letterSpacing: '-0.015em',
+          marginBottom: 12,
+        }}>
+          Ask your pipeline anything.
         </div>
         <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-muted)', fontStyle: 'italic' }}>
           Click any question.

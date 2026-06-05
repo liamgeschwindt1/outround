@@ -3,33 +3,31 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const DEAL_OPTIONS = ['Under €5k', '€5k to €25k', '€25k to €100k', 'Over €100k'];
+const DEAL_OPTIONS  = ['Under \u20ac5k', '\u20ac5k to \u20ac25k', '\u20ac25k to \u20ac100k', 'Over \u20ac100k'];
 const CYCLE_OPTIONS = ['Under 30 days', '30 to 90 days', '90 to 180 days', 'Over 180 days'];
 
 const DEAL_MIDPOINTS = {
-  'Under €5k': 3000,
-  '€5k to €25k': 15000,
-  '€25k to €100k': 60000,
-  'Over €100k': 150000,
+  'Under \u20ac5k':      3000,
+  '\u20ac5k to \u20ac25k':   15000,
+  '\u20ac25k to \u20ac100k': 60000,
+  'Over \u20ac100k':    150000,
 };
 
-// weeks per cycle, cycles per year
 const CYCLE_CONFIG = {
-  'Under 30 days':   { weeks: 4,  cyclesPerYear: 12 },
-  '30 to 90 days':   { weeks: 8,  cyclesPerYear: 6  },
-  '90 to 180 days':  { weeks: 16, cyclesPerYear: 3  },
-  'Over 180 days':   { weeks: 26, cyclesPerYear: 2  },
+  'Under 30 days':  { weeks: 4,  cyclesPerYear: 12 },
+  '30 to 90 days':  { weeks: 8,  cyclesPerYear: 6  },
+  '90 to 180 days': { weeks: 16, cyclesPerYear: 3  },
+  'Over 180 days':  { weeks: 26, cyclesPerYear: 2  },
 };
 
-const OUTROUND_PER_REP_MONTH = 149;
-const HOURS_LOST_PER_REP_WEEK = 12.8; // 17% + 15% of 40h
-const CALL_DURATION_HRS = 0.5;        // 30 min
-const CONVERSION_RATE = 0.05;         // 5%
+const HOURS_LOST_PER_REP_WEEK = 12.8;
+const CALL_DURATION_HRS       = 0.5;
+const CONVERSION_RATE         = 0.05;
 
 function fmtEur(n) {
-  if (n >= 1000000) return `€${(n / 1000000).toFixed(1)}M`;
-  if (n >= 1000) return `€${Math.round(n / 1000)}k`;
-  return `€${Math.round(n)}`;
+  if (n >= 1000000) return '\u20ac' + (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000)    return '\u20ac' + Math.round(n / 1000) + 'k';
+  return '\u20ac' + Math.round(n);
 }
 
 function fmtNum(n) {
@@ -37,33 +35,22 @@ function fmtNum(n) {
 }
 
 function calc(dealLabel, cycleLabel, numReps) {
-  const dealMidpoint = DEAL_MIDPOINTS[dealLabel];
+  const dealMidpoint                         = DEAL_MIDPOINTS[dealLabel];
   const { weeks: cycleWeeks, cyclesPerYear } = CYCLE_CONFIG[cycleLabel];
-
-  const hoursLostPerRepWeek = HOURS_LOST_PER_REP_WEEK;                       // step 1
-  const totalHoursLostWeek = hoursLostPerRepWeek * numReps;                   // step 2
-  const missedCallsWeek = totalHoursLostWeek / CALL_DURATION_HRS;            // step 3
-  const missedCallsCycle = missedCallsWeek * cycleWeeks;                     // step 4
-  const pipelinePerCycle = missedCallsCycle * CONVERSION_RATE * dealMidpoint; // step 5
-  const annualPipeline = pipelinePerCycle * cyclesPerYear;                   // step 6
-  const outroundAnnual = numReps * OUTROUND_PER_REP_MONTH * 12;              // step 7
-  const roi = annualPipeline / outroundAnnual;                               // step 8
-
+  const totalHoursLostWeek                   = HOURS_LOST_PER_REP_WEEK * numReps;
+  const missedCallsWeek                      = totalHoursLostWeek / CALL_DURATION_HRS;
+  const missedCallsCycle                     = missedCallsWeek * cycleWeeks;
+  const pipelinePerCycle                     = missedCallsCycle * CONVERSION_RATE * dealMidpoint;
+  const annualPipeline                       = pipelinePerCycle * cyclesPerYear;
   return {
     dealLabel, cycleLabel, numReps, dealMidpoint,
     cycleWeeks, cyclesPerYear,
-    hoursLostPerRepWeek,
-    totalHoursLostWeek,
-    missedCallsWeek,
-    missedCallsCycle,
-    pipelinePerCycle,
-    annualPipeline,
-    outroundAnnual,
-    roi,
+    totalHoursLostWeek, missedCallsWeek,
+    missedCallsCycle, pipelinePerCycle, annualPipeline,
   };
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ─── Choice button ────────────────────────────────────────────────────────────
 
 function ChoiceButton({ label, onClick }) {
   const [hover, setHover] = useState(false);
@@ -95,61 +82,105 @@ function ChoiceButton({ label, onClick }) {
   );
 }
 
-function StepLine({ num, label, value, source, isHighlight }) {
+// ─── Chevron ──────────────────────────────────────────────────────────────────
+
+function Chevron({ open }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', flexShrink: 0 }}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+// ─── Collapsible proof row ────────────────────────────────────────────────────
+
+function CollapsibleStep({ num, summary, working, source, delay }) {
+  const [open, setOpen]   = useState(false);
+  const [hover, setHover] = useState(false);
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10 }}
+      initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.35 }}
-      style={{ marginBottom: source ? 4 : 16 }}
+      transition={{ duration: 0.3, delay }}
+      style={{ borderBottom: '0.5px solid var(--border)' }}
     >
-      <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-        <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          color: 'var(--text-muted)',
-          letterSpacing: '0.08em',
-          flexShrink: 0,
-          minWidth: 20,
-        }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 10,
+          padding: '12px 0',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
+          color: hover ? 'var(--text-primary)' : 'var(--text-sub)',
+          transition: 'color 0.15s',
+        }}
+      >
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', flexShrink: 0, minWidth: 18 }}>
           {num}.
         </span>
-        <div style={{ flex: 1 }}>
-          <span style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: isHighlight ? 'clamp(15px, 2vw, 18px)' : 'clamp(13px, 1.7vw, 15px)',
-            color: 'var(--text-sub)',
-            lineHeight: 1.5,
-          }}>
-            {label}{' '}
-          </span>
-          <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: isHighlight ? 'clamp(15px, 2vw, 18px)' : 'clamp(13px, 1.7vw, 15px)',
-            fontWeight: 700,
-            color: isHighlight ? 'var(--coral)' : 'var(--text-primary)',
-          }}>
-            {value}
-          </span>
-        </div>
-      </div>
-      {source && (
-        <div style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 9,
-          color: 'var(--text-muted)',
-          marginTop: 3,
-          marginBottom: 14,
-          marginLeft: 32,
-          lineHeight: 1.5,
-          fontStyle: 'italic',
-          opacity: 0.75,
-        }}>
-          {source}
-        </div>
-      )}
+        <span style={{ flex: 1, fontFamily: 'var(--font-body)', fontSize: 'clamp(13px, 1.6vw, 14px)', lineHeight: 1.5 }}>
+          {summary}
+        </span>
+        <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+          <Chevron open={open} />
+        </span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.0, 0.0, 0.2, 1] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ paddingBottom: 14, paddingLeft: 28 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.6, marginBottom: source ? 6 : 0 }}>
+                {working}
+              </div>
+              {source && (
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.55, fontStyle: 'italic', opacity: 0.8 }}>
+                  {source}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
+}
+
+// ─── Counting number animation ────────────────────────────────────────────────
+
+function CountingNumber({ target, duration }) {
+  const [display, setDisplay] = useState(0);
+  const startRef = useRef(null);
+  const rafRef   = useRef(null);
+
+  useEffect(() => {
+    startRef.current = null;
+    function frame(ts) {
+      if (!startRef.current) startRef.current = ts;
+      const progress = Math.min((ts - startRef.current) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(target * eased));
+      if (progress < 1) rafRef.current = requestAnimationFrame(frame);
+    }
+    rafRef.current = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [target, duration]);
+
+  return <>{fmtEur(display)}</>;
 }
 
 const STEP_SPRING = { type: 'spring', stiffness: 260, damping: 28 };
@@ -157,62 +188,89 @@ const STEP_SPRING = { type: 'spring', stiffness: 260, damping: 28 };
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function RevenueCalculator() {
-  const [step, setStep] = useState('deal');
-  const [dealLabel, setDealLabel] = useState(null);
+  const [step, setStep]             = useState('deal');
+  const [dealLabel, setDealLabel]   = useState(null);
   const [cycleLabel, setCycleLabel] = useState(null);
-  const [teamInput, setTeamInput] = useState('');
-  const [teamError, setTeamError] = useState('');
-  const [numReps, setNumReps] = useState(null);
-  const [revealedSteps, setRevealedSteps] = useState(0);
-  const [showCTA, setShowCTA] = useState(false);
-  const intervalRef = useRef(null);
+  const [teamInput, setTeamInput]   = useState('');
+  const [teamError, setTeamError]   = useState('');
+  const [numReps, setNumReps]       = useState(null);
+  const [showBigNum, setShowBigNum] = useState(false);
+  const [revealedRows, setRevealedRows] = useState(0);
+  const [showCTA, setShowCTA]       = useState(false);
+  const intervalRef  = useRef(null);
   const teamInputRef = useRef(null);
 
-  function selectDeal(label) {
-    setDealLabel(label);
-    setTimeout(() => setStep('cycle'), 280);
-  }
-
-  function selectCycle(label) {
-    setCycleLabel(label);
-    setTimeout(() => setStep('team'), 280);
-  }
+  function selectDeal(label)  { setDealLabel(label);  setTimeout(() => setStep('cycle'), 280); }
+  function selectCycle(label) { setCycleLabel(label); setTimeout(() => setStep('team'),  280); }
 
   function submitTeam(e) {
-    e?.preventDefault();
+    e && e.preventDefault();
     const n = parseInt(teamInput, 10);
-    if (!n || n < 1 || n > 9999) {
-      setTeamError('Please enter a number between 1 and 9999.');
-      return;
-    }
+    if (!n || n < 1 || n > 9999) { setTeamError('Please enter a number between 1 and 9999.'); return; }
     setTeamError('');
     setNumReps(n);
     setTimeout(() => setStep('results'), 280);
   }
 
   useEffect(() => {
-    if (step === 'team') setTimeout(() => teamInputRef.current?.focus(), 350);
+    if (step === 'team') setTimeout(() => teamInputRef.current && teamInputRef.current.focus(), 350);
   }, [step]);
-
-  const TOTAL_STEPS = 10; // 8 calc steps + separator + ROI
 
   useEffect(() => {
     if (step !== 'results') return;
-    setRevealedSteps(0);
+    setShowBigNum(false);
+    setRevealedRows(0);
     setShowCTA(false);
-    let count = 0;
-    intervalRef.current = setInterval(() => {
-      count++;
-      setRevealedSteps(count);
-      if (count >= TOTAL_STEPS) {
-        clearInterval(intervalRef.current);
-        setTimeout(() => setShowCTA(true), 500);
-      }
-    }, 750);
-    return () => clearInterval(intervalRef.current);
+    const t0 = setTimeout(() => {
+      setShowBigNum(true);
+      let row = 0;
+      intervalRef.current = setInterval(() => {
+        row++;
+        setRevealedRows(row);
+        if (row >= 5) { clearInterval(intervalRef.current); setTimeout(() => setShowCTA(true), 400); }
+      }, 620);
+    }, 500);
+    return () => { clearTimeout(t0); clearInterval(intervalRef.current); };
   }, [step]);
 
   const c = dealLabel && cycleLabel && numReps ? calc(dealLabel, cycleLabel, numReps) : null;
+
+  useEffect(() => {
+    if (c) { try { localStorage.setItem('outround_pipeline', String(c.annualPipeline)); } catch (_) {} }
+  }, [c]);
+
+  const proofRows = c ? [
+    {
+      summary: `${HOURS_LOST_PER_REP_WEEK} hours lost per rep, per week on admin and research`,
+      working: `17% CRM admin + 15% prospect research \u00d7 40h working week = ${HOURS_LOST_PER_REP_WEEK}h`,
+      source:  'Salesforce State of Sales 2025; Forrester Activity Study 2025',
+    },
+    {
+      summary: `${fmtNum(c.totalHoursLostWeek)} hours lost per week across ${c.numReps} rep${c.numReps > 1 ? 's' : ''}`,
+      working: `${HOURS_LOST_PER_REP_WEEK}h \u00d7 ${c.numReps} = ${fmtNum(c.totalHoursLostWeek)}h`,
+      source:  null,
+    },
+    {
+      summary: `${fmtNum(c.missedCallsWeek)} calls missed per week (30-minute average)`,
+      working: `${fmtNum(c.totalHoursLostWeek)}h \u00f7 0.5h per call = ${fmtNum(c.missedCallsWeek)} calls`,
+      source:  'Chorus / ZoomInfo Sales Benchmark Report \u2014 average B2B sales call 30 minutes',
+    },
+    {
+      summary: `${fmtNum(c.missedCallsCycle)} calls missed per ${c.cycleLabel.toLowerCase()} cycle`,
+      working: `${fmtNum(c.missedCallsWeek)} calls \u00d7 ${c.cycleWeeks} weeks = ${fmtNum(c.missedCallsCycle)} calls`,
+      source:  null,
+    },
+    {
+      summary: `${fmtEur(c.pipelinePerCycle)} pipeline at risk per cycle at 5% conversion`,
+      working: `${fmtNum(c.missedCallsCycle)} \u00d7 5% \u00d7 ${fmtEur(c.dealMidpoint)} avg deal = ${fmtEur(c.pipelinePerCycle)}`,
+      source:  'Belkins B2B Outbound Benchmarks 2024 \u2014 conservative European outbound conversion rate',
+    },
+  ] : [];
+
+  function reset() {
+    setStep('deal'); setDealLabel(null); setCycleLabel(null);
+    setTeamInput(''); setNumReps(null);
+  }
 
   return (
     <section
@@ -230,11 +288,10 @@ export default function RevenueCalculator() {
       <div style={{ width: '100%', maxWidth: 580 }}>
         <AnimatePresence mode="wait">
 
-          {/* Step 1 — Deal size */}
           {step === 'deal' && (
             <motion.div key="deal" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator · 1 of 3
+                The revenue leak calculator \u00b7 1 of 3
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 What is your average deal size?
@@ -245,11 +302,10 @@ export default function RevenueCalculator() {
             </motion.div>
           )}
 
-          {/* Step 2 — Sales cycle */}
           {step === 'cycle' && (
             <motion.div key="cycle" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator · 2 of 3
+                The revenue leak calculator \u00b7 2 of 3
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 How long is your average sales cycle?
@@ -260,11 +316,10 @@ export default function RevenueCalculator() {
             </motion.div>
           )}
 
-          {/* Step 3 — Team size */}
           {step === 'team' && (
             <motion.div key="team" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator · 3 of 3
+                The revenue leak calculator \u00b7 3 of 3
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 How many salespeople on your team?
@@ -272,27 +327,19 @@ export default function RevenueCalculator() {
               <form onSubmit={submitTeam} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <input
                   ref={teamInputRef}
-                  type="number"
-                  min="1"
-                  max="9999"
+                  type="number" min="1" max="9999"
                   value={teamInput}
                   onChange={e => { setTeamInput(e.target.value); setTeamError(''); }}
                   onKeyDown={e => { if (e.key === 'Enter') submitTeam(); }}
                   placeholder="e.g. 12"
                   style={{
-                    width: '100%',
-                    background: 'var(--bg-card)',
+                    width: '100%', background: 'var(--bg-card)',
                     border: `0.5px solid ${teamError ? '#ef4444' : 'rgba(242,107,69,0.45)'}`,
-                    borderRadius: 10,
-                    padding: '16px 20px',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-display)',
-                    fontSize: 'clamp(28px, 5vw, 40px)',
-                    fontWeight: 700,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    MozAppearance: 'textfield',
-                    WebkitAppearance: 'none',
+                    borderRadius: 10, padding: '16px 20px',
+                    color: 'var(--text-primary)', fontFamily: 'var(--font-display)',
+                    fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 700,
+                    outline: 'none', boxSizing: 'border-box',
+                    MozAppearance: 'textfield', WebkitAppearance: 'none',
                   }}
                 />
                 {teamError && <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#ef4444' }}>{teamError}</div>}
@@ -303,170 +350,95 @@ export default function RevenueCalculator() {
                   style={{
                     background: teamInput ? 'linear-gradient(135deg, #f26b45, #4ba3e3)' : 'var(--bg-hover)',
                     color: teamInput ? '#0a0a0b' : 'var(--text-muted)',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 15,
-                    fontWeight: 700,
-                    padding: '14px 32px',
-                    borderRadius: 999,
-                    border: 'none',
-                    cursor: teamInput ? 'pointer' : 'default',
-                    minHeight: 44,
-                    transition: 'background 0.2s, color 0.2s',
-                    alignSelf: 'flex-start',
+                    fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
+                    padding: '14px 32px', borderRadius: 999, border: 'none',
+                    cursor: teamInput ? 'pointer' : 'default', minHeight: 44,
+                    transition: 'background 0.2s, color 0.2s', alignSelf: 'flex-start',
                   }}
                 >
-                  Calculate the leak →
+                  Calculate the leak &rarr;
                 </motion.button>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
-                  €{OUTROUND_PER_REP_MONTH}/seat/month - no hidden fees
-                </div>
               </form>
             </motion.div>
           )}
 
-          {/* Step 4 — Results */}
           {step === 'results' && c && (
-            <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 36 }}>
+            <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 32 }}>
                 Your numbers
               </div>
 
-              {/* Step 1 */}
-              {revealedSteps >= 1 && (
-                <StepLine
-                  num="1"
-                  label="Hours lost per rep per week"
-                  value={`${c.hoursLostPerRepWeek}h`}
-                  source="17% on CRM admin (Salesforce State of Sales, 2025) + 15% on prospect research (Forrester Activity Study, 2025) × 40h working week"
-                />
-              )}
+              <AnimatePresence>
+                {showBigNum && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: [0.0, 0.0, 0.2, 1] }}
+                    style={{ marginBottom: 8 }}
+                  >
+                    <div style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: 'clamp(52px, 10vw, 88px)',
+                      fontWeight: 700,
+                      color: 'var(--coral)',
+                      lineHeight: 1,
+                      letterSpacing: '-0.03em',
+                    }}>
+                      <CountingNumber target={c.annualPipeline} duration={1400} />
+                    </div>
+                    <div style={{
+                      fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-muted)',
+                      letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 10, marginBottom: 40,
+                    }}>
+                      Annual pipeline at risk
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              {/* Step 2 */}
-              {revealedSteps >= 2 && (
-                <StepLine
-                  num="2"
-                  label={`Total hours lost across ${c.numReps} rep${c.numReps > 1 ? 's' : ''} per week`}
-                  value={`${c.hoursLostPerRepWeek} × ${c.numReps} = ${fmtNum(c.totalHoursLostWeek)}h`}
-                />
-              )}
-
-              {/* Step 3 */}
-              {revealedSteps >= 3 && (
-                <StepLine
-                  num="3"
-                  label="Missed calls per week (30 min average call)"
-                  value={`${fmtNum(c.totalHoursLostWeek)}h ÷ 0.5h = ${fmtNum(c.missedCallsWeek)} calls`}
-                  source="Chorus / ZoomInfo Sales Benchmark Report - average B2B sales call 30 minutes"
-                />
-              )}
-
-              {/* Step 4 */}
-              {revealedSteps >= 4 && (
-                <StepLine
-                  num="4"
-                  label={`Missed calls per ${c.cycleLabel.toLowerCase()} cycle (${c.cycleWeeks} weeks)`}
-                  value={`${fmtNum(c.missedCallsWeek)} × ${c.cycleWeeks} = ${fmtNum(c.missedCallsCycle)} calls`}
-                />
-              )}
-
-              {/* Step 5 */}
-              {revealedSteps >= 5 && (
-                <StepLine
-                  num="5"
-                  label={`Pipeline at risk per cycle (5% conversion × ${fmtEur(c.dealMidpoint)} deal)`}
-                  value={`${fmtNum(c.missedCallsCycle)} × 5% × ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.pipelinePerCycle)}`}
-                  source="Belkins B2B Outbound Benchmarks, 2024 - conservative European outbound call-to-opportunity rate"
-                />
-              )}
-
-              {/* Step 6 */}
-              {revealedSteps >= 6 && (
-                <StepLine
-                  num="6"
-                  label={`Annual pipeline at risk (${c.cyclesPerYear} cycles/year)`}
-                  value={`${fmtEur(c.pipelinePerCycle)} × ${c.cyclesPerYear} = ${fmtEur(c.annualPipeline)}`}
-                  isHighlight
-                />
-              )}
-
-              {/* Separator */}
-              {revealedSteps >= 7 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  style={{ height: '0.5px', background: 'var(--border-md)', margin: '16px 0' }}
-                />
-              )}
-
-              {/* Step 7 */}
-              {revealedSteps >= 8 && (
-                <StepLine
-                  num="7"
-                  label={`Outround annual cost (${c.numReps} rep${c.numReps > 1 ? 's' : ''} × €${OUTROUND_PER_REP_MONTH}/mo × 12)`}
-                  value={fmtEur(c.outroundAnnual)}
-                />
-              )}
-
-              {/* Step 8 — ROI */}
-              {revealedSteps >= 9 && (
-                <StepLine
-                  num="8"
-                  label="Return on investment"
-                  value={`${c.roi.toFixed(0)}×`}
-                  isHighlight
-                />
-              )}
-
-              {/* Disclaimer + refs */}
-              {revealedSteps >= 10 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div style={{
-                    marginTop: 28,
-                    padding: '14px 16px',
-                    background: 'var(--bg-card)',
-                    border: '0.5px solid var(--border)',
-                    borderRadius: 8,
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 12,
-                    color: 'var(--text-muted)',
-                    lineHeight: 1.65,
-                    marginBottom: 20,
-                  }}>
-                    This calculation reflects only the pipeline impact of time lost to admin and research. It does not account for the increase in close rate resulting from improved call quality and intelligence - which Outround also delivers.
+              {revealedRows > 0 && (
+                <div style={{ marginBottom: 36 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>
+                    How we get there
                   </div>
-                </motion.div>
+                  {proofRows.slice(0, revealedRows).map((row, i) => (
+                    <CollapsibleStep key={i} num={i + 1} summary={row.summary} working={row.working} source={row.source} delay={0} />
+                  ))}
+                </div>
               )}
 
               <AnimatePresence>
                 {showCTA && (
-                  <motion.button
+                  <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-                    whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => document.getElementById('invisible')?.scrollIntoView({ behavior: 'smooth' })}
-                    style={{
-                      marginTop: 28,
-                      background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
-                      color: '#0a0a0b',
-                      fontFamily: 'var(--font-body)',
-                      fontSize: 15,
-                      fontWeight: 700,
-                      padding: '14px 36px',
-                      borderRadius: 999,
-                      border: 'none',
-                      cursor: 'pointer',
-                      boxShadow: '0 0 28px rgba(242,107,69,0.25)',
-                      minHeight: 44,
-                    }}
                   >
-                    See what Outround reveals
-                  </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => { const el = document.getElementById('how'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
+                      style={{
+                        background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
+                        color: '#0a0a0b', fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
+                        padding: '14px 36px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                        boxShadow: '0 0 28px rgba(242,107,69,0.25)', minHeight: 44,
+                        marginBottom: 18, display: 'block',
+                      }}
+                    >
+                      See how Outround recovers this.
+                    </motion.button>
+                    <button
+                      onClick={reset}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)',
+                        letterSpacing: '0.06em', padding: 0,
+                      }}
+                    >
+                      Recalculate with different numbers
+                    </button>
+                  </motion.div>
                 )}
               </AnimatePresence>
             </motion.div>
