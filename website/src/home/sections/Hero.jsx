@@ -70,7 +70,7 @@ export default function Hero() {
         >
           Your sales engine is leaking revenue.
           <br />
-          <span style={{ color: 'var(--text-sub)' }}>You can't see where.</span>
+          <span style={{ color: 'var(--text-sub)' }}>Find out where.</span>
         </motion.h1>
 
         {/* Sub-copy */}
@@ -87,9 +87,7 @@ export default function Hero() {
             lineHeight: 1.75,
           }}
         >
-          It's not what you forget. It's what you never saw.
-          <br />
-          Every conversation your team has contains signal. Most of it disappears the moment the call ends.
+          Every conversation your team has contain signal. Most of it disappears the moment the call ends.
         </motion.div>
 
         {/* CTA */}
