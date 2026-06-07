@@ -4,30 +4,25 @@ import { motion, useInView } from 'framer-motion';
 // ─── Integration network ──────────────────────────────────────────────────────
 
 const NET_W = 480;
-const NET_H = 280;
+const NET_H = 300;
 
 const NET_NODES = [
-  { id: 'meets',   src: '/icons/meets.png',   label: 'Meet',    cx: 72,  cy: 48  },
-  { id: 'teams',   src: '/icons/teams.png',   label: 'Teams',   cx: 408, cy: 48  },
-  { id: 'slack',   src: '/icons/slack.png',   label: 'Slack',   cx: 20,  cy: 145 },
-  { id: 'zoom',    src: '/icons/zoom.png',    label: 'Zoom',    cx: 460, cy: 145 },
-  { id: 'hubspot', src: '/icons/hubspot.png', label: 'HubSpot', cx: 72,  cy: 242 },
-  { id: 'apollo',  src: '/icons/apollo.png',  label: 'Apollo',  cx: 408, cy: 242 },
-  { id: 'chat',    src: '/icons/chat.png',    label: 'Chat',    cx: 240, cy: 258 },
+  { id: 'meets',   src: '/icons/meets.png',   label: 'Meet',    cx: 62,  cy: 48  },
+  { id: 'teams',   src: '/icons/teams.png',   label: 'Teams',   cx: 418, cy: 48  },
+  { id: 'slack',   src: '/icons/slack.png',   label: 'Slack',   cx: 14,  cy: 150 },
+  { id: 'zoom',    src: '/icons/zoom.png',    label: 'Zoom',    cx: 466, cy: 150 },
+  { id: 'hubspot', src: '/icons/hubspot.png', label: 'HubSpot', cx: 62,  cy: 252 },
+  { id: 'apollo',  src: '/icons/apollo.png',  label: 'Apollo',  cx: 418, cy: 252 },
+  { id: 'chat',    src: '/icons/chat.png',    label: 'Chat',    cx: 240, cy: 270 },
 ];
 
-const HUB = { cx: 240, cy: 132 };
+const HUB = { cx: 240, cy: 150 };
 
 const EDGES = NET_NODES.map((n, i) => ({
   a: n.id, b: 'hub',
-  dur: 2.0 + (i % 5) * 0.25,
-  delay: i * 0.35,
+  pulseDur: 2.2 + i * 0.35,
+  pulseDelay: i * 0.28,
 }));
-
-function getNetNode(id) {
-  if (id === 'hub') return HUB;
-  return NET_NODES.find(n => n.id === id);
-}
 
 // Lightweight dot-sphere orb for the hub
 function MiniOrb({ size = 72 }) {
@@ -147,30 +142,35 @@ function IntegrationNetwork({ isInView }) {
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Edges — hub-only spokes */}
+        {/* Edges — pulsing spokes, no travelling dots */}
         {EDGES.map((edge, i) => {
-          const a = getNetNode(edge.a);
-          const b = getNetNode(edge.b);
+          const a = NET_NODES.find(n => n.id === edge.a);
+          const b = HUB;
           const pathD = `M ${a.cx} ${a.cy} L ${b.cx} ${b.cy}`;
           return (
-            <g key={i}>
-              <path d={pathD} stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none" />
+            <path
+              key={i}
+              d={pathD}
+              stroke="rgba(255,255,255,1)"
+              strokeOpacity="0.06"
+              strokeWidth="1"
+              fill="none"
+            >
               {isInView && (
-                <circle r="2.2" fill="rgba(242,107,69,0.85)">
-                  <animateMotion dur={`${edge.dur}s`} repeatCount="indefinite" begin={`${edge.delay}s`} path={pathD} />
-                </circle>
+                <animate
+                  attributeName="stroke-opacity"
+                  values="0.06;0.22;0.06"
+                  dur={`${edge.pulseDur}s`}
+                  repeatCount="indefinite"
+                  begin={`${edge.pulseDelay}s`}
+                />
               )}
-              {isInView && (
-                <circle r="1.4" fill="rgba(75,163,227,0.6)">
-                  <animateMotion dur={`${edge.dur * 1.5}s`} repeatCount="indefinite" begin={`${edge.delay + edge.dur * 0.55}s`} path={`M ${b.cx} ${b.cy} L ${a.cx} ${a.cy}`} />
-                </circle>
-              )}
-            </g>
+            </path>
           );
         })}
       </svg>
 
-      {/* Integration icon nodes — icon only, no label */}
+      {/* Integration icon nodes — bare image, rounded, no card */}
       {NET_NODES.map((node, i) => (
         <motion.div
           key={node.id}
@@ -185,21 +185,17 @@ function IntegrationNetwork({ isInView }) {
             zIndex: 1,
           }}
         >
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '0.5px solid rgba(255,255,255,0.09)',
-            borderRadius: 8,
-            padding: 8,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <img src={node.src} alt={node.label} width={22} height={22} style={{ objectFit: 'contain', display: 'block' }} />
-          </div>
+          <img
+            src={node.src}
+            alt={node.label}
+            width={36}
+            height={36}
+            style={{ objectFit: 'contain', display: 'block', borderRadius: 8 }}
+          />
         </motion.div>
       ))}
 
-      {/* Hub — dot-sphere orb, no text */}
+      {/* Hub — dot-sphere orb, no card, no text */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={isInView ? { opacity: 1, scale: 1 } : {}}
@@ -212,7 +208,7 @@ function IntegrationNetwork({ isInView }) {
           zIndex: 2,
         }}
       >
-        <MiniOrb size={72} />
+        <MiniOrb size={100} />
       </motion.div>
     </div>
   );
