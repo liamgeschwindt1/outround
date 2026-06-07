@@ -1,118 +1,166 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 
-// ─── Inline SVG icons (Tabler-style) ─────────────────────────────────────────
+// ─── Integration network ──────────────────────────────────────────────────────
 
-function IconCalendar() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <rect x="4" y="5" width="16" height="16" rx="2" />
-      <line x1="16" y1="3" x2="16" y2="7" />
-      <line x1="8" y1="3" x2="8" y2="7" />
-      <line x1="4" y1="11" x2="20" y2="11" />
-      <line x1="11" y1="15" x2="12" y2="15" />
-      <line x1="12" y1="15" x2="12" y2="18" />
-    </svg>
-  );
-}
+const NET_W = 520;
+const NET_H = 290;
 
-function IconDatabase() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <ellipse cx="12" cy="6" rx="8" ry="3" />
-      <path d="M4 6v6a8 3 0 0 0 16 0v-6" />
-      <path d="M4 12v6a8 3 0 0 0 16 0v-6" />
-    </svg>
-  );
-}
-
-function IconMessage() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <path d="M8 9h8" />
-      <path d="M8 13h6" />
-      <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z" />
-    </svg>
-  );
-}
-
-const NODES = [
-  { label: 'Calendar',  Icon: IconCalendar },
-  { label: 'CRM',       Icon: IconDatabase },
-  { label: 'Messaging', Icon: IconMessage },
+const NET_NODES = [
+  { id: 'meets',   src: '/icons/meets.png',   label: 'Meet',    cx: 85,  cy: 46  },
+  { id: 'teams',   src: '/icons/teams.png',   label: 'Teams',   cx: 435, cy: 46  },
+  { id: 'slack',   src: '/icons/slack.png',   label: 'Slack',   cx: 30,  cy: 150 },
+  { id: 'zoom',    src: '/icons/zoom.png',    label: 'Zoom',    cx: 490, cy: 150 },
+  { id: 'hubspot', src: '/icons/hubspot.png', label: 'HubSpot', cx: 85,  cy: 254 },
+  { id: 'apollo',  src: '/icons/apollo.png',  label: 'Apollo',  cx: 435, cy: 254 },
+  { id: 'chat',    src: '/icons/chat.png',    label: 'Chat',    cx: 260, cy: 272 },
 ];
 
-function WorkflowNode({ label, Icon, delay, isInView }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.38, ease: [0.0, 0.0, 0.2, 1], delay }}
-      style={{
-        background: 'linear-gradient(135deg, rgba(242,107,69,0.4), rgba(75,163,227,0.4))',
-        padding: '0.5px',
-        borderRadius: 12,
-        flexShrink: 0,
-      }}
-    >
-      <div style={{
-        background: 'var(--bg-card)',
-        borderRadius: 11.5,
-        padding: '22px 24px 18px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 12,
-        minWidth: 104,
-      }}>
-        <span style={{ color: 'rgba(242,241,239,0.65)', display: 'flex' }}>
-          <Icon />
-        </span>
-        <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11,
-          letterSpacing: '0.1em',
-          color: 'rgba(242,241,239,0.65)',
-          whiteSpace: 'nowrap',
-          textTransform: 'uppercase',
-        }}>
-          {label}
-        </span>
-      </div>
-    </motion.div>
-  );
+const HUB = { cx: 260, cy: 138 };
+
+const EDGES = [
+  { a: 'meets',   b: 'hub',     dur: 2.2, delay: 0.0 },
+  { a: 'teams',   b: 'hub',     dur: 2.8, delay: 0.5 },
+  { a: 'slack',   b: 'hub',     dur: 2.5, delay: 0.9 },
+  { a: 'zoom',    b: 'hub',     dur: 2.1, delay: 0.3 },
+  { a: 'hubspot', b: 'hub',     dur: 2.9, delay: 0.7 },
+  { a: 'apollo',  b: 'hub',     dur: 2.3, delay: 1.1 },
+  { a: 'chat',    b: 'hub',     dur: 2.6, delay: 0.4 },
+  { a: 'meets',   b: 'teams',   dur: 3.6, delay: 1.3 },
+  { a: 'slack',   b: 'hubspot', dur: 3.3, delay: 1.7 },
+  { a: 'zoom',    b: 'apollo',  dur: 3.5, delay: 2.0 },
+  { a: 'hubspot', b: 'chat',    dur: 3.1, delay: 2.3 },
+  { a: 'chat',    b: 'apollo',  dur: 3.0, delay: 2.6 },
+];
+
+function getNetNode(id) {
+  if (id === 'hub') return HUB;
+  return NET_NODES.find(n => n.id === id);
 }
 
-function Connector({ isInView }) {
+function IntegrationNetwork({ isInView }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : {}}
-      transition={{ duration: 0.3, delay: 0.5 }}
-      style={{
-        position: 'relative',
-        flex: 1,
-        height: 1,
-        background: 'rgba(255,255,255,0.08)',
-        alignSelf: 'center',
-        overflow: 'hidden',
-        borderRadius: 1,
-        minWidth: 20,
-      }}
-    >
-      <span style={{
-        position: 'absolute',
-        top: 0, left: 0,
-        width: '40%',
-        height: '100%',
-        background: 'linear-gradient(90deg, transparent, rgba(242,107,69,0.9), transparent)',
-        animation: 'how-pulse 2.4s ease-in-out infinite',
-        borderRadius: 1,
-      }} />
-    </motion.div>
+    <div style={{ position: 'relative', width: '100%', aspectRatio: `${NET_W} / ${NET_H}` }}>
+      {/* SVG lines layer */}
+      <svg
+        viewBox={`0 0 ${NET_W} ${NET_H}`}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <radialGradient id="netHubGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="rgba(242,107,69,0.18)" />
+            <stop offset="100%" stopColor="transparent" />
+          </radialGradient>
+        </defs>
+
+        {/* Soft glow around hub */}
+        <circle cx={HUB.cx} cy={HUB.cy} r={60} fill="url(#netHubGlow)" />
+
+        {/* Edges */}
+        {EDGES.map((edge, i) => {
+          const a = getNetNode(edge.a);
+          const b = getNetNode(edge.b);
+          const pathD = `M ${a.cx} ${a.cy} L ${b.cx} ${b.cy}`;
+          const pathDRev = `M ${b.cx} ${b.cy} L ${a.cx} ${a.cy}`;
+          return (
+            <g key={i}>
+              <path d={pathD} stroke="rgba(255,255,255,0.07)" strokeWidth="1" fill="none" />
+              {isInView && (
+                <circle r="2.8" fill="rgba(242,107,69,0.9)">
+                  <animateMotion dur={`${edge.dur}s`} repeatCount="indefinite" begin={`${edge.delay}s`} path={pathD} />
+                </circle>
+              )}
+              {isInView && (
+                <circle r="1.6" fill="rgba(75,163,227,0.65)">
+                  <animateMotion dur={`${edge.dur * 1.4}s`} repeatCount="indefinite" begin={`${edge.delay + edge.dur * 0.6}s`} path={pathDRev} />
+                </circle>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Integration icon nodes */}
+      {NET_NODES.map((node, i) => (
+        <motion.div
+          key={node.id}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={isInView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 0.4, delay: 0.15 + i * 0.07, ease: [0.0, 0.0, 0.2, 1] }}
+          style={{
+            position: 'absolute',
+            left: `${(node.cx / NET_W) * 100}%`,
+            top: `${(node.cy / NET_H) * 100}%`,
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1,
+          }}
+        >
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid rgba(255,255,255,0.1)',
+            borderRadius: 10,
+            padding: '9px 9px 6px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 5,
+          }}>
+            <img src={node.src} alt={node.label} width={26} height={26} style={{ objectFit: 'contain', display: 'block' }} />
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              letterSpacing: '0.08em',
+              color: 'rgba(242,241,239,0.45)',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+            }}>
+              {node.label}
+            </span>
+          </div>
+        </motion.div>
+      ))}
+
+      {/* Hub node — Outround */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={isInView ? { opacity: 1, scale: 1 } : {}}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        style={{
+          position: 'absolute',
+          left: `${(HUB.cx / NET_W) * 100}%`,
+          top: `${(HUB.cy / NET_H) * 100}%`,
+          transform: 'translate(-50%, -50%)',
+          zIndex: 2,
+        }}
+      >
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(242,107,69,0.15), rgba(75,163,227,0.15))',
+          border: '0.5px solid rgba(242,107,69,0.45)',
+          borderRadius: 12,
+          padding: '11px 18px 9px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 5,
+        }}>
+          <span style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 14,
+            fontWeight: 700,
+            color: 'var(--coral)',
+            letterSpacing: '-0.01em',
+          }}>Outround</span>
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 8,
+            letterSpacing: '0.1em',
+            color: 'rgba(242,241,239,0.35)',
+            textTransform: 'uppercase',
+          }}>intelligence layer</span>
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
@@ -341,7 +389,7 @@ export default function HowOutroundWorks() {
             </motion.div>
           </div>
 
-          {/* Workflow nodes block */}
+          {/* Integration network */}
           <motion.div
             initial={{ opacity: 0, x: 12 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -350,22 +398,10 @@ export default function HowOutroundWorks() {
               background: 'var(--bg-sub)',
               border: '0.5px solid var(--border)',
               borderRadius: 16,
-              padding: 'clamp(28px, 4vw, 48px) clamp(24px, 3vw, 40px)',
-              display: 'flex',
-              alignItems: 'center',
-              minHeight: 200,
+              padding: 'clamp(20px, 3vw, 36px)',
             }}
           >
-            {NODES.map((node, i) => (
-              <div key={node.label} style={{
-                display: 'flex',
-                alignItems: 'center',
-                flex: i < NODES.length - 1 ? '1 1 0' : '0 0 auto',
-              }}>
-                <WorkflowNode label={node.label} Icon={node.Icon} delay={0.4 + i * 0.12} isInView={isInView} />
-                {i < NODES.length - 1 && <Connector isInView={isInView} />}
-              </div>
-            ))}
+            <IntegrationNetwork isInView={isInView} />
           </motion.div>
         </div>
 

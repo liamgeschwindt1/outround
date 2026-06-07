@@ -39,6 +39,9 @@ const MIN_RECOVERED_PER_CALL       = (POST_CALL_LOG_MIN * POST_CALL_RECOVERY)
 // Conservative discount on recovered time (not all saved time becomes selling time)
 const EFFICIENCY_DISCOUNT          = 0.40;
 
+// Close rate hardcoded at conservative European outbound benchmark
+const CLOSE_RATE                   = 0.03;
+
 // Derived per-rep figures (per the readiness model)
 const DISPLACED_CALLS_PER_REP_WEEK = (MIN_LOST_PER_CALL * CALLS_PER_REP_DAY) / 60 / CALL_DURATION_MIN * 60;
 // = (65 × 8) ÷ 30 = 17.33 displaced calls per rep per week
@@ -55,7 +58,8 @@ function fmtNum(n) {
   return Math.round(n).toLocaleString('en');
 }
 
-function calc(dealLabel, cycleLabel, numReps, closeRate) {
+function calc(dealLabel, cycleLabel, numReps) {
+  const closeRate                            = CLOSE_RATE;
   const dealMidpoint                         = DEAL_MIDPOINTS[dealLabel];
   const { weeks: cycleWeeks, cyclesPerYear } = CYCLE_CONFIG[cycleLabel];
 
@@ -77,7 +81,7 @@ function calc(dealLabel, cycleLabel, numReps, closeRate) {
   const annualPotential     = fullPotential     * cyclesPerYear;
 
   return {
-    dealLabel, cycleLabel, numReps, dealMidpoint, closeRate,
+    dealLabel, cycleLabel, numReps, dealMidpoint, closeRate: CLOSE_RATE,
     cycleWeeks, cyclesPerYear,
     callsPerCycle,
     displacedCallsCycle, displacedCallsPerRepWeek: DISPLACED_CALLS_PER_REP_WEEK,
@@ -228,31 +232,15 @@ export default function RevenueCalculator() {
   const [step, setStep]             = useState('deal');
   const [dealLabel, setDealLabel]   = useState(null);
   const [cycleLabel, setCycleLabel] = useState(null);
-  const [closeRateInput, setCloseRateInput] = useState('');
-  const [closeRateError, setCloseRateError] = useState('');
-  const [closeRate, setCloseRate]   = useState(null); // stored as decimal (e.g. 0.05)
   const [teamInput, setTeamInput]   = useState('');
   const [teamError, setTeamError]   = useState('');
   const [numReps, setNumReps]       = useState(null);
   const [showBigNum, setShowBigNum] = useState(false);
   const [showMethod, setShowMethod] = useState(false);
   const teamInputRef = useRef(null);
-  const closeRateInputRef = useRef(null);
 
   function selectDeal(label)  { setDealLabel(label);  setTimeout(() => setStep('cycle'), 280); }
-  function selectCycle(label) { setCycleLabel(label); setTimeout(() => setStep('close'),  280); }
-
-  function submitCloseRate(e) {
-    e && e.preventDefault();
-    const raw = parseFloat(closeRateInput);
-    if (isNaN(raw) || raw <= 0 || raw > 100) {
-      setCloseRateError('Enter a close rate between 0.1 and 100.');
-      return;
-    }
-    setCloseRateError('');
-    setCloseRate(raw / 100);
-    setTimeout(() => setStep('team'), 280);
-  }
+  function selectCycle(label) { setCycleLabel(label); setTimeout(() => setStep('team'),  280); }
 
   function submitTeam(e) {
     e && e.preventDefault();
@@ -264,8 +252,7 @@ export default function RevenueCalculator() {
   }
 
   useEffect(() => {
-    if (step === 'team')  setTimeout(() => teamInputRef.current  && teamInputRef.current.focus(),  350);
-    if (step === 'close') setTimeout(() => closeRateInputRef.current && closeRateInputRef.current.focus(), 350);
+    if (step === 'team') setTimeout(() => teamInputRef.current && teamInputRef.current.focus(), 350);
   }, [step]);
 
   useEffect(() => {
@@ -275,7 +262,7 @@ export default function RevenueCalculator() {
     return () => clearTimeout(t0);
   }, [step]);
 
-  const c = dealLabel && cycleLabel && numReps && closeRate ? calc(dealLabel, cycleLabel, numReps, closeRate) : null;
+  const c = dealLabel && cycleLabel && numReps ? calc(dealLabel, cycleLabel, numReps) : null;
 
   useEffect(() => {
     if (c) {
@@ -300,10 +287,7 @@ export default function RevenueCalculator() {
     }
   }, [c]);
 
-  const closeRatePct = c ? (c.closeRate * 100) : 0;
-  const closeRatePctLabel = c
-    ? (closeRatePct >= 10 ? closeRatePct.toFixed(0) : closeRatePct.toFixed(1)) + '%'
-    : '';
+  const closeRatePctLabel = `${CLOSE_RATE * 100}%`;
 
   const proofRows = c ? [
     {
@@ -330,7 +314,6 @@ export default function RevenueCalculator() {
 
   function reset() {
     setStep('deal'); setDealLabel(null); setCycleLabel(null);
-    setCloseRateInput(''); setCloseRate(null);
     setTeamInput(''); setNumReps(null);
   }
   // reset retained for potential future use
@@ -416,7 +399,7 @@ export default function RevenueCalculator() {
           {step === 'close' && (
             <motion.div key="close" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator · 3 of 4
+                The revenue leak calculator · 3 of 3
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, lineHeight: 1.15 }}>
                 What is your close rate from connected calls?
@@ -566,6 +549,7 @@ export default function RevenueCalculator() {
                         maxWidth: 600,
                       }}>
                         Admin and research are eating the calls your reps should be making.
+                        At a 3% close rate, every displaced call costs {fmtEur(CLOSE_RATE * c.dealMidpoint)}.
                       </p>
 
                       {/* Editable input chips */}
@@ -574,9 +558,8 @@ export default function RevenueCalculator() {
                         marginBottom: 36,
                       }}>
                         {[
-                          { label: c.dealLabel,                       step: 'deal'  },
-                          { label: c.cycleLabel.toLowerCase() + ' cycle', step: 'cycle' },
-                          { label: closeRatePctLabel + ' close rate', step: 'close' },
+                          { label: c.dealLabel,                              step: 'deal'  },
+                          { label: c.cycleLabel.toLowerCase() + ' cycle',  step: 'cycle' },
                           { label: `${c.numReps} rep${c.numReps > 1 ? 's' : ''}`, step: 'team'  },
                         ].map(chip => (
                           <button
