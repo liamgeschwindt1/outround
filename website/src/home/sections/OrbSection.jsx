@@ -284,7 +284,9 @@ export default function OrbSection() {
       id="orb"
       ref={ref}
       style={{
-        background: 'var(--bg)',
+        background: '#0a0a0b',
+        backgroundImage: 'radial-gradient(circle, rgba(242,241,239,0.07) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -324,6 +326,16 @@ export default function OrbSection() {
 
       {/* Eyebrow */}
       <div style={{ textAlign: 'center', marginBottom: 52, maxWidth: 720 }}>
+        <div style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'clamp(13px, 1.4vw, 15px)',
+          color: 'var(--text-muted)',
+          fontStyle: 'italic',
+          marginBottom: 18,
+          letterSpacing: '0.01em',
+        }}>
+          This is what builds over time. Every call adds to it. It compounds. It&rsquo;s yours.
+        </div>
         <div style={{
           fontFamily: 'var(--font-display)',
           fontSize: 'clamp(28px, 4.4vw, 44px)',

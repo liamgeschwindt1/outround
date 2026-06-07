@@ -323,7 +323,7 @@ export default function RevenueCalculator() {
     <section
       id="calculator"
       style={{
-        background: 'var(--bg-sub)',
+        background: '#111114',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',

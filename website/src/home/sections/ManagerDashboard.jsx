@@ -1,5 +1,5 @@
-import { useRef, useEffect } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { useRef, useEffect, useState } from 'react';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 
 // ─── Radar canvas ─────────────────────────────────────────────────────────────
 
@@ -243,13 +243,22 @@ function RepCard({ rep, delay, isInView }) {
 export default function ManagerDashboard() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // Close modal on Escape
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setModalOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modalOpen]);
 
   return (
     <section
       id="team"
       ref={ref}
       style={{
-        background: 'var(--bg-sub)',
+        background: '#111114',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -288,14 +297,39 @@ export default function ManagerDashboard() {
           </span>
         </motion.div>
 
-        {/* Rep cards — same level */}
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'stretch', marginBottom: 24 }}>
-          {REPS.map((rep, i) => (
-            <RepCard key={rep.name} rep={rep} delay={i * 0.14} isInView={isInView} />
-          ))}
-        </div>
+        {/* See rep profiles button */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          style={{ marginBottom: 40 }}
+        >
+          <button
+            onClick={() => setModalOpen(true)}
+            style={{
+              background: 'var(--bg-card)',
+              border: '0.5px solid var(--border-md)',
+              borderRadius: 999,
+              padding: '12px 24px',
+              fontFamily: 'var(--font-body)',
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              minHeight: 44,
+              transition: 'border-color 0.15s, background 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(242,107,69,0.6)'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-md)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
+          >
+            See rep profiles →
+          </button>
+        </motion.div>
 
-        {/* Callout stat + disclaimer */}
+        {/* Callout stat */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -353,6 +387,83 @@ export default function ManagerDashboard() {
           Get early access
         </motion.button>
       </div>
+
+      {/* Rep profiles modal */}
+      <AnimatePresence>
+        {modalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setModalOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(10,10,11,0.85)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 1000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={{ duration: 0.25, ease: [0.0, 0.0, 0.2, 1] }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)',
+                border: '0.5px solid var(--border-md)',
+                borderRadius: 16,
+                padding: 'clamp(24px, 3vw, 36px)',
+                width: '100%',
+                maxWidth: 860,
+                maxHeight: '90vh',
+                overflowY: 'auto',
+              }}
+            >
+              {/* Modal header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
+                    Rep profiles
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    Sample data — connect Outround to see your real team
+                  </div>
+                </div>
+                <button
+                  onClick={() => setModalOpen(false)}
+                  style={{
+                    background: 'none',
+                    border: '0.5px solid var(--border)',
+                    borderRadius: 6,
+                    color: 'var(--text-muted)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 12,
+                    padding: '6px 12px',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  ✕ Close
+                </button>
+              </div>
+
+              {/* Cards */}
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'stretch' }}>
+                {REPS.map((rep, i) => (
+                  <RepCard key={rep.name} rep={rep} delay={i * 0.1} isInView />
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

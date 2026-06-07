@@ -68,11 +68,57 @@ function IntegrationNetwork({ isInView }) {
 // ─── Step list ────────────────────────────────────────────────────────────────
 
 const HOW_STEPS = [
-  'Every prospect researched before your rep picks up the phone.',
-  'Every call captured, structured, and filed the moment it ends.',
-  'Every CRM field updated automatically, linked to the exact second it was said.',
-  'Every pattern across your pipeline surfaced before you think to ask.',
-  'Every conversation adding to an intelligence layer that gets sharper with every call.',
+  {
+    text: 'Every prospect researched before your rep picks up the phone.',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="2"/>
+        <line x1="9" y1="12" x2="15" y2="12"/>
+        <line x1="9" y1="16" x2="12" y2="16"/>
+      </svg>
+    ),
+  },
+  {
+    text: 'Every call captured, structured, and filed the moment it ends.',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 18.5a6.5 6.5 0 0 0 6.5-6.5V8a6.5 6.5 0 0 0-13 0v4A6.5 6.5 0 0 0 12 18.5z"/>
+        <line x1="12" y1="18.5" x2="12" y2="22"/>
+        <line x1="8" y1="22" x2="16" y2="22"/>
+      </svg>
+    ),
+  },
+  {
+    text: 'Every CRM field updated automatically, linked to the exact second it was said.',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 11A8 8 0 1 0 4.93 17"/>
+        <polyline points="20 4 20 11 13 11"/>
+      </svg>
+    ),
+  },
+  {
+    text: 'Every pattern across your pipeline surfaced before you think to ask.',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+    ),
+  },
+  {
+    text: 'Every conversation adding to an intelligence layer that gets sharper with every call.',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+        <path d="M3 5v4c0 1.656 4.03 3 9 3s9-1.344 9-3V5"/>
+        <path d="M3 9v4c0 1.656 4.03 3 9 3s9-1.344 9-3V9"/>
+        <path d="M3 13v4c0 1.656 4.03 3 9 3s9-1.344 9-3v-4"/>
+      </svg>
+    ),
+  },
 ];
 
 // ─── Format helpers ───────────────────────────────────────────────────────────
@@ -161,14 +207,16 @@ export default function HowOutroundWorks() {
   const dispReps        = numReps          || 10;
   const dispMissedCycle = missedCallsCycle || 480;  // 10 reps × ~48 missed/cycle
   const dispPipeline    = pipeline         || 4600000;
-  const monthlyCost     = dispReps * 149;
+  const monthlyCost     = dispReps * 89;
 
   return (
     <section
       id="how"
       ref={ref}
       style={{
-        background: 'var(--bg)',
+        background: '#0a0a0b',
+        backgroundImage: 'radial-gradient(circle, rgba(242,241,239,0.07) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -209,7 +257,7 @@ export default function HowOutroundWorks() {
           color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65,
           whiteSpace: 'nowrap',
         }}>
-          {'/* connect \u00b7 capture \u00b7 query */'}
+          {'/* brief \u00b7 capture \u00b7 update \u00b7 coordinate \u00b7 query */'}
         </div>
       </div>
 
@@ -349,8 +397,8 @@ export default function HowOutroundWorks() {
             </motion.h2>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {HOW_STEPS.map((line, i) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {HOW_STEPS.map((step, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 8 }}
@@ -358,30 +406,28 @@ export default function HowOutroundWorks() {
                 transition={{ ...EASE, delay: 0.3 + i * 0.08 }}
                 style={{
                   display: 'flex',
+                  alignItems: 'flex-start',
                   gap: 16,
-                  paddingBottom: 14,
+                  padding: '18px 0',
                   borderBottom: i < HOW_STEPS.length - 1 ? '0.5px solid var(--border)' : 'none',
                 }}
               >
                 <span style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10,
                   color: 'var(--coral)',
-                  letterSpacing: '0.08em',
                   flexShrink: 0,
-                  paddingTop: 4,
-                  minWidth: 22,
+                  marginTop: 2,
+                  opacity: 0.9,
                 }}>
-                  {String(i + 1).padStart(2, '0')}
+                  {step.icon}
                 </span>
                 <p style={{
                   fontFamily: 'var(--font-body)',
-                  fontSize: 'clamp(15px, 1.6vw, 17px)',
+                  fontSize: 'clamp(16px, 1.8vw, 19px)',
                   color: 'var(--text-primary)',
-                  lineHeight: 1.6,
+                  lineHeight: 1.65,
                   margin: 0,
                 }}>
-                  {line}
+                  {step.text}
                 </p>
               </motion.div>
             ))}
@@ -485,124 +531,61 @@ export default function HowOutroundWorks() {
             </div>
           )}
 
-          <div
-            className="impact-grid"
+          {/* Post-deployment statements */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ ...EASE, delay: 0.3 }}
             style={{
               display: 'grid',
-              gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
-              gap: 'clamp(16px, 2.5vw, 32px)',
-              alignItems: 'stretch',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: 16,
               marginBottom: 48,
-              position: 'relative',
-              filter: hasUserData ? 'none' : 'blur(3px) saturate(0.7)',
-              opacity: hasUserData ? 1 : 0.55,
-              pointerEvents: hasUserData ? 'auto' : 'none',
-              transition: 'filter 0.4s ease, opacity 0.4s ease',
             }}
           >
-            {/* BEFORE */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ ...EASE, delay: 0.3 }}
-              style={{
-                background: 'var(--bg-card)',
-                border: '0.5px solid var(--border)',
-                borderRadius: 14,
-                padding: 'clamp(24px, 3vw, 36px)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 24,
-              }}
-            >
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 10,
-                color: 'var(--text-muted)', letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-              }}>
-                Without Outround
-              </div>
-              <ImpactStat
-                value="12.8h"
-                label="lost per rep, per week to admin and research"
-                tone="muted"
-              />
-              <ImpactStat
-                value={fmtNum(dispMissedCycle)}
-                label="conversations missed every sales cycle"
-                tone="muted"
-              />
-              <div style={{ height: '0.5px', background: 'var(--border)', margin: '4px 0' }} />
-              <ImpactStat
-                value={fmtEur(dispPipeline)}
-                label="annual pipeline at risk"
-                tone="muted"
-                big
-              />
-            </motion.div>
-
-            {/* Arrow */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ ...EASE, delay: 0.5 }}
-              className="impact-arrow"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: 32,
-              }}
-            >
-              <svg width="32" height="32" viewBox="0 0 24 24" stroke="var(--coral)"
-                strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="13 6 19 12 13 18" />
-              </svg>
-            </motion.div>
-
-            {/* AFTER */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ ...EASE, delay: 0.4 }}
-              style={{
-                background: 'linear-gradient(135deg, rgba(242,107,69,0.09), rgba(75,163,227,0.04))',
-                border: '0.5px solid rgba(242,107,69,0.4)',
-                borderRadius: 14,
-                padding: 'clamp(24px, 3vw, 36px)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 24,
-                position: 'relative',
-              }}
-            >
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 10,
-                color: 'var(--coral)', letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-              }}>
-                With Outround
-              </div>
-              <ImpactStat
-                value="2 min"
-                label="per call to confirm what was captured"
-                tone="primary"
-              />
-              <ImpactStat
-                value="100%"
-                label="of conversations captured, structured, and filed"
-                tone="primary"
-              />
-              <div style={{ height: '0.5px', background: 'rgba(242,107,69,0.2)', margin: '4px 0' }} />
-              <ImpactStat
-                value={fmtEur(dispPipeline)}
-                label="your team now has time to create"
-                tone="coral"
-                big
-              />
-            </motion.div>
-          </div>
+            {[
+              { icon: '⏱', text: 'Brief delivered in Slack 15 minutes before every call.' },
+              { icon: '⚡', text: 'CRM updated automatically before you leave your desk.' },
+              { icon: '→',  text: 'Next steps assigned without you deciding them.' },
+              { icon: '✓',  text: 'Zero calls lost to admin.' },
+            ].map(({ icon, text }, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ ...EASE, delay: 0.35 + i * 0.07 }}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '0.5px solid var(--border)',
+                  borderRadius: 12,
+                  padding: '20px 22px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 14,
+                }}
+              >
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 16,
+                  color: 'var(--coral)',
+                  flexShrink: 0,
+                  lineHeight: 1.4,
+                  marginTop: 1,
+                }}>
+                  {icon}
+                </span>
+                <p style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'clamp(14px, 1.5vw, 16px)',
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.6,
+                  margin: 0,
+                }}>
+                  {text}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
 
           {/* The definitive sentence */}
           <motion.div
@@ -652,7 +635,7 @@ export default function HowOutroundWorks() {
               marginTop: 14,
             }}>
               {hasUserData
-                ? (dispReps + ' seats \u00b7 \u20ac149/seat/month')
+                ? (dispReps + ' seats \u00b7 \u20ac89/seat/month')
                 : '/* numbers appear once you run the calculator above */'}
             </div>
 

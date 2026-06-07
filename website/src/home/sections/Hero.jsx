@@ -185,9 +185,11 @@ export default function Hero() {
             }}
           >
             {[
-              ['Capture', '100% of calls'],
-              ['Update',  'Live to CRM'],
-              ['Query',   'Plain language'],
+              ['Brief',      'Pre-call intel'],
+              ['Capture',    '100% of calls'],
+              ['Update',     'Live to CRM'],
+              ['Coordinate', 'Next steps set'],
+              ['Query',      'Plain language'],
             ].map(([k, v]) => (
               <div key={k}>
                 <div style={{

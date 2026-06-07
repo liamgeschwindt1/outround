@@ -54,7 +54,9 @@ export default function FinalCTA() {
     <section
       id="cta"
       style={{
-        background: 'var(--bg)',
+        background: '#0a0a0b',
+        backgroundImage: 'radial-gradient(circle, rgba(242,241,239,0.07) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -233,7 +235,7 @@ export default function FinalCTA() {
           </div>
           <div style={{ height: '0.5px', background: 'var(--border)' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <RailStat label="First-year price"        value="\u20ac99/seat/mo" />
+            <RailStat label="First-year price"        value="\u20ac49/seat/mo" />
             <RailStat label="Onboarding window"       value="48 hours"          />
             <RailStat label="Direct line to founders" value="Always"            />
           </div>
