@@ -3,39 +3,139 @@ import { motion, useInView } from 'framer-motion';
 
 // ─── Integration network ──────────────────────────────────────────────────────
 
-const NET_W = 520;
-const NET_H = 290;
+const NET_W = 480;
+const NET_H = 280;
 
 const NET_NODES = [
-  { id: 'meets',   src: '/icons/meets.png',   label: 'Meet',    cx: 85,  cy: 46  },
-  { id: 'teams',   src: '/icons/teams.png',   label: 'Teams',   cx: 435, cy: 46  },
-  { id: 'slack',   src: '/icons/slack.png',   label: 'Slack',   cx: 30,  cy: 150 },
-  { id: 'zoom',    src: '/icons/zoom.png',    label: 'Zoom',    cx: 490, cy: 150 },
-  { id: 'hubspot', src: '/icons/hubspot.png', label: 'HubSpot', cx: 85,  cy: 254 },
-  { id: 'apollo',  src: '/icons/apollo.png',  label: 'Apollo',  cx: 435, cy: 254 },
-  { id: 'chat',    src: '/icons/chat.png',    label: 'Chat',    cx: 260, cy: 272 },
+  { id: 'meets',   src: '/icons/meets.png',   label: 'Meet',    cx: 72,  cy: 48  },
+  { id: 'teams',   src: '/icons/teams.png',   label: 'Teams',   cx: 408, cy: 48  },
+  { id: 'slack',   src: '/icons/slack.png',   label: 'Slack',   cx: 20,  cy: 145 },
+  { id: 'zoom',    src: '/icons/zoom.png',    label: 'Zoom',    cx: 460, cy: 145 },
+  { id: 'hubspot', src: '/icons/hubspot.png', label: 'HubSpot', cx: 72,  cy: 242 },
+  { id: 'apollo',  src: '/icons/apollo.png',  label: 'Apollo',  cx: 408, cy: 242 },
+  { id: 'chat',    src: '/icons/chat.png',    label: 'Chat',    cx: 240, cy: 258 },
 ];
 
-const HUB = { cx: 260, cy: 138 };
+const HUB = { cx: 240, cy: 132 };
 
-const EDGES = [
-  { a: 'meets',   b: 'hub',     dur: 2.2, delay: 0.0 },
-  { a: 'teams',   b: 'hub',     dur: 2.8, delay: 0.5 },
-  { a: 'slack',   b: 'hub',     dur: 2.5, delay: 0.9 },
-  { a: 'zoom',    b: 'hub',     dur: 2.1, delay: 0.3 },
-  { a: 'hubspot', b: 'hub',     dur: 2.9, delay: 0.7 },
-  { a: 'apollo',  b: 'hub',     dur: 2.3, delay: 1.1 },
-  { a: 'chat',    b: 'hub',     dur: 2.6, delay: 0.4 },
-  { a: 'meets',   b: 'teams',   dur: 3.6, delay: 1.3 },
-  { a: 'slack',   b: 'hubspot', dur: 3.3, delay: 1.7 },
-  { a: 'zoom',    b: 'apollo',  dur: 3.5, delay: 2.0 },
-  { a: 'hubspot', b: 'chat',    dur: 3.1, delay: 2.3 },
-  { a: 'chat',    b: 'apollo',  dur: 3.0, delay: 2.6 },
-];
+const EDGES = NET_NODES.map((n, i) => ({
+  a: n.id, b: 'hub',
+  dur: 2.0 + (i % 5) * 0.25,
+  delay: i * 0.35,
+}));
 
 function getNetNode(id) {
   if (id === 'hub') return HUB;
   return NET_NODES.find(n => n.id === id);
+}
+
+// Lightweight dot-sphere orb for the hub
+function MiniOrb({ size = 72 }) {
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+    ctx.scale(dpr, dpr);
+
+    const cx = size / 2;
+    const cy = size / 2;
+    const sphereR = size / 2 - 4;
+
+    const DOT_COUNT = 180;
+    const dots = Array.from({ length: DOT_COUNT }, (_, i) => {
+      const golden = Math.PI * (3 - Math.sqrt(5));
+      const y = 1 - (i / (DOT_COUNT - 1)) * 2;
+      const radius = Math.sqrt(1 - y * y);
+      const theta = golden * i;
+      return {
+        nx: Math.cos(theta) * radius,
+        ny: y,
+        nz: Math.sin(theta) * radius,
+        phase: Math.random() * Math.PI * 2,
+        driftSpeed: 0.0003 + Math.random() * 0.0004,
+        driftAmp: 0.008 + Math.random() * 0.01,
+      };
+    });
+
+    let startTime = null;
+    function draw(ts) {
+      if (!startTime) startTime = ts;
+      const elapsed = ts - startTime;
+      ctx.clearRect(0, 0, size, size);
+
+      const gradT = (Math.sin((elapsed / 9000) * Math.PI * 2) + 1) / 2;
+      const cr = Math.round(242 - (242 - 75) * gradT);
+      const cg = Math.round(107 - (107 - 163) * gradT);
+      const cb = Math.round(69  - (69  - 227) * gradT);
+
+      const rotY = elapsed * 0.00022;
+      const rotX = elapsed * 0.00009;
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+      // Subtle pulse ring
+      const pulseT = (Math.sin((elapsed / 3200) * Math.PI * 2) + 1) / 2;
+      const pScale = 1 + 0.04 * pulseT;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(pScale, pScale);
+      ctx.beginPath();
+      ctx.arc(0, 0, sphereR + 5, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.18)`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+
+      const projected = dots.map(d => {
+        const drift = Math.sin(elapsed * d.driftSpeed + d.phase) * d.driftAmp;
+        let nx = d.nx + drift;
+        let ny = d.ny + Math.cos(elapsed * d.driftSpeed + d.phase) * d.driftAmp * 0.5;
+        let nz = d.nz;
+        const len = Math.sqrt(nx*nx + ny*ny + nz*nz);
+        nx /= len; ny /= len; nz /= len;
+        const x1 = nx * cosY + nz * sinY;
+        const z1 = -nx * sinY + nz * cosY;
+        const y2 = ny * cosX - z1 * sinX;
+        const z2 = ny * sinX + z1 * cosX;
+        const sx = cx + x1 * sphereR;
+        const sy = cy + y2 * sphereR;
+        const depth = (z2 + 1) / 2;
+        return { sx, sy, depth };
+      });
+      projected.sort((a, b) => a.depth - b.depth);
+      projected.forEach(({ sx, sy, depth }) => {
+        const opacity = 0.08 + depth * 0.65;
+        const dotSize = 0.5 + depth * 0.9;
+        const mixT = depth;
+        const dr = Math.round(242 * (1 - mixT * 0.3));
+        const dg = Math.round(cg);
+        const db = Math.round(cb + (227 - cb) * mixT * 0.4);
+        ctx.beginPath();
+        ctx.arc(sx, sy, dotSize, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${dr},${dg},${db},${opacity})`;
+        ctx.fill();
+      });
+
+      rafRef.current = requestAnimationFrame(draw);
+    }
+    rafRef.current = requestAnimationFrame(draw);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [size]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ display: 'block', filter: 'drop-shadow(0 0 14px rgba(242,107,69,0.3))' }}
+    />
+  );
 }
 
 function IntegrationNetwork({ isInView }) {
@@ -47,33 +147,22 @@ function IntegrationNetwork({ isInView }) {
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}
         xmlns="http://www.w3.org/2000/svg"
       >
-        <defs>
-          <radialGradient id="netHubGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(242,107,69,0.18)" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-        </defs>
-
-        {/* Soft glow around hub */}
-        <circle cx={HUB.cx} cy={HUB.cy} r={60} fill="url(#netHubGlow)" />
-
-        {/* Edges */}
+        {/* Edges — hub-only spokes */}
         {EDGES.map((edge, i) => {
           const a = getNetNode(edge.a);
           const b = getNetNode(edge.b);
           const pathD = `M ${a.cx} ${a.cy} L ${b.cx} ${b.cy}`;
-          const pathDRev = `M ${b.cx} ${b.cy} L ${a.cx} ${a.cy}`;
           return (
             <g key={i}>
-              <path d={pathD} stroke="rgba(255,255,255,0.07)" strokeWidth="1" fill="none" />
+              <path d={pathD} stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none" />
               {isInView && (
-                <circle r="2.8" fill="rgba(242,107,69,0.9)">
+                <circle r="2.2" fill="rgba(242,107,69,0.85)">
                   <animateMotion dur={`${edge.dur}s`} repeatCount="indefinite" begin={`${edge.delay}s`} path={pathD} />
                 </circle>
               )}
               {isInView && (
-                <circle r="1.6" fill="rgba(75,163,227,0.65)">
-                  <animateMotion dur={`${edge.dur * 1.4}s`} repeatCount="indefinite" begin={`${edge.delay + edge.dur * 0.6}s`} path={pathDRev} />
+                <circle r="1.4" fill="rgba(75,163,227,0.6)">
+                  <animateMotion dur={`${edge.dur * 1.5}s`} repeatCount="indefinite" begin={`${edge.delay + edge.dur * 0.55}s`} path={`M ${b.cx} ${b.cy} L ${a.cx} ${a.cy}`} />
                 </circle>
               )}
             </g>
@@ -81,13 +170,13 @@ function IntegrationNetwork({ isInView }) {
         })}
       </svg>
 
-      {/* Integration icon nodes */}
+      {/* Integration icon nodes — icon only, no label */}
       {NET_NODES.map((node, i) => (
         <motion.div
           key={node.id}
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.75 }}
           animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.4, delay: 0.15 + i * 0.07, ease: [0.0, 0.0, 0.2, 1] }}
+          transition={{ duration: 0.35, delay: 0.2 + i * 0.06, ease: [0.0, 0.0, 0.2, 1] }}
           style={{
             position: 'absolute',
             left: `${(node.cx / NET_W) * 100}%`,
@@ -98,32 +187,21 @@ function IntegrationNetwork({ isInView }) {
         >
           <div style={{
             background: 'var(--bg-card)',
-            border: '0.5px solid rgba(255,255,255,0.1)',
-            borderRadius: 10,
-            padding: '9px 9px 6px',
+            border: '0.5px solid rgba(255,255,255,0.09)',
+            borderRadius: 8,
+            padding: 8,
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: 5,
+            justifyContent: 'center',
           }}>
-            <img src={node.src} alt={node.label} width={26} height={26} style={{ objectFit: 'contain', display: 'block' }} />
-            <span style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9,
-              letterSpacing: '0.08em',
-              color: 'rgba(242,241,239,0.45)',
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-            }}>
-              {node.label}
-            </span>
+            <img src={node.src} alt={node.label} width={22} height={22} style={{ objectFit: 'contain', display: 'block' }} />
           </div>
         </motion.div>
       ))}
 
-      {/* Hub node — Outround */}
+      {/* Hub — dot-sphere orb, no text */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.85 }}
+        initial={{ opacity: 0, scale: 0.8 }}
         animate={isInView ? { opacity: 1, scale: 1 } : {}}
         transition={{ duration: 0.5, delay: 0.1 }}
         style={{
@@ -134,31 +212,7 @@ function IntegrationNetwork({ isInView }) {
           zIndex: 2,
         }}
       >
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(242,107,69,0.15), rgba(75,163,227,0.15))',
-          border: '0.5px solid rgba(242,107,69,0.45)',
-          borderRadius: 12,
-          padding: '11px 18px 9px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 5,
-        }}>
-          <span style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 14,
-            fontWeight: 700,
-            color: 'var(--coral)',
-            letterSpacing: '-0.01em',
-          }}>Outround</span>
-          <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 8,
-            letterSpacing: '0.1em',
-            color: 'rgba(242,241,239,0.35)',
-            textTransform: 'uppercase',
-          }}>intelligence layer</span>
-        </div>
+        <MiniOrb size={72} />
       </motion.div>
     </div>
   );
