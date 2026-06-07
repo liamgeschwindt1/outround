@@ -1,6 +1,7 @@
 import HeroDotGrid from './HeroDotGrid';
 import Hero from './sections/Hero';
 import RevenueCalculator from './sections/RevenueCalculator';
+import DayBar from './sections/DayBar';
 import SolutionSection from './sections/SolutionSection';
 import HowOutroundWorks from './sections/HowOutroundWorks';
 import OrbSection from './sections/OrbSection';
@@ -14,6 +15,7 @@ export default function HomePage() {
         <Hero />
       </section>
       <RevenueCalculator />
+      <DayBar />
       <SolutionSection />
       <HowOutroundWorks />
       <OrbSection />
