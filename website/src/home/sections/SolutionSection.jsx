@@ -7,10 +7,6 @@ function fmtEur(n) {
   return '\u20ac' + Math.round(n);
 }
 
-function fmtNum(n) {
-  return Math.round(n).toLocaleString('en');
-}
-
 const STATEMENTS = [
   { icon: '⏱', text: 'Brief delivered in Slack 15 minutes before every call.' },
   { icon: '⚡', text: 'CRM updated automatically before you leave your desk.' },
@@ -49,10 +45,9 @@ export default function SolutionSection() {
   }, []);
 
   const EASE        = { duration: 0.45, ease: [0.0, 0.0, 0.2, 1] };
-  const hasUserData = pipeline !== null;
-  const dispReps    = numReps   || 10;
-  const dispPipeline = pipeline || 4600000;
-  const monthlyCost  = dispReps * 89;
+  const hasUserData  = pipeline !== null;
+  const dispReps     = numReps   || 10;
+  const dispPipeline = pipeline  || 4600000;
 
   return (
     <section
@@ -236,7 +231,8 @@ export default function SolutionSection() {
           ))}
         </div>
 
-        {/* What this means */}
+        {/* What this means — only shown after calculator is run */}
+        {hasUserData && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -263,29 +259,10 @@ export default function SolutionSection() {
             margin: 0,
             maxWidth: 880,
           }}>
-            {hasUserData ? (
-              <>
-                Outround gives your team{' '}
-                <span style={{ color: 'var(--coral)', fontWeight: 700 }}>{fmtEur(dispPipeline)}</span>
-                {' '}of selling time back every year. For{' '}
-                <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
-                  {'\u20ac' + fmtNum(monthlyCost) + '/month'}
-                </span>
-                .
-              </>
-            ) : (
-              <>The selling time you are losing is the selling time Outround gives back. Run the calculator above to see your figure.</>
-            )}
+            Outround gives your team{' '}
+            <span style={{ color: 'var(--coral)', fontWeight: 700 }}>{fmtEur(dispPipeline)}</span>
+            {' '}of selling time back every year.
           </p>
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 11,
-            color: 'var(--text-muted)', letterSpacing: '0.06em',
-            marginTop: 14,
-          }}>
-            {hasUserData
-              ? (dispReps + ' seats \u00b7 \u20ac89/seat/month')
-              : '/* numbers appear once you run the calculator above */'}
-          </div>
 
           {/* Quality bridge */}
           <div style={{
@@ -314,6 +291,7 @@ export default function SolutionSection() {
             </p>
           </div>
         </motion.div>
+        )}
 
       </div>
     </section>
