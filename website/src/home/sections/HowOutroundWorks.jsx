@@ -3,13 +3,7 @@ import { motion, useInView } from 'framer-motion';
 
 // ─── Integration network ──────────────────────────────────────────────────────
 
-const NET_W = 480;
-const NET_H = 300;
-const CX = 240, CY = 150, R = 118;
-
-// 7 icons evenly spaced at 360/7° intervals, starting from top (-90°)
-// centroid of all positions == (CX, CY) exactly
-const NET_NODES = [
+const ORBIT_ICONS = [
   { id: 'meets',   src: '/icons/meets.png',   label: 'Meet'    },
   { id: 'teams',   src: '/icons/teams.png',   label: 'Teams'   },
   { id: 'zoom',    src: '/icons/zoom.png',    label: 'Zoom'    },
@@ -17,165 +11,55 @@ const NET_NODES = [
   { id: 'chat',    src: '/icons/chat.png',    label: 'Chat'    },
   { id: 'hubspot', src: '/icons/hubspot.png', label: 'HubSpot' },
   { id: 'slack',   src: '/icons/slack.png',   label: 'Slack'   },
-].map((n, i) => {
-  const angle = (-Math.PI / 2) + (2 * Math.PI / 7) * i;
-  return { ...n, cx: Math.round(CX + R * Math.cos(angle)), cy: Math.round(CY + R * Math.sin(angle)) };
-});
+];
 
-// Lightweight dot-sphere orb for the hub
-function MiniOrb({ size = 72 }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
-    ctx.scale(dpr, dpr);
-
-    const cx = size / 2;
-    const cy = size / 2;
-    const sphereR = size / 2 - 4;
-
-    const DOT_COUNT = 180;
-    const dots = Array.from({ length: DOT_COUNT }, (_, i) => {
-      const golden = Math.PI * (3 - Math.sqrt(5));
-      const y = 1 - (i / (DOT_COUNT - 1)) * 2;
-      const radius = Math.sqrt(1 - y * y);
-      const theta = golden * i;
-      return {
-        nx: Math.cos(theta) * radius,
-        ny: y,
-        nz: Math.sin(theta) * radius,
-        phase: Math.random() * Math.PI * 2,
-        driftSpeed: 0.0003 + Math.random() * 0.0004,
-        driftAmp: 0.008 + Math.random() * 0.01,
-      };
-    });
-
-    let startTime = null;
-    function draw(ts) {
-      if (!startTime) startTime = ts;
-      const elapsed = ts - startTime;
-      ctx.clearRect(0, 0, size, size);
-
-      const gradT = (Math.sin((elapsed / 9000) * Math.PI * 2) + 1) / 2;
-      const cr = Math.round(242 - (242 - 75) * gradT);
-      const cg = Math.round(107 - (107 - 163) * gradT);
-      const cb = Math.round(69  - (69  - 227) * gradT);
-
-      const rotY = elapsed * 0.00022;
-      const rotX = elapsed * 0.00009;
-      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
-      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
-
-      // Subtle pulse ring
-      const pulseT = (Math.sin((elapsed / 3200) * Math.PI * 2) + 1) / 2;
-      const pScale = 1 + 0.04 * pulseT;
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.scale(pScale, pScale);
-      ctx.beginPath();
-      ctx.arc(0, 0, sphereR + 5, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.18)`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.restore();
-
-      const projected = dots.map(d => {
-        const drift = Math.sin(elapsed * d.driftSpeed + d.phase) * d.driftAmp;
-        let nx = d.nx + drift;
-        let ny = d.ny + Math.cos(elapsed * d.driftSpeed + d.phase) * d.driftAmp * 0.5;
-        let nz = d.nz;
-        const len = Math.sqrt(nx*nx + ny*ny + nz*nz);
-        nx /= len; ny /= len; nz /= len;
-        const x1 = nx * cosY + nz * sinY;
-        const z1 = -nx * sinY + nz * cosY;
-        const y2 = ny * cosX - z1 * sinX;
-        const z2 = ny * sinX + z1 * cosX;
-        const sx = cx + x1 * sphereR;
-        const sy = cy + y2 * sphereR;
-        const depth = (z2 + 1) / 2;
-        return { sx, sy, depth };
-      });
-      projected.sort((a, b) => a.depth - b.depth);
-      projected.forEach(({ sx, sy, depth }) => {
-        const opacity = 0.08 + depth * 0.65;
-        const dotSize = 0.5 + depth * 0.9;
-        const mixT = depth;
-        const dr = Math.round(242 * (1 - mixT * 0.3));
-        const dg = Math.round(cg);
-        const db = Math.round(cb + (227 - cb) * mixT * 0.4);
-        ctx.beginPath();
-        ctx.arc(sx, sy, dotSize, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${dr},${dg},${db},${opacity})`;
-        ctx.fill();
-      });
-
-      rafRef.current = requestAnimationFrame(draw);
-    }
-    rafRef.current = requestAnimationFrame(draw);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [size]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{ display: 'block', filter: 'drop-shadow(0 0 14px rgba(242,107,69,0.3))' }}
-    />
-  );
-}
+const ORBIT_R = 110; // px, radius of the ring
+const ORBIT_SIZE = (ORBIT_R + 40) * 2; // container fits ring + icon half-size
+const ORBIT_DURATION = 28; // seconds for one full revolution
 
 function IntegrationNetwork({ isInView }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-      <div style={{ position: 'relative', width: NET_W, height: NET_H, maxWidth: '100%' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '24px 0' }}>
+      <div style={{ position: 'relative', width: ORBIT_SIZE, height: ORBIT_SIZE }}>
 
-        {/* Integration icon nodes */}
-        {NET_NODES.map((node, i) => (
-          <motion.div
-            key={node.id}
-            initial={{ opacity: 0, scale: 0.75 }}
-            animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.35, delay: 0.2 + i * 0.06, ease: [0.0, 0.0, 0.2, 1] }}
-            style={{
-              position: 'absolute',
-              left: node.cx,
-              top: node.cy,
-              transform: 'translate(-50%, -50%)',
-              zIndex: 1,
-            }}
-          >
-            <img
-              src={node.src}
-              alt={node.label}
-              width={40}
-              height={40}
-              style={{ objectFit: 'contain', display: 'block', width: 40, height: 40, borderRadius: 10 }}
-            />
-          </motion.div>
-        ))}
-
-        {/* Hub — dot-sphere orb, exact centre of coordinate space */}
+        {/* Rotating ring — each icon placed on the ring, counter-rotated to stay upright */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          animate={isInView ? { rotate: 360 } : { rotate: 0 }}
+          transition={{ duration: ORBIT_DURATION, repeat: Infinity, ease: 'linear' }}
           style={{
             position: 'absolute',
-            left: CX,
-            top: CY,
-            transform: 'translate(-50%, -50%)',
-            zIndex: 2,
+            inset: 0,
           }}
         >
-          <MiniOrb size={110} />
+          {ORBIT_ICONS.map((icon, i) => {
+            const angle = (2 * Math.PI / ORBIT_ICONS.length) * i - Math.PI / 2;
+            const x = ORBIT_SIZE / 2 + ORBIT_R * Math.cos(angle);
+            const y = ORBIT_SIZE / 2 + ORBIT_R * Math.sin(angle);
+            return (
+              <motion.div
+                key={icon.id}
+                animate={isInView ? { rotate: -360 } : { rotate: 0 }}
+                transition={{ duration: ORBIT_DURATION, repeat: Infinity, ease: 'linear' }}
+                style={{
+                  position: 'absolute',
+                  left: x,
+                  top: y,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                <motion.img
+                  src={icon.src}
+                  alt={icon.label}
+                  initial={{ opacity: 0 }}
+                  animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 + i * 0.07 }}
+                  style={{ width: 40, height: 40, objectFit: 'contain', display: 'block', borderRadius: 10 }}
+                />
+              </motion.div>
+            );
+          })}
         </motion.div>
+
       </div>
     </div>
   );
