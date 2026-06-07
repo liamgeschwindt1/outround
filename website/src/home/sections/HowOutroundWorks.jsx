@@ -155,7 +155,7 @@ function IntegrationNetwork({ isInView }) {
             alt={node.label}
             width={36}
             height={36}
-            style={{ objectFit: 'cover', display: 'block', borderRadius: '50%', width: 36, height: 36 }}
+            style={{ objectFit: 'contain', display: 'block', width: 36, height: 36 }}
           />
         </motion.div>
       ))}
@@ -409,12 +409,6 @@ export default function HowOutroundWorks() {
             initial={{ opacity: 0, x: 12 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ ...EASE, delay: 0.25 }}
-            style={{
-              background: 'var(--bg-sub)',
-              border: '0.5px solid var(--border)',
-              borderRadius: 16,
-              padding: 'clamp(20px, 3vw, 36px)',
-            }}
           >
             <IntegrationNetwork isInView={isInView} />
           </motion.div>
