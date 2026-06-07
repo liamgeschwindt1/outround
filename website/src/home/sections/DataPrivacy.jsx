@@ -1,45 +1,6 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 
-// ─── EU Flag ──────────────────────────────────────────────────────────────────
-
-function EUFlag({ size = 64 }) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const starR = size * 0.085;   // star orbit radius
-  const starSize = size * 0.09; // star bounding size
-
-  function star(cx, cy, outer, inner, points = 5) {
-    const pts = [];
-    for (let i = 0; i < points * 2; i++) {
-      const angle = (i * Math.PI) / points - Math.PI / 2;
-      const r = i % 2 === 0 ? outer : inner;
-      pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
-    }
-    return pts.join(' ');
-  }
-
-  const stars = Array.from({ length: 12 }, (_, i) => {
-    const angle = (i / 12) * 2 * Math.PI - Math.PI / 2;
-    const sx = cx + starR * Math.cos(angle);
-    const sy = cy + starR * Math.sin(angle);
-    return { sx, sy };
-  });
-
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={cx} cy={cy} r={size / 2} fill="#003399" />
-      {stars.map(({ sx, sy }, i) => (
-        <polygon
-          key={i}
-          points={star(sx, sy, starSize * 0.28, starSize * 0.12)}
-          fill="#FFD700"
-        />
-      ))}
-    </svg>
-  );
-}
-
 // ─── Orbit visual ─────────────────────────────────────────────────────────────
 
 const ORBIT_ITEMS = [
@@ -125,7 +86,7 @@ function DataOrbit({ isInView }) {
         height: 72,
         boxShadow: '0 0 0 1px rgba(242,107,69,0.3), 0 0 24px rgba(0,51,153,0.4)',
       }}>
-        <EUFlag size={72} />
+        <img src="/icons/eu.webp" alt="EU" style={{ width: 72, height: 72, objectFit: 'cover', display: 'block' }} />
       </div>
 
       {/* Orbiting icon group */}
