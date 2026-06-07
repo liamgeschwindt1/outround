@@ -235,9 +235,7 @@ export default function RevenueCalculator() {
   const [teamError, setTeamError]   = useState('');
   const [numReps, setNumReps]       = useState(null);
   const [showBigNum, setShowBigNum] = useState(false);
-  const [revealedRows, setRevealedRows] = useState(0);
-  const [showCTA, setShowCTA]       = useState(false);
-  const intervalRef  = useRef(null);
+  const [showMethod, setShowMethod] = useState(false);
   const teamInputRef = useRef(null);
   const closeRateInputRef = useRef(null);
 
@@ -273,18 +271,8 @@ export default function RevenueCalculator() {
   useEffect(() => {
     if (step !== 'results') return;
     setShowBigNum(false);
-    setRevealedRows(0);
-    setShowCTA(false);
-    const t0 = setTimeout(() => {
-      setShowBigNum(true);
-      let row = 0;
-      intervalRef.current = setInterval(() => {
-        row++;
-        setRevealedRows(row);
-        if (row >= 6) { clearInterval(intervalRef.current); setTimeout(() => setShowCTA(true), 400); }
-      }, 520);
-    }, 500);
-    return () => { clearTimeout(t0); clearInterval(intervalRef.current); };
+    const t0 = setTimeout(() => setShowBigNum(true), 400);
+    return () => clearTimeout(t0);
   }, [step]);
 
   const c = dealLabel && cycleLabel && numReps && closeRate ? calc(dealLabel, cycleLabel, numReps, closeRate) : null;
@@ -319,34 +307,24 @@ export default function RevenueCalculator() {
 
   const proofRows = c ? [
     {
-      summary: `${CALLS_PER_REP_DAY} calls per rep per day \u00d7 ${DAYS_PER_WEEK} days \u00d7 ${c.cycleWeeks} weeks = ${fmtNum(c.callsPerCycle)} calls per cycle`,
-      working: `${c.numReps} rep${c.numReps > 1 ? 's' : ''} \u00d7 ${CALLS_PER_REP_DAY} \u00d7 ${DAYS_PER_WEEK} \u00d7 ${c.cycleWeeks} = ${fmtNum(c.callsPerCycle)} calls`,
-      source:  'Bridge Group SDR Metrics Report \u2014 standard outbound benchmark of 8 connected calls per rep per day',
-    },
-    {
-      summary: `Full pipeline potential = ${fmtNum(c.callsPerCycle)} calls \u00d7 ${closeRatePctLabel} close rate \u00d7 ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.fullPotential)} per cycle`,
-      working: `${fmtNum(c.callsPerCycle)} \u00d7 ${closeRatePctLabel} \u00d7 ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.fullPotential)}`,
-      source:  null,
-    },
-    {
-      summary: `${POST_CALL_LOG_MIN} min post-call logging + ${PRE_CALL_RESEARCH_MIN} min pre-call research = ${MIN_LOST_PER_CALL} min lost per call`,
-      working: `At ${CALLS_PER_REP_DAY} calls/day that displaces \u2248${DISPLACED_CALLS_PER_REP_WEEK.toFixed(1)} calls per rep per week`,
+      summary: `${POST_CALL_LOG_MIN} min post-call logging + ${PRE_CALL_RESEARCH_MIN} min pre-call research = ${MIN_LOST_PER_CALL} min of admin per call`,
+      working: `At ${CALLS_PER_REP_DAY} calls/day, that displaces \u2248${DISPLACED_CALLS_PER_REP_WEEK.toFixed(1)} calls per rep per week`,
       source:  'Salesforce State of Sales 2025; Forrester Activity Study 2025',
     },
     {
-      summary: `Currently lost = ${fmtNum(c.displacedCallsCycle)} displaced calls \u00d7 ${closeRatePctLabel} \u00d7 ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.lostPipeline)} per cycle`,
-      working: `${DISPLACED_CALLS_PER_REP_WEEK.toFixed(1)} \u00d7 ${c.cycleWeeks} weeks \u00d7 ${c.numReps} rep${c.numReps > 1 ? 's' : ''} = ${fmtNum(c.displacedCallsCycle)} displaced calls`,
+      summary: `${fmtNum(c.displacedCallsCycle)} calls displaced across ${c.numReps} rep${c.numReps > 1 ? 's' : ''} over a ${c.cycleLabel.toLowerCase()} cycle`,
+      working: `${DISPLACED_CALLS_PER_REP_WEEK.toFixed(1)} \u00d7 ${c.cycleWeeks} weeks \u00d7 ${c.numReps} rep${c.numReps > 1 ? 's' : ''} = ${fmtNum(c.displacedCallsCycle)} calls never made`,
       source:  null,
     },
     {
-      summary: `Outround recovers ${Math.round(POST_CALL_RECOVERY * 100)}% of post-call + ${Math.round(PRE_CALL_RECOVERY * 100)}% of pre-call = ${MIN_RECOVERED_PER_CALL} min back per call`,
-      working: `That unlocks ${RECOVERED_CALLS_PER_REP.toFixed(1)} additional calls per rep per day before any discount`,
+      summary: `${fmtEur(c.lostPipeline)} pipeline lost per cycle at ${closeRatePctLabel} close rate and ${fmtEur(c.dealMidpoint)} avg deal`,
+      working: `${fmtNum(c.displacedCallsCycle)} \u00d7 ${closeRatePctLabel} \u00d7 ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.lostPipeline)} per cycle`,
       source:  null,
     },
     {
-      summary: `Conservatively recovered = ${fmtEur(c.recoveredPipeline)} per cycle (after ${Math.round(EFFICIENCY_DISCOUNT * 100)}% efficiency discount)`,
-      working: `(${RECOVERED_CALLS_PER_REP.toFixed(1)} \u00d7 ${EFFICIENCY_DISCOUNT}) \u00d7 ${c.numReps} rep${c.numReps > 1 ? 's' : ''} \u00d7 ${c.cycleWeeks} weeks \u00d7 ${closeRatePctLabel} \u00d7 ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.recoveredPipeline)}`,
-      source:  'We discount recovered time by 40%. Most tools don\u2019t. We\u2019d rather understate it.',
+      summary: `${fmtEur(c.annualLost)} annualised across ${c.cyclesPerYear} cycles per year`,
+      working: `${fmtEur(c.lostPipeline)} \u00d7 ${c.cyclesPerYear} = ${fmtEur(c.annualLost)} per year \u00b7 ${fmtEur(c.annualLost / 12)} per month`,
+      source:  'Bridge Group SDR Metrics Report \u2014 8 connected calls/rep/day benchmark; Belkins B2B Outbound Benchmarks 2024',
     },
   ] : [];
 
@@ -355,8 +333,8 @@ export default function RevenueCalculator() {
     setCloseRateInput(''); setCloseRate(null);
     setTeamInput(''); setNumReps(null);
   }
-
-  const isResults = step === 'results' && c;
+  // reset retained for potential future use
+  void reset;
 
   return (
     <section
@@ -393,16 +371,16 @@ export default function RevenueCalculator() {
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
-          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65,
+          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.55,
           whiteSpace: 'nowrap',
         }}>
-          {'/* live model \u00b7 sources cited */'}
+          {'/* sources cited in methodology */'}
         </div>
       </div>
 
       <div style={{
         width: '100%',
-        maxWidth: isResults ? 1200 : 580,
+        maxWidth: 760,
         transition: 'max-width 0.4s ease',
       }}>
         <AnimatePresence mode="wait">
@@ -539,193 +517,144 @@ export default function RevenueCalculator() {
           {step === 'results' && c && (
             <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
 
-              <div
-                className="calc-results-grid"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)',
-                  gap: 'clamp(40px, 6vw, 88px)',
-                  alignItems: 'start',
-                }}
-              >
-                {/* LEFT — dominant number + outcome + CTA */}
-                <div>
-                  <div style={{
-                    fontFamily: 'var(--font-mono)', fontSize: 11,
-                    color: 'var(--text-muted)', letterSpacing: '0.12em',
-                    textTransform: 'uppercase', marginBottom: 24,
-                  }}>
-                    Your numbers
-                  </div>
+              <div style={{ maxWidth: 760, margin: '0 auto' }}>
+                <AnimatePresence>
+                  {showBigNum && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, ease: [0.0, 0.0, 0.2, 1] }}
+                    >
+                      {/* Tiny label above */}
+                      <div style={{
+                        fontFamily: 'var(--font-mono)', fontSize: 11,
+                        color: 'var(--text-muted)', letterSpacing: '0.14em',
+                        textTransform: 'uppercase', marginBottom: 20,
+                      }}>
+                        What your team is losing
+                      </div>
 
-                  <AnimatePresence>
-                    {showBigNum && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, ease: [0.0, 0.0, 0.2, 1] }}
-                      >
-                        {/* Hero number \u2014 conservatively recovered */}
-                        <div style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: 'clamp(56px, 9vw, 116px)',
-                          fontWeight: 700,
-                          color: 'var(--coral)',
-                          lineHeight: 0.95,
-                          letterSpacing: '-0.04em',
-                          marginBottom: 14,
-                        }}>
-                          <CountingNumber target={c.recoveredPipeline} duration={1400} />
-                        </div>
-                        <div style={{
-                          fontFamily: 'var(--font-mono)', fontSize: 12,
-                          color: 'var(--text-muted)', letterSpacing: '0.1em',
-                          textTransform: 'uppercase', marginBottom: 28,
-                        }}>
-                          Conservatively recovered with Outround \u00b7 per {c.cycleLabel.toLowerCase()} cycle
-                        </div>
+                      {/* Dominant coral number \u2014 monthly */}
+                      <div style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 'clamp(72px, 12vw, 168px)',
+                        fontWeight: 700,
+                        color: 'var(--coral)',
+                        lineHeight: 0.9,
+                        letterSpacing: '-0.045em',
+                        marginBottom: 18,
+                      }}>
+                        <CountingNumber target={c.annualLost / 12} duration={1500} />
+                      </div>
+                      <div style={{
+                        fontFamily: 'var(--font-mono)', fontSize: 12,
+                        color: 'var(--text-muted)', letterSpacing: '0.12em',
+                        textTransform: 'uppercase', marginBottom: 36,
+                      }}>
+                        Every month, in pipeline that is never built
+                      </div>
 
-                        {/* Supporting two numbers */}
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: 18,
-                          marginBottom: 28,
-                          maxWidth: 520,
-                        }}>
-                          <div style={{
-                            background: 'rgba(255,255,255,0.02)',
-                            border: '0.5px solid var(--border)',
-                            borderRadius: 12,
-                            padding: '18px 20px',
-                          }}>
-                            <div style={{
-                              fontFamily: 'var(--font-mono)', fontSize: 10,
-                              color: 'var(--text-muted)', letterSpacing: '0.1em',
-                              textTransform: 'uppercase', marginBottom: 8,
-                            }}>
-                              Full potential
-                            </div>
-                            <div style={{
-                              fontFamily: 'var(--font-display)',
-                              fontSize: 'clamp(22px, 3vw, 32px)',
-                              fontWeight: 700,
-                              color: 'var(--text-primary)',
-                              lineHeight: 1,
-                              letterSpacing: '-0.02em',
-                            }}>
-                              {fmtEur(c.fullPotential)}
-                            </div>
-                          </div>
-                          <div style={{
-                            background: 'rgba(255,255,255,0.02)',
-                            border: '0.5px solid var(--border)',
-                            borderRadius: 12,
-                            padding: '18px 20px',
-                          }}>
-                            <div style={{
-                              fontFamily: 'var(--font-mono)', fontSize: 10,
-                              color: 'var(--text-muted)', letterSpacing: '0.1em',
-                              textTransform: 'uppercase', marginBottom: 8,
-                            }}>
-                              Currently lost
-                            </div>
-                            <div style={{
-                              fontFamily: 'var(--font-display)',
-                              fontSize: 'clamp(22px, 3vw, 32px)',
-                              fontWeight: 700,
-                              color: 'var(--text-primary)',
-                              lineHeight: 1,
-                              letterSpacing: '-0.02em',
-                            }}>
-                              {fmtEur(c.lostPipeline)}
-                            </div>
-                          </div>
-                        </div>
+                      {/* One line of plain English */}
+                      <p style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 'clamp(18px, 2vw, 24px)',
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                        lineHeight: 1.4,
+                        letterSpacing: '-0.012em',
+                        margin: '0 0 48px',
+                        maxWidth: 600,
+                      }}>
+                        Admin and research are eating the calls your reps should be making.
+                      </p>
 
-                        <p style={{
-                          fontFamily: 'var(--font-body)',
-                          fontSize: 13,
-                          color: 'var(--text-muted)',
-                          lineHeight: 1.55,
-                          margin: '0 0 32px',
-                          maxWidth: 520,
-                          fontStyle: 'italic',
-                        }}>
-                          We applied a 40% efficiency discount to recovered time. Most tools don\u2019t. We\u2019d rather understate it.
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      {/* Editable input chips */}
+                      <div style={{
+                        display: 'flex', flexWrap: 'wrap', gap: 8,
+                        marginBottom: 36,
+                      }}>
+                        {[
+                          { label: c.dealLabel,                       step: 'deal'  },
+                          { label: c.cycleLabel.toLowerCase() + ' cycle', step: 'cycle' },
+                          { label: closeRatePctLabel + ' close rate', step: 'close' },
+                          { label: `${c.numReps} rep${c.numReps > 1 ? 's' : ''}`, step: 'team'  },
+                        ].map(chip => (
+                          <button
+                            key={chip.step}
+                            onClick={() => setStep(chip.step)}
+                            style={{
+                              background: 'transparent',
+                              border: '0.5px solid var(--border)',
+                              borderRadius: 999,
+                              padding: '6px 12px',
+                              color: 'var(--text-sub)',
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 11,
+                              letterSpacing: '0.04em',
+                              cursor: 'pointer',
+                              transition: 'border-color 0.15s, color 0.15s',
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.borderColor = 'rgba(242,107,69,0.55)';
+                              e.currentTarget.style.color = 'var(--text-primary)';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.borderColor = 'var(--border)';
+                              e.currentTarget.style.color = 'var(--text-sub)';
+                            }}
+                          >
+                            {chip.label}
+                          </button>
+                        ))}
+                      </div>
 
-                  <AnimatePresence>
-                    {showCTA && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-                      >
-                        <motion.button
-                          whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => { const el = document.getElementById('how'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
-                          style={{
-                            background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
-                            color: '#0a0a0b', fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
-                            padding: '14px 36px', borderRadius: 999, border: 'none', cursor: 'pointer',
-                            boxShadow: '0 0 28px rgba(242,107,69,0.25)', minHeight: 44,
-                            marginBottom: 18, display: 'block',
-                          }}
-                        >
-                          See how Outround recovers this.
-                        </motion.button>
+                      {/* Methodology footnote \u2014 collapsed by default */}
+                      <div style={{ borderTop: '0.5px solid var(--border)', paddingTop: 16 }}>
                         <button
-                          onClick={reset}
+                          onClick={() => setShowMethod(m => !m)}
                           style={{
                             background: 'none', border: 'none', cursor: 'pointer',
-                            fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)',
-                            letterSpacing: '0.06em', padding: 0,
+                            padding: 0,
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            fontFamily: 'var(--font-mono)', fontSize: 11,
+                            color: 'var(--text-muted)', letterSpacing: '0.08em',
                           }}
                         >
-                          Recalculate with different numbers
+                          <span>How we calculated this</span>
+                          <Chevron open={showMethod} />
                         </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
 
-                {/* RIGHT — proof rail */}
-                {revealedRows > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.2 }}
-                    style={{
-                      background: 'rgba(255,255,255,0.015)',
-                      border: '0.5px solid var(--border)',
-                      borderRadius: 14,
-                      padding: 'clamp(20px, 2.5vw, 32px)',
-                    }}
-                  >
-                    <div style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 10,
-                      color: 'var(--text-muted)', letterSpacing: '0.1em',
-                      textTransform: 'uppercase', marginBottom: 14,
-                    }}>
-                      How we get there
-                    </div>
-                    {proofRows.slice(0, revealedRows).map((row, i) => (
-                      <CollapsibleStep key={i} num={i + 1} summary={row.summary} working={row.working} source={row.source} delay={0} />
-                    ))}
-                  </motion.div>
-                )}
+                        <AnimatePresence>
+                          {showMethod && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.25, ease: [0.0, 0.0, 0.2, 1] }}
+                              style={{ overflow: 'hidden' }}
+                            >
+                              <div style={{ paddingTop: 14 }}>
+                                {proofRows.map((row, i) => (
+                                  <CollapsibleStep key={i} num={i + 1} summary={row.summary} working={row.working} source={row.source} delay={0} />
+                                ))}
+                                <div style={{
+                                  fontFamily: 'var(--font-mono)', fontSize: 10,
+                                  color: 'var(--text-muted)', lineHeight: 1.6,
+                                  fontStyle: 'italic', opacity: 0.7,
+                                  paddingTop: 12,
+                                }}>
+                                  Figures shown are pipeline value (deals \u00d7 ACV), not closed revenue. Assumes 8 connected calls per rep per day at the SDR benchmark and a 5-day working week.
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <style>{`
-                @media (max-width: 880px) {
-                  .calc-results-grid { grid-template-columns: 1fr !important; }
-                }
-              `}</style>
             </motion.div>
           )}
 
