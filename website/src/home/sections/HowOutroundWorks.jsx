@@ -18,12 +18,6 @@ const NET_NODES = [
 
 const HUB = { cx: 240, cy: 150 };
 
-const EDGES = NET_NODES.map((n, i) => ({
-  a: n.id, b: 'hub',
-  pulseDur: 2.2 + i * 0.35,
-  pulseDelay: i * 0.28,
-}));
-
 // Lightweight dot-sphere orb for the hub
 function MiniOrb({ size = 72 }) {
   const canvasRef = useRef(null);
@@ -136,39 +130,6 @@ function MiniOrb({ size = 72 }) {
 function IntegrationNetwork({ isInView }) {
   return (
     <div style={{ position: 'relative', width: '100%', aspectRatio: `${NET_W} / ${NET_H}` }}>
-      {/* SVG lines layer */}
-      <svg
-        viewBox={`0 0 ${NET_W} ${NET_H}`}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Edges — pulsing spokes, no travelling dots */}
-        {EDGES.map((edge, i) => {
-          const a = NET_NODES.find(n => n.id === edge.a);
-          const b = HUB;
-          const pathD = `M ${a.cx} ${a.cy} L ${b.cx} ${b.cy}`;
-          return (
-            <path
-              key={i}
-              d={pathD}
-              stroke="rgba(255,255,255,1)"
-              strokeOpacity="0.06"
-              strokeWidth="1"
-              fill="none"
-            >
-              {isInView && (
-                <animate
-                  attributeName="stroke-opacity"
-                  values="0.06;0.22;0.06"
-                  dur={`${edge.pulseDur}s`}
-                  repeatCount="indefinite"
-                  begin={`${edge.pulseDelay}s`}
-                />
-              )}
-            </path>
-          );
-        })}
-      </svg>
 
       {/* Integration icon nodes — bare image, rounded, no card */}
       {NET_NODES.map((node, i) => (
@@ -195,15 +156,15 @@ function IntegrationNetwork({ isInView }) {
         </motion.div>
       ))}
 
-      {/* Hub — dot-sphere orb, no card, no text */}
+      {/* Hub — dot-sphere orb, centred */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={isInView ? { opacity: 1, scale: 1 } : {}}
         transition={{ duration: 0.5, delay: 0.1 }}
         style={{
           position: 'absolute',
-          left: `${(HUB.cx / NET_W) * 100}%`,
-          top: `${(HUB.cy / NET_H) * 100}%`,
+          left: '50%',
+          top: '50%',
           transform: 'translate(-50%, -50%)',
           zIndex: 2,
         }}
