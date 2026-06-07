@@ -265,7 +265,6 @@ export default function RevenueCalculator() {
   const [numReps, setNumReps]       = useState(null);
   const [showBigNum, setShowBigNum] = useState(false);
   const [showMethod, setShowMethod] = useState(false);
-  const [barAnimated,  setBarAnimated]  = useState(false);
   const [showBarStats, setShowBarStats] = useState(false);
 
   function selectDeal(label)  { setDealLabel(label);  setTimeout(() => setStep('cycle'), 280); }
@@ -275,12 +274,10 @@ export default function RevenueCalculator() {
   useEffect(() => {
     if (step !== 'results') return;
     setShowBigNum(false);
-    setBarAnimated(false);
     setShowBarStats(false);
     const t0 = setTimeout(() => setShowBigNum(true),  400);
-    const t1 = setTimeout(() => setBarAnimated(true),  900);
-    const t2 = setTimeout(() => setShowBarStats(true), 2200);
-    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
+    const t1 = setTimeout(() => setShowBarStats(true), 1400);
+    return () => { clearTimeout(t0); clearTimeout(t1); };
   }, [step]);
 
   const c = dealLabel && cycleLabel && numReps ? calc(dealLabel, cycleLabel, numReps) : null;
@@ -445,48 +442,21 @@ export default function RevenueCalculator() {
                       <div style={{
                         fontFamily: 'var(--font-mono)', fontSize: 11,
                         color: 'var(--text-muted)', letterSpacing: '0.14em',
-                        textTransform: 'uppercase', marginBottom: 8,
+                        textTransform: 'uppercase', marginBottom: 20,
                       }}>
                         Where a rep&rsquo;s day goes &middot; {c.numReps} rep{c.numReps !== 1 ? 's' : ''}
                       </div>
 
-                      {/* ── State label ── */}
-                      <div style={{ height: 20, marginBottom: 12 }}>
-                        <AnimatePresence mode="wait">
-                          <motion.div
-                            key={barAnimated ? 'after' : 'before'}
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 4 }}
-                            transition={{ duration: 0.2 }}
-                            style={{
-                              display: 'inline-flex', alignItems: 'center', gap: 6,
-                              fontFamily: 'var(--font-mono)', fontSize: 10,
-                              letterSpacing: '0.12em', textTransform: 'uppercase',
-                              color: barAnimated ? 'var(--coral)' : 'var(--text-muted)',
-                            }}
-                          >
-                            <span style={{
-                              width: 5, height: 5, borderRadius: '50%', display: 'inline-block',
-                              background: barAnimated ? 'var(--coral)' : 'var(--text-muted)',
-                              transition: 'background 0.3s',
-                            }} />
-                            {barAnimated ? 'After Outround' : 'Before Outround'}
-                          </motion.div>
-                        </AnimatePresence>
-                      </div>
-
                       {/* ── Stacked bar ── */}
                       <div style={{ display: 'flex', height: 56, borderRadius: 8, overflow: 'hidden', width: '100%' }}>
-                        {BAR_SEGS.map((seg, i) => (
+                        {BAR_SEGS.filter(s => !s.rec).map((seg, i) => (
                           <div
                             key={seg.id}
                             style={{
-                              flexGrow: BarSegGrow(seg, barAnimated),
+                              flexGrow: seg.hours,
                               flexShrink: 1, flexBasis: 0, minWidth: 0,
                               background: seg.color,
                               borderLeft: i > 0 ? '1.5px solid rgba(0,0,0,0.2)' : 'none',
-                              transition: 'flex-grow 1.1s cubic-bezier(0.16,1,0.3,1)',
                             }}
                           />
                         ))}
@@ -494,20 +464,18 @@ export default function RevenueCalculator() {
 
                       {/* ── Label row ── */}
                       <div style={{ display: 'flex', width: '100%', marginTop: 8, alignItems: 'flex-start' }}>
-                        {BAR_SEGS.map(seg => (
+                        {BAR_SEGS.filter(s => !s.rec).map(seg => (
                           <div
                             key={seg.id}
                             style={{
-                              flexGrow: BarSegGrow(seg, barAnimated),
+                              flexGrow: seg.hours,
                               flexShrink: 1, flexBasis: 0, minWidth: 0,
                               paddingRight: 3, overflow: 'hidden',
-                              opacity: seg.coral ? (barAnimated ? 0 : 1) : (seg.rec ? (barAnimated ? 1 : 0) : 1),
-                              transition: 'flex-grow 1.1s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease',
                             }}
                           >
                             <div style={{
                               fontFamily: 'var(--font-mono)', fontSize: 9,
-                              color: seg.rec ? '#4ba3e3' : (seg.coral ? 'var(--coral)' : 'var(--text-muted)'),
+                              color: seg.coral ? 'var(--coral)' : 'var(--text-muted)',
                               letterSpacing: '0.06em', textTransform: 'uppercase',
                               lineHeight: 1.3, whiteSpace: 'nowrap',
                             }}>
@@ -515,10 +483,9 @@ export default function RevenueCalculator() {
                             </div>
                             <div style={{
                               fontFamily: 'var(--font-body)', fontSize: 11,
-                              color: seg.rec ? 'rgba(75,163,227,0.6)' : 'var(--text-muted)',
-                              whiteSpace: 'nowrap',
+                              color: 'var(--text-muted)', whiteSpace: 'nowrap',
                             }}>
-                              {seg.rec ? `+${BAR_REC_H}h` : `${seg.hours}h`}
+                              {seg.hours}h
                             </div>
                           </div>
                         ))}
@@ -535,66 +502,38 @@ export default function RevenueCalculator() {
                           Selling time
                         </span>
                         <span style={{
-                          fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700,
-                          color: barAnimated ? 'rgba(75,163,227,0.25)' : '#4ba3e3',
-                          transition: 'color 0.5s ease',
+                          fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700,
+                          color: '#4ba3e3',
                         }}>
                           {BEFORE_SELL_PCT}%
-                        </span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)' }}>→</span>
-                        <span style={{
-                          fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700,
-                          color: barAnimated ? '#4ba3e3' : 'rgba(75,163,227,0.15)',
-                          transition: 'color 0.6s ease 0.6s',
-                        }}>
-                          {AFTER_SELL_PCT}%
                         </span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', opacity: 0.6 }}>
                           of the working day
                         </span>
                       </div>
 
-                      {/* ── Two stat cards ── */}
+                      {/* ── Pipeline lost stat ── */}
                       <AnimatePresence>
                         {showBarStats && (
                           <motion.div
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4, ease: [0.0, 0.0, 0.2, 1] }}
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                              gap: 12, marginTop: 20, marginBottom: 36,
-                            }}
+                            style={{ marginTop: 20, marginBottom: 36 }}
                           >
-                            <div style={{
-                              background: 'rgba(75,163,227,0.06)',
-                              border: '0.5px solid rgba(75,163,227,0.18)',
-                              borderRadius: 10, padding: '16px 18px',
-                            }}>
-                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(75,163,227,0.55)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
-                                Recovered per rep / day
-                              </div>
-                              <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 700, color: '#4ba3e3', lineHeight: 1 }}>
-                                {BAR_REC_H}h
-                              </div>
-                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(75,163,227,0.45)', marginTop: 5 }}>
-                                back in selling time
-                              </div>
-                            </div>
                             <div style={{
                               background: 'rgba(242,107,69,0.06)',
                               border: '0.5px solid rgba(242,107,69,0.18)',
                               borderRadius: 10, padding: '16px 18px',
                             }}>
                               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(242,107,69,0.55)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
-                                Pipeline lost &middot; per month
+                                Pipeline never built &middot; per month
                               </div>
-                              <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 700, color: 'var(--coral)', lineHeight: 1 }}>
+                              <div style={{ fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 700, color: 'var(--coral)', lineHeight: 1 }}>
                                 <CountingNumber target={c.annualLost / 12} duration={1200} />
                               </div>
                               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(242,107,69,0.45)', marginTop: 5 }}>
-                                never built &middot; {c.numReps} rep{c.numReps !== 1 ? 's' : ''} &middot; {c.cycleLabel.toLowerCase()}
+                                {c.numReps} rep{c.numReps !== 1 ? 's' : ''} &middot; {c.cycleLabel.toLowerCase()} &middot; 3% close rate
                               </div>
                             </div>
                           </motion.div>
