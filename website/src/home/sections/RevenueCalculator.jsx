@@ -20,9 +20,30 @@ const CYCLE_CONFIG = {
   'Over 180 days':  { weeks: 26, cyclesPerYear: 2  },
 };
 
-const HOURS_LOST_PER_REP_WEEK = 12.8;
-const CALL_DURATION_HRS       = 0.5;
-const CONVERSION_RATE         = 0.05;
+// Benchmark assumptions
+const CALLS_PER_REP_DAY            = 8;     // standard SDR benchmark
+const DAYS_PER_WEEK                = 5;
+const CALL_DURATION_MIN            = 30;
+
+// Time lost per call to admin and research
+const POST_CALL_LOG_MIN            = 45;
+const PRE_CALL_RESEARCH_MIN        = 20;
+const MIN_LOST_PER_CALL            = POST_CALL_LOG_MIN + PRE_CALL_RESEARCH_MIN; // 65
+
+// Outround recovery rates
+const POST_CALL_RECOVERY           = 0.90;  // 90% of post-call logging
+const PRE_CALL_RECOVERY            = 0.70;  // 70% of pre-call research
+const MIN_RECOVERED_PER_CALL       = (POST_CALL_LOG_MIN * POST_CALL_RECOVERY)
+                                   + (PRE_CALL_RESEARCH_MIN * PRE_CALL_RECOVERY); // 54
+
+// Conservative discount on recovered time (not all saved time becomes selling time)
+const EFFICIENCY_DISCOUNT          = 0.40;
+
+// Derived per-rep figures (per the readiness model)
+const DISPLACED_CALLS_PER_REP_WEEK = (MIN_LOST_PER_CALL * CALLS_PER_REP_DAY) / 60 / CALL_DURATION_MIN * 60;
+// = (65 × 8) ÷ 30 = 17.33 displaced calls per rep per week
+const RECOVERED_CALLS_PER_REP      = (MIN_RECOVERED_PER_CALL * CALLS_PER_REP_DAY) / CALL_DURATION_MIN;
+// = (54 × 8) ÷ 30 = 14.4 calls recovered per rep
 
 function fmtEur(n) {
   if (n >= 1000000) return '\u20ac' + (n / 1000000).toFixed(1) + 'M';
@@ -34,19 +55,35 @@ function fmtNum(n) {
   return Math.round(n).toLocaleString('en');
 }
 
-function calc(dealLabel, cycleLabel, numReps) {
+function calc(dealLabel, cycleLabel, numReps, closeRate) {
   const dealMidpoint                         = DEAL_MIDPOINTS[dealLabel];
   const { weeks: cycleWeeks, cyclesPerYear } = CYCLE_CONFIG[cycleLabel];
-  const totalHoursLostWeek                   = HOURS_LOST_PER_REP_WEEK * numReps;
-  const missedCallsWeek                      = totalHoursLostWeek / CALL_DURATION_HRS;
-  const missedCallsCycle                     = missedCallsWeek * cycleWeeks;
-  const pipelinePerCycle                     = missedCallsCycle * CONVERSION_RATE * dealMidpoint;
-  const annualPipeline                       = pipelinePerCycle * cyclesPerYear;
+
+  // Step 1 — Full pipeline potential (if every available calling hour was spent calling)
+  const callsPerCycle      = numReps * CALLS_PER_REP_DAY * DAYS_PER_WEEK * cycleWeeks;
+  const fullPotential      = callsPerCycle * closeRate * dealMidpoint;
+
+  // Step 2 — Pipeline currently lost to admin and research
+  const displacedCallsCycle = DISPLACED_CALLS_PER_REP_WEEK * cycleWeeks * numReps;
+  const lostPipeline        = displacedCallsCycle * closeRate * dealMidpoint;
+
+  // Step 3 — Conservatively recovered with Outround (after 40% efficiency discount)
+  const recoveredCallsCycle = RECOVERED_CALLS_PER_REP * EFFICIENCY_DISCOUNT * numReps * cycleWeeks;
+  const recoveredPipeline   = recoveredCallsCycle * closeRate * dealMidpoint;
+
+  // Annualised versions for downstream sections that key off annual figures
+  const annualLost          = lostPipeline      * cyclesPerYear;
+  const annualRecovered     = recoveredPipeline * cyclesPerYear;
+  const annualPotential     = fullPotential     * cyclesPerYear;
+
   return {
-    dealLabel, cycleLabel, numReps, dealMidpoint,
+    dealLabel, cycleLabel, numReps, dealMidpoint, closeRate,
     cycleWeeks, cyclesPerYear,
-    totalHoursLostWeek, missedCallsWeek,
-    missedCallsCycle, pipelinePerCycle, annualPipeline,
+    callsPerCycle,
+    displacedCallsCycle, displacedCallsPerRepWeek: DISPLACED_CALLS_PER_REP_WEEK,
+    recoveredCallsCycle, recoveredCallsPerRep: RECOVERED_CALLS_PER_REP,
+    fullPotential, lostPipeline, recoveredPipeline,
+    annualPotential, annualLost, annualRecovered,
   };
 }
 
@@ -191,6 +228,9 @@ export default function RevenueCalculator() {
   const [step, setStep]             = useState('deal');
   const [dealLabel, setDealLabel]   = useState(null);
   const [cycleLabel, setCycleLabel] = useState(null);
+  const [closeRateInput, setCloseRateInput] = useState('');
+  const [closeRateError, setCloseRateError] = useState('');
+  const [closeRate, setCloseRate]   = useState(null); // stored as decimal (e.g. 0.05)
   const [teamInput, setTeamInput]   = useState('');
   const [teamError, setTeamError]   = useState('');
   const [numReps, setNumReps]       = useState(null);
@@ -199,9 +239,22 @@ export default function RevenueCalculator() {
   const [showCTA, setShowCTA]       = useState(false);
   const intervalRef  = useRef(null);
   const teamInputRef = useRef(null);
+  const closeRateInputRef = useRef(null);
 
   function selectDeal(label)  { setDealLabel(label);  setTimeout(() => setStep('cycle'), 280); }
-  function selectCycle(label) { setCycleLabel(label); setTimeout(() => setStep('team'),  280); }
+  function selectCycle(label) { setCycleLabel(label); setTimeout(() => setStep('close'),  280); }
+
+  function submitCloseRate(e) {
+    e && e.preventDefault();
+    const raw = parseFloat(closeRateInput);
+    if (isNaN(raw) || raw <= 0 || raw > 100) {
+      setCloseRateError('Enter a close rate between 0.1 and 100.');
+      return;
+    }
+    setCloseRateError('');
+    setCloseRate(raw / 100);
+    setTimeout(() => setStep('team'), 280);
+  }
 
   function submitTeam(e) {
     e && e.preventDefault();
@@ -213,7 +266,8 @@ export default function RevenueCalculator() {
   }
 
   useEffect(() => {
-    if (step === 'team') setTimeout(() => teamInputRef.current && teamInputRef.current.focus(), 350);
+    if (step === 'team')  setTimeout(() => teamInputRef.current  && teamInputRef.current.focus(),  350);
+    if (step === 'close') setTimeout(() => closeRateInputRef.current && closeRateInputRef.current.focus(), 350);
   }, [step]);
 
   useEffect(() => {
@@ -227,61 +281,78 @@ export default function RevenueCalculator() {
       intervalRef.current = setInterval(() => {
         row++;
         setRevealedRows(row);
-        if (row >= 5) { clearInterval(intervalRef.current); setTimeout(() => setShowCTA(true), 400); }
-      }, 620);
+        if (row >= 6) { clearInterval(intervalRef.current); setTimeout(() => setShowCTA(true), 400); }
+      }, 520);
     }, 500);
     return () => { clearTimeout(t0); clearInterval(intervalRef.current); };
   }, [step]);
 
-  const c = dealLabel && cycleLabel && numReps ? calc(dealLabel, cycleLabel, numReps) : null;
+  const c = dealLabel && cycleLabel && numReps && closeRate ? calc(dealLabel, cycleLabel, numReps, closeRate) : null;
 
   useEffect(() => {
     if (c) {
       try {
-        localStorage.setItem('outround_pipeline',     String(c.annualPipeline));
+        // Keep `outround_pipeline` mapped to currently-lost annual pipeline so
+        // downstream sections (HowOutroundWorks) continue to read a meaningful value.
+        localStorage.setItem('outround_pipeline',     String(c.annualLost));
         localStorage.setItem('outround_reps',         String(c.numReps));
-        localStorage.setItem('outround_missed_cycle', String(c.missedCallsCycle));
+        localStorage.setItem('outround_missed_cycle', String(c.displacedCallsCycle));
+        localStorage.setItem('outround_recovered',   String(c.annualRecovered));
+        localStorage.setItem('outround_potential',   String(c.annualPotential));
         window.dispatchEvent(new CustomEvent('outround:calc', {
           detail: {
-            pipeline: c.annualPipeline,
+            pipeline: c.annualLost,
+            potential: c.annualPotential,
+            recovered: c.annualRecovered,
             reps: c.numReps,
-            missedCycle: c.missedCallsCycle,
+            missedCycle: c.displacedCallsCycle,
           },
         }));
       } catch (_) {}
     }
   }, [c]);
 
+  const closeRatePct = c ? (c.closeRate * 100) : 0;
+  const closeRatePctLabel = c
+    ? (closeRatePct >= 10 ? closeRatePct.toFixed(0) : closeRatePct.toFixed(1)) + '%'
+    : '';
+
   const proofRows = c ? [
     {
-      summary: `${HOURS_LOST_PER_REP_WEEK} hours lost per rep, per week on admin and research`,
-      working: `17% CRM admin + 15% prospect research \u00d7 40h working week = ${HOURS_LOST_PER_REP_WEEK}h`,
+      summary: `${CALLS_PER_REP_DAY} calls per rep per day \u00d7 ${DAYS_PER_WEEK} days \u00d7 ${c.cycleWeeks} weeks = ${fmtNum(c.callsPerCycle)} calls per cycle`,
+      working: `${c.numReps} rep${c.numReps > 1 ? 's' : ''} \u00d7 ${CALLS_PER_REP_DAY} \u00d7 ${DAYS_PER_WEEK} \u00d7 ${c.cycleWeeks} = ${fmtNum(c.callsPerCycle)} calls`,
+      source:  'Bridge Group SDR Metrics Report \u2014 standard outbound benchmark of 8 connected calls per rep per day',
+    },
+    {
+      summary: `Full pipeline potential = ${fmtNum(c.callsPerCycle)} calls \u00d7 ${closeRatePctLabel} close rate \u00d7 ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.fullPotential)} per cycle`,
+      working: `${fmtNum(c.callsPerCycle)} \u00d7 ${closeRatePctLabel} \u00d7 ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.fullPotential)}`,
+      source:  null,
+    },
+    {
+      summary: `${POST_CALL_LOG_MIN} min post-call logging + ${PRE_CALL_RESEARCH_MIN} min pre-call research = ${MIN_LOST_PER_CALL} min lost per call`,
+      working: `At ${CALLS_PER_REP_DAY} calls/day that displaces \u2248${DISPLACED_CALLS_PER_REP_WEEK.toFixed(1)} calls per rep per week`,
       source:  'Salesforce State of Sales 2025; Forrester Activity Study 2025',
     },
     {
-      summary: `${fmtNum(c.totalHoursLostWeek)} hours lost per week across ${c.numReps} rep${c.numReps > 1 ? 's' : ''}`,
-      working: `${HOURS_LOST_PER_REP_WEEK}h \u00d7 ${c.numReps} = ${fmtNum(c.totalHoursLostWeek)}h`,
+      summary: `Currently lost = ${fmtNum(c.displacedCallsCycle)} displaced calls \u00d7 ${closeRatePctLabel} \u00d7 ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.lostPipeline)} per cycle`,
+      working: `${DISPLACED_CALLS_PER_REP_WEEK.toFixed(1)} \u00d7 ${c.cycleWeeks} weeks \u00d7 ${c.numReps} rep${c.numReps > 1 ? 's' : ''} = ${fmtNum(c.displacedCallsCycle)} displaced calls`,
       source:  null,
     },
     {
-      summary: `${fmtNum(c.missedCallsWeek)} calls missed per week (30-minute average)`,
-      working: `${fmtNum(c.totalHoursLostWeek)}h \u00f7 0.5h per call = ${fmtNum(c.missedCallsWeek)} calls`,
-      source:  'Chorus / ZoomInfo Sales Benchmark Report \u2014 average B2B sales call 30 minutes',
-    },
-    {
-      summary: `${fmtNum(c.missedCallsCycle)} calls missed per ${c.cycleLabel.toLowerCase()} cycle`,
-      working: `${fmtNum(c.missedCallsWeek)} calls \u00d7 ${c.cycleWeeks} weeks = ${fmtNum(c.missedCallsCycle)} calls`,
+      summary: `Outround recovers ${Math.round(POST_CALL_RECOVERY * 100)}% of post-call + ${Math.round(PRE_CALL_RECOVERY * 100)}% of pre-call = ${MIN_RECOVERED_PER_CALL} min back per call`,
+      working: `That unlocks ${RECOVERED_CALLS_PER_REP.toFixed(1)} additional calls per rep per day before any discount`,
       source:  null,
     },
     {
-      summary: `${fmtEur(c.pipelinePerCycle)} pipeline at risk per cycle at 5% conversion`,
-      working: `${fmtNum(c.missedCallsCycle)} \u00d7 5% \u00d7 ${fmtEur(c.dealMidpoint)} avg deal = ${fmtEur(c.pipelinePerCycle)}`,
-      source:  'Belkins B2B Outbound Benchmarks 2024 \u2014 conservative European outbound conversion rate',
+      summary: `Conservatively recovered = ${fmtEur(c.recoveredPipeline)} per cycle (after ${Math.round(EFFICIENCY_DISCOUNT * 100)}% efficiency discount)`,
+      working: `(${RECOVERED_CALLS_PER_REP.toFixed(1)} \u00d7 ${EFFICIENCY_DISCOUNT}) \u00d7 ${c.numReps} rep${c.numReps > 1 ? 's' : ''} \u00d7 ${c.cycleWeeks} weeks \u00d7 ${closeRatePctLabel} \u00d7 ${fmtEur(c.dealMidpoint)} = ${fmtEur(c.recoveredPipeline)}`,
+      source:  'We discount recovered time by 40%. Most tools don\u2019t. We\u2019d rather understate it.',
     },
   ] : [];
 
   function reset() {
     setStep('deal'); setDealLabel(null); setCycleLabel(null);
+    setCloseRateInput(''); setCloseRate(null);
     setTeamInput(''); setNumReps(null);
   }
 
@@ -339,7 +410,7 @@ export default function RevenueCalculator() {
           {step === 'deal' && (
             <motion.div key="deal" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator \u00b7 1 of 3
+                The revenue leak calculator \u00b7 1 of 4
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 What is your average deal size?
@@ -353,7 +424,7 @@ export default function RevenueCalculator() {
           {step === 'cycle' && (
             <motion.div key="cycle" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator \u00b7 2 of 3
+                The revenue leak calculator \u00b7 2 of 4
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 How long is your average sales cycle?
@@ -364,10 +435,65 @@ export default function RevenueCalculator() {
             </motion.div>
           )}
 
-          {step === 'team' && (
-            <motion.div key="team" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
+          {step === 'close' && (
+            <motion.div key="close" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator \u00b7 3 of 3
+                The revenue leak calculator · 3 of 4
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, lineHeight: 1.15 }}>
+                What is your close rate from connected calls?
+              </h2>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', marginTop: 0, marginBottom: 24, lineHeight: 1.55 }}>
+                The percentage of connected calls that become closed deals. A VP Sales knows this number instantly.
+              </p>
+              <form onSubmit={submitCloseRate} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    ref={closeRateInputRef}
+                    type="number" min="0.1" max="100" step="0.1"
+                    value={closeRateInput}
+                    onChange={e => { setCloseRateInput(e.target.value); setCloseRateError(''); }}
+                    onKeyDown={e => { if (e.key === 'Enter') submitCloseRate(); }}
+                    placeholder="e.g. 3"
+                    style={{
+                      width: '100%', background: 'var(--bg-card)',
+                      border: `0.5px solid ${closeRateError ? '#ef4444' : 'rgba(242,107,69,0.45)'}`,
+                      borderRadius: 10, padding: '16px 56px 16px 20px',
+                      color: 'var(--text-primary)', fontFamily: 'var(--font-display)',
+                      fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 700,
+                      outline: 'none', boxSizing: 'border-box',
+                      MozAppearance: 'textfield', WebkitAppearance: 'none',
+                    }}
+                  />
+                  <span style={{
+                    position: 'absolute', right: 22, top: '50%', transform: 'translateY(-50%)',
+                    fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 4vw, 30px)',
+                    fontWeight: 700, color: 'var(--text-muted)', pointerEvents: 'none',
+                  }}>%</span>
+                </div>
+                {closeRateError && <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#ef4444' }}>{closeRateError}</div>}
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.015, boxShadow: '0 0 36px rgba(242,107,69,0.35)' }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{
+                    background: closeRateInput ? 'linear-gradient(135deg, #f26b45, #4ba3e3)' : 'var(--bg-hover)',
+                    color: closeRateInput ? '#0a0a0b' : 'var(--text-muted)',
+                    fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
+                    padding: '14px 32px', borderRadius: 999, border: 'none',
+                    cursor: closeRateInput ? 'pointer' : 'default', minHeight: 44,
+                    transition: 'background 0.2s, color 0.2s', alignSelf: 'flex-start',
+                  }}
+                >
+                  Next →
+                </motion.button>
+              </form>
+            </motion.div>
+          )}
+
+          {step === 'team' && (            <motion.div key="team" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
+                The revenue leak calculator \u00b7 4 of 4
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 How many salespeople on your team?
@@ -439,37 +565,94 @@ export default function RevenueCalculator() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, ease: [0.0, 0.0, 0.2, 1] }}
                       >
+                        {/* Hero number \u2014 conservatively recovered */}
                         <div style={{
                           fontFamily: 'var(--font-display)',
-                          fontSize: 'clamp(64px, 10vw, 128px)',
+                          fontSize: 'clamp(56px, 9vw, 116px)',
                           fontWeight: 700,
                           color: 'var(--coral)',
                           lineHeight: 0.95,
                           letterSpacing: '-0.04em',
-                          marginBottom: 16,
+                          marginBottom: 14,
                         }}>
-                          <CountingNumber target={c.annualPipeline} duration={1400} />
+                          <CountingNumber target={c.recoveredPipeline} duration={1400} />
                         </div>
                         <div style={{
                           fontFamily: 'var(--font-mono)', fontSize: 12,
                           color: 'var(--text-muted)', letterSpacing: '0.1em',
-                          textTransform: 'uppercase', marginBottom: 36,
+                          textTransform: 'uppercase', marginBottom: 28,
                         }}>
-                          Annual pipeline at risk \u00b7 {c.numReps} rep{c.numReps > 1 ? 's' : ''}
+                          Conservatively recovered with Outround \u00b7 per {c.cycleLabel.toLowerCase()} cycle
+                        </div>
+
+                        {/* Supporting two numbers */}
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: 18,
+                          marginBottom: 28,
+                          maxWidth: 520,
+                        }}>
+                          <div style={{
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '0.5px solid var(--border)',
+                            borderRadius: 12,
+                            padding: '18px 20px',
+                          }}>
+                            <div style={{
+                              fontFamily: 'var(--font-mono)', fontSize: 10,
+                              color: 'var(--text-muted)', letterSpacing: '0.1em',
+                              textTransform: 'uppercase', marginBottom: 8,
+                            }}>
+                              Full potential
+                            </div>
+                            <div style={{
+                              fontFamily: 'var(--font-display)',
+                              fontSize: 'clamp(22px, 3vw, 32px)',
+                              fontWeight: 700,
+                              color: 'var(--text-primary)',
+                              lineHeight: 1,
+                              letterSpacing: '-0.02em',
+                            }}>
+                              {fmtEur(c.fullPotential)}
+                            </div>
+                          </div>
+                          <div style={{
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '0.5px solid var(--border)',
+                            borderRadius: 12,
+                            padding: '18px 20px',
+                          }}>
+                            <div style={{
+                              fontFamily: 'var(--font-mono)', fontSize: 10,
+                              color: 'var(--text-muted)', letterSpacing: '0.1em',
+                              textTransform: 'uppercase', marginBottom: 8,
+                            }}>
+                              Currently lost
+                            </div>
+                            <div style={{
+                              fontFamily: 'var(--font-display)',
+                              fontSize: 'clamp(22px, 3vw, 32px)',
+                              fontWeight: 700,
+                              color: 'var(--text-primary)',
+                              lineHeight: 1,
+                              letterSpacing: '-0.02em',
+                            }}>
+                              {fmtEur(c.lostPipeline)}
+                            </div>
+                          </div>
                         </div>
 
                         <p style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: 'clamp(18px, 2.2vw, 26px)',
-                          fontWeight: 500,
-                          color: 'var(--text-primary)',
-                          lineHeight: 1.4,
-                          letterSpacing: '-0.015em',
-                          margin: '0 0 40px',
-                          maxWidth: 480,
+                          fontFamily: 'var(--font-body)',
+                          fontSize: 13,
+                          color: 'var(--text-muted)',
+                          lineHeight: 1.55,
+                          margin: '0 0 32px',
+                          maxWidth: 520,
+                          fontStyle: 'italic',
                         }}>
-                          That is the revenue your team is losing every year to admin and research time that Outround eliminates in{' '}
-                          <span style={{ color: 'var(--coral)' }}>2 minutes</span>.
+                          We applied a 40% efficiency discount to recovered time. Most tools don\u2019t. We\u2019d rather understate it.
                         </p>
                       </motion.div>
                     )}
