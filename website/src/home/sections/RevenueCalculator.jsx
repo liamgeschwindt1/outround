@@ -59,7 +59,6 @@ const RECOVERED_CALLS_PER_REP      = (MIN_RECOVERED_PER_CALL * CALLS_PER_REP_DAY
 
 const BAR_SEGS = [
   { id: 'selling',   label: 'Selling',    hours: 2.3,  coral: false, rec: false, color: '#4ba3e3' },
-  { id: 'recovered', label: 'Recovered',  hours: 0,    coral: false, rec: true,  color: 'rgba(75,163,227,0.5)' },
   { id: 'crm',       label: 'CRM',        hours: 1.45, coral: true,  rec: false, color: '#f26b45' },
   { id: 'research',  label: 'Research',   hours: 1.3,  coral: true,  rec: false, color: '#e85c38' },
   { id: 'followup',  label: 'Follow-up',  hours: 0.8,  coral: true,  rec: false, color: '#d44c2e' },
@@ -73,8 +72,8 @@ const BEFORE_SELL_PCT    = Math.round(2.3 / 8 * 100);                           
 const AFTER_SELL_PCT     = Math.round((2.3 + BAR_REC_H) / 8 * 100);                         // 64
 
 function BarSegGrow(seg, animated) {
-  if (seg.rec)   return animated ? BAR_REC_H           : 0.0001;
-  if (seg.coral) return animated ? seg.hours * BAR_SHRINK : seg.hours;
+  if (seg.id === 'selling') return animated ? seg.hours + BAR_REC_H : seg.hours;
+  if (seg.coral)            return animated ? seg.hours * BAR_SHRINK : seg.hours;
   return seg.hours;
 }
 
@@ -509,17 +508,15 @@ export default function RevenueCalculator() {
                               flexGrow: BarSegGrow(seg, barTriggered),
                               flexShrink: 1, flexBasis: 0, minWidth: 0,
                               paddingRight: 3, overflow: 'hidden',
-                              opacity: seg.coral ? (barTriggered ? 0 : 1) : (seg.rec ? (barTriggered ? 1 : 0) : 1),
+                              opacity: seg.coral ? (barTriggered ? 0 : 1) : 1,
                               transition: seg.coral
                                 ? 'flex-grow 0.6s ease-out, opacity 0.2s ease'
-                                : seg.rec
-                                  ? 'flex-grow 0.5s ease-in-out 0.3s, opacity 0.25s ease 0.5s'
-                                  : 'flex-grow 0.5s ease-in-out 0.3s',
+                                : 'flex-grow 0.5s ease-in-out 0.3s',
                             }}
                           >
                             <div style={{
                               fontFamily: 'var(--font-mono)', fontSize: 9,
-                              color: seg.rec ? '#4ba3e3' : (seg.coral ? 'var(--coral)' : 'var(--text-muted)'),
+                              color: seg.coral ? 'var(--coral)' : 'var(--text-muted)',
                               letterSpacing: '0.06em', textTransform: 'uppercase',
                               lineHeight: 1.3, whiteSpace: 'nowrap',
                             }}>
@@ -527,15 +524,13 @@ export default function RevenueCalculator() {
                             </div>
                             <div style={{
                               fontFamily: 'var(--font-body)', fontSize: 11,
-                              color: seg.rec ? 'rgba(75,163,227,0.6)' : (seg.id === 'selling' && barTriggered ? '#4ba3e3' : 'var(--text-muted)'),
+                              color: seg.id === 'selling' && barTriggered ? '#4ba3e3' : 'var(--text-muted)',
                               whiteSpace: 'nowrap',
                               transition: 'color 0.3s ease',
                             }}>
                               {seg.id === 'selling' && barTriggered
                                 ? `2.3h \u2192 ${(2.3 + BAR_REC_H).toFixed(1)}h`
-                                : seg.rec
-                                  ? `+${BAR_REC_H}h`
-                                  : `${seg.hours}h`}
+                                : `${seg.hours}h`}
                             </div>
                           </div>
                         ))}
@@ -698,20 +693,21 @@ export default function RevenueCalculator() {
                         <div style={{ marginBottom: 20 }}>
                           {!barTriggered ? (
                             <motion.button
-                              whileHover={{ scale: 1.015, boxShadow: '0 0 32px rgba(242,107,69,0.35)' }}
+                              whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
                               whileTap={{ scale: 0.98 }}
                               onClick={triggerBar}
                               style={{
                                 width: '100%',
-                                background: 'linear-gradient(135deg, #f26b45, #e85c38)',
+                                background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
                                 color: '#0a0a0b',
                                 fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
-                                padding: '14px 24px', borderRadius: 10, border: 'none',
+                                padding: '14px 24px', borderRadius: 999, border: 'none',
                                 cursor: 'pointer', minHeight: 48,
                                 letterSpacing: '-0.01em',
+                                boxShadow: '0 0 28px rgba(242,107,69,0.25)',
                               }}
                             >
-                              Remove the drag
+                              Upgrade your pipeline
                             </motion.button>
                           ) : (
                             <button
