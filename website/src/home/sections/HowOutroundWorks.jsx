@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 
 // ─── Integration network ──────────────────────────────────────────────────────
@@ -121,102 +121,20 @@ const HOW_STEPS = [
   },
 ];
 
-// ─── Format helpers ───────────────────────────────────────────────────────────
-
-function fmtEur(n) {
-  if (n >= 1000000) return '\u20ac' + (n / 1000000).toFixed(1) + 'M';
-  if (n >= 1000)    return '\u20ac' + Math.round(n / 1000) + 'k';
-  return '\u20ac' + Math.round(n);
-}
-
-function fmtNum(n) {
-  return Math.round(n).toLocaleString('en');
-}
-
-// ─── Impact stat ──────────────────────────────────────────────────────────────
-
-function ImpactStat({ value, label, tone = 'muted', big = false }) {
-  const color = tone === 'coral'
-    ? 'var(--coral)'
-    : tone === 'primary'
-      ? 'var(--text-primary)'
-      : 'var(--text-sub)';
-  return (
-    <div>
-      <div style={{
-        fontFamily: 'var(--font-display)',
-        fontSize: big ? 'clamp(40px, 5.5vw, 58px)' : 'clamp(22px, 2.8vw, 28px)',
-        fontWeight: 700,
-        lineHeight: 1,
-        letterSpacing: '-0.025em',
-        color,
-        marginBottom: 8,
-      }}>
-        {value}
-      </div>
-      <div style={{
-        fontFamily: 'var(--font-body)',
-        fontSize: 13,
-        color: 'var(--text-muted)',
-        lineHeight: 1.5,
-      }}>
-        {label}
-      </div>
-    </div>
-  );
-}
-
 // ─── Section ──────────────────────────────────────────────────────────────────
 
 export default function HowOutroundWorks() {
   const ref      = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
-  const [pipeline, setPipeline] = useState(null);
-  const [numReps,  setNumReps]  = useState(null);
-  const [missedCallsCycle, setMissedCallsCycle] = useState(null);
 
-  useEffect(() => {
-    const read = () => {
-      try {
-        const v = localStorage.getItem('outround_pipeline');
-        if (v) setPipeline(parseFloat(v));
-        const r = localStorage.getItem('outround_reps');
-        if (r) setNumReps(parseInt(r, 10));
-        const m = localStorage.getItem('outround_missed_cycle');
-        if (m) setMissedCallsCycle(parseFloat(m));
-      } catch (_) {}
-    };
-    read();
-    const onCalc = (e) => {
-      if (!e.detail) return read();
-      setPipeline(e.detail.pipeline);
-      setNumReps(e.detail.reps);
-      setMissedCallsCycle(e.detail.missedCycle);
-    };
-    window.addEventListener('outround:calc', onCalc);
-    window.addEventListener('storage', read);
-    return () => {
-      window.removeEventListener('outround:calc', onCalc);
-      window.removeEventListener('storage', read);
-    };
-  }, []);
-
-  const EASE        = { duration: 0.45, ease: [0.0, 0.0, 0.2, 1] };
-  const hasUserData = pipeline !== null;
-  // Defaults model a 10-rep team if the calculator has not been run yet
-  const dispReps        = numReps          || 10;
-  const dispMissedCycle = missedCallsCycle || 480;  // 10 reps × ~48 missed/cycle
-  const dispPipeline    = pipeline         || 4600000;
-  const monthlyCost     = dispReps * 89;
+  const EASE = { duration: 0.45, ease: [0.0, 0.0, 0.2, 1] };
 
   return (
     <section
       id="how"
       ref={ref}
       style={{
-        background: '#0a0a0b',
-        backgroundImage: 'radial-gradient(circle, rgba(242,241,239,0.07) 1px, transparent 1px)',
-        backgroundSize: '28px 28px',
+        background: '#111114',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -434,247 +352,11 @@ export default function HowOutroundWorks() {
           </div>
         </div>
 
-        {/* ─────────────────────────────────────────────────────────────────── */}
-        {/* IMPACT — before / after */}
-        {/* ─────────────────────────────────────────────────────────────────── */}
-        <div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : {}}
-            transition={EASE}
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              color: 'var(--coral)',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              marginBottom: 18,
-              textAlign: 'left',
-            }}
-          >
-            Impact
-          </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: 10 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ ...EASE, delay: 0.1 }}
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(28px, 4vw, 44px)',
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              lineHeight: 1.1,
-              letterSpacing: '-0.025em',
-              margin: '0 0 16px',
-              maxWidth: 640,
-            }}
-          >
-            30 minutes of admin per call. Down to 2.
-          </motion.h2>
-
-          {/* Calculator gate */}
-          {!hasUserData && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ ...EASE, delay: 0.2 }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                flexWrap: 'wrap',
-                padding: '14px 18px',
-                marginBottom: 36,
-                background: 'rgba(242,107,69,0.06)',
-                border: '0.5px solid rgba(242,107,69,0.35)',
-                borderRadius: 10,
-                maxWidth: 720,
-              }}
-            >
-              <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: 10,
-                color: 'var(--coral)', letterSpacing: '0.14em',
-                textTransform: 'uppercase', whiteSpace: 'nowrap',
-              }}>
-                Your numbers first
-              </span>
-              <span style={{
-                fontFamily: 'var(--font-body)', fontSize: 14,
-                color: 'var(--text-sub)', lineHeight: 1.5, flex: 1, minWidth: 220,
-              }}>
-                Run the calculator above to see this section calibrated to your team.
-              </span>
-              <button
-                onClick={() => {
-                  const el = document.getElementById('calculator');
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  else window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                style={{
-                  background: 'var(--coral)', color: '#0a0a0b',
-                  fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 700,
-                  padding: '8px 16px', borderRadius: 999, border: 'none',
-                  cursor: 'pointer', whiteSpace: 'nowrap', minHeight: 36,
-                }}
-              >
-                Run calculator ↑
-              </button>
-            </motion.div>
-          )}
-          {hasUserData && (
-            <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: 10,
-              color: 'var(--coral)', letterSpacing: '0.14em',
-              textTransform: 'uppercase', marginBottom: 36, opacity: 0.85,
-            }}>
-              {'\u2713 Calibrated to your ' + dispReps + '-rep team'}
-            </div>
-          )}
-
-          {/* Post-deployment statements */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ ...EASE, delay: 0.3 }}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: 16,
-              marginBottom: 48,
-            }}
-          >
-            {[
-              { icon: '⏱', text: 'Brief delivered in Slack 15 minutes before every call.' },
-              { icon: '⚡', text: 'CRM updated automatically before you leave your desk.' },
-              { icon: '→',  text: 'Next steps assigned without you deciding them.' },
-              { icon: '✓',  text: 'Zero calls lost to admin.' },
-            ].map(({ icon, text }, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ ...EASE, delay: 0.35 + i * 0.07 }}
-                style={{
-                  background: 'var(--bg-card)',
-                  border: '0.5px solid var(--border)',
-                  borderRadius: 12,
-                  padding: '20px 22px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 14,
-                }}
-              >
-                <span style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 16,
-                  color: 'var(--coral)',
-                  flexShrink: 0,
-                  lineHeight: 1.4,
-                  marginTop: 1,
-                }}>
-                  {icon}
-                </span>
-                <p style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 'clamp(14px, 1.5vw, 16px)',
-                  color: 'var(--text-primary)',
-                  lineHeight: 1.6,
-                  margin: 0,
-                }}>
-                  {text}
-                </p>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* The definitive sentence */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ ...EASE, delay: 0.7 }}
-            style={{
-              borderTop: '0.5px solid var(--border)',
-              paddingTop: 36,
-              marginTop: 24,
-            }}
-          >
-            <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: 11,
-              color: 'var(--text-muted)', letterSpacing: '0.14em',
-              textTransform: 'uppercase', marginBottom: 18,
-            }}>
-              What this means
-            </div>
-            <p style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(22px, 2.8vw, 34px)',
-              fontWeight: 500,
-              color: 'var(--text-primary)',
-              lineHeight: 1.35,
-              letterSpacing: '-0.02em',
-              margin: 0,
-              maxWidth: 880,
-            }}>
-              {hasUserData ? (
-                <>
-                  Outround gives your team{' '}
-                  <span style={{ color: 'var(--coral)', fontWeight: 700 }}>{fmtEur(dispPipeline)}</span>
-                  {' '}of selling time back every year. For{' '}
-                  <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
-                    {'\u20ac' + fmtNum(monthlyCost) + '/month'}
-                  </span>
-                  .
-                </>
-              ) : (
-                <>The selling time you are losing is the selling time Outround gives back. Run the calculator above to see your figure.</>
-              )}
-            </p>
-            <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: 11,
-              color: 'var(--text-muted)', letterSpacing: '0.06em',
-              marginTop: 14,
-            }}>
-              {hasUserData
-                ? (dispReps + ' seats \u00b7 \u20ac89/seat/month')
-                : '/* numbers appear once you run the calculator above */'}
-            </div>
-
-            {/* Quality bridge */}
-            <div style={{
-              marginTop: 40,
-              paddingTop: 28,
-              borderTop: '0.5px solid var(--border)',
-              maxWidth: 760,
-            }}>
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 10,
-                color: 'var(--text-muted)', letterSpacing: '0.12em',
-                textTransform: 'uppercase', marginBottom: 14,
-                opacity: 0.75,
-              }}>
-                {'/* what this number does not capture */'}
-              </div>
-              <p style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: 'clamp(14px, 1.5vw, 16px)',
-                color: 'var(--text-sub)',
-                lineHeight: 1.7,
-                margin: 0,
-                fontStyle: 'italic',
-              }}>
-                This calculation only accounts for time. It says nothing about what happens when your reps walk into every call better prepared, and your pipeline intelligence compounds with every conversation. We will let your numbers prove that part.
-              </p>
-            </div>
-          </motion.div>
-        </div>
-
       </div>
 
       <style>{`
         @media (max-width: 880px) {
           .how-what-grid, .how-steps-grid { grid-template-columns: 1fr !important; }
-          .impact-grid { grid-template-columns: 1fr !important; }
-          .impact-arrow { transform: rotate(90deg); margin: 4px auto; }
         }
       `}</style>
     </section>
