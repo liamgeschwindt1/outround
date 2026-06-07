@@ -21,7 +21,7 @@ const CYCLE_CONFIG = {
 };
 
 const TEAM_OPTIONS = [
-  { label: '1 rep',    value: 1  },
+  { label: '1 rep',    value: 3  },
   { label: '2 to 5',  value: 3  },
   { label: '6 to 15', value: 10 },
   { label: '16+',     value: 20 },
@@ -460,321 +460,307 @@ export default function RevenueCalculator() {
                         Where a rep&rsquo;s day goes &middot; {c.numReps} rep{c.numReps !== 1 ? 's' : ''}
                       </div>
 
-                      {/* ── Two-column: vertical bar left, stats right ── */}
-                      <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-
-                        {/* LEFT: vertical bar + inline labels */}
-                        <div style={{ flexShrink: 0, width: 164 }}>
-                          <div style={{ display: 'flex', gap: 10, height: 280 }}>
-                            {/* Bar column */}
-                            <div style={{ display: 'flex', flexDirection: 'column', width: 28, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
-                              {BAR_SEGS.map((seg, i) => (
-                                <div
-                                  key={seg.id}
-                                  style={{
-                                    position: 'relative',
-                                    flexGrow: BarSegGrow(seg, barTriggered),
-                                    flexShrink: 1, flexBasis: 0,
-                                    background: seg.color,
-                                    borderTop: i > 0 ? '1.5px solid rgba(0,0,0,0.2)' : 'none',
-                                    transition: seg.coral
-                                      ? 'flex-grow 0.6s ease-out'
-                                      : seg.id === 'selling'
-                                        ? 'flex-grow 0.5s ease-in-out 0.3s'
-                                        : 'none',
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  {seg.coral && (
-                                    <div style={{
-                                      position: 'absolute', inset: 0,
-                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                      fontFamily: 'var(--font-mono)', fontSize: 7,
-                                      color: 'rgba(255,255,255,0.5)',
-                                      opacity: barTriggered ? 1 : 0,
-                                      transition: 'opacity 0.3s ease 0.7s',
-                                      writingMode: 'vertical-rl',
-                                    }}>
-                                      {barTriggered ? '\u201380%' : ''}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                            {/* Labels column */}
-                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                              {BAR_SEGS.map(seg => (
-                                <div
-                                  key={seg.id}
-                                  style={{
-                                    flexGrow: BarSegGrow(seg, barTriggered),
-                                    flexShrink: 1, flexBasis: 0, minHeight: 0,
-                                    display: 'flex', flexDirection: 'column', justifyContent: 'center',
-                                    overflow: 'hidden',
-                                    opacity: seg.coral ? (barTriggered ? 0 : 1) : 1,
-                                    transition: seg.coral
-                                      ? 'flex-grow 0.6s ease-out, opacity 0.2s ease'
-                                      : 'flex-grow 0.5s ease-in-out 0.3s',
-                                  }}
-                                >
-                                  <div style={{
-                                    fontFamily: 'var(--font-mono)', fontSize: 8,
-                                    color: seg.coral ? 'var(--coral)' : 'var(--text-muted)',
-                                    letterSpacing: '0.06em', textTransform: 'uppercase',
-                                    lineHeight: 1.2, whiteSpace: 'nowrap',
-                                  }}>
-                                    {seg.label}
-                                  </div>
-                                  <div style={{
-                                    fontFamily: 'var(--font-body)', fontSize: 10,
-                                    color: seg.id === 'selling' && barTriggered ? '#4ba3e3' : 'var(--text-muted)',
-                                    whiteSpace: 'nowrap',
-                                    transition: 'color 0.3s ease',
-                                  }}>
-                                    {seg.id === 'selling' && barTriggered
-                                      ? `2.3h \u2192 ${(2.3 + BAR_REC_H).toFixed(1)}h`
-                                      : `${seg.hours}h`}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* RIGHT: stats + controls */}
-                        <div style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 0 }}>
-
-                          {/* Three stats */}
-                          <AnimatePresence>
-                            {showBarStats && (
-                              <motion.div
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.4, ease: [0.0, 0.0, 0.2, 1] }}
-                                style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}
-                              >
-                                {/* Selling time */}
-                                <div style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                  padding: '12px 16px',
-                                  background: 'rgba(255,255,255,0.03)',
-                                  border: '0.5px solid var(--border)',
-                                  borderRadius: 10,
-                                }}>
-                                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                                    Selling time
-                                  </span>
-                                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                                    <span style={{
-                                      fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700,
-                                      color: barTriggered ? 'rgba(75,163,227,0.3)' : '#4ba3e3',
-                                      transition: 'color 0.5s ease',
-                                    }}>
-                                      {BEFORE_SELL_PCT}%
-                                    </span>
-                                    {barTriggered && (
-                                      <motion.span
-                                        initial={{ opacity: 0, x: -4 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ duration: 0.2 }}
-                                        style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)' }}
-                                      >
-                                        →
-                                      </motion.span>
-                                    )}
-                                    {barTriggered && (
-                                      <motion.span
-                                        initial={{ opacity: 0, x: -4 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ duration: 0.2, delay: 0.05 }}
-                                        style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: '#4ba3e3' }}
-                                      >
-                                        {AFTER_SELL_PCT}%
-                                      </motion.span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Pipeline never built */}
-                                <div style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                  padding: '12px 16px',
-                                  background: 'rgba(242,107,69,0.06)',
-                                  border: '0.5px solid rgba(242,107,69,0.18)',
-                                  borderRadius: 10,
-                                }}>
-                                  <div>
-                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(242,107,69,0.55)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>
-                                      Pipeline never built &middot; per month
-                                    </div>
-                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(242,107,69,0.4)' }}>
-                                      {c.numReps} rep{c.numReps !== 1 ? 's' : ''} &middot; {c.cycleLabel.toLowerCase()} &middot; 3% close
-                                    </div>
-                                  </div>
-                                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: 'var(--coral)', lineHeight: 1, textAlign: 'right' }}>
-                                    <CountingNumber
-                                      key={barTriggered ? 'lost-after' : 'lost-before'}
-                                      target={barTriggered ? (c.annualLost - c.annualRecovered) / 12 : c.annualLost / 12}
-                                      from={barTriggered ? c.annualLost / 12 : 0}
-                                      duration={barTriggered ? 900 : 1200}
-                                    />
-                                  </div>
-                                </div>
-
-                                {/* Recovered */}
-                                <AnimatePresence>
-                                  {showAfterStats && (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 8 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      exit={{ opacity: 0 }}
-                                      transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1] }}
-                                      style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                        padding: '12px 16px',
-                                        background: 'rgba(34,197,94,0.06)',
-                                        border: '0.5px solid rgba(34,197,94,0.22)',
-                                        borderRadius: 10,
-                                      }}
-                                    >
-                                      <div>
-                                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(34,197,94,0.65)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>
-                                          Pipeline recovered &middot; per month
-                                        </div>
-                                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(34,197,94,0.4)' }}>
-                                          with Outround &middot; your numbers
-                                        </div>
-                                      </div>
-                                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: '#22c55e', lineHeight: 1 }}>
-                                        <CountingNumber key="recovered" target={c.annualRecovered / 12} from={0} duration={900} />
-                                      </div>
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-                              </motion.div>
+                      {/* ── Horizontal bar ── */}
+                      <div style={{ display: 'flex', height: 56, borderRadius: 8, overflow: 'hidden', width: '100%' }}>
+                        {BAR_SEGS.map((seg, i) => (
+                          <div
+                            key={seg.id}
+                            style={{
+                              position: 'relative',
+                              flexGrow: BarSegGrow(seg, barTriggered),
+                              flexShrink: 1, flexBasis: 0, minWidth: 0,
+                              background: seg.color,
+                              borderLeft: i > 0 ? '1.5px solid rgba(0,0,0,0.2)' : 'none',
+                              transition: seg.coral
+                                ? 'flex-grow 0.6s ease-out'
+                                : seg.id === 'selling'
+                                  ? 'flex-grow 0.5s ease-in-out 0.3s'
+                                  : 'none',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {seg.coral && (
+                              <div style={{
+                                position: 'absolute', inset: 0,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontFamily: 'var(--font-mono)', fontSize: 8,
+                                color: 'rgba(255,255,255,0.5)',
+                                opacity: barTriggered ? 1 : 0,
+                                transition: 'opacity 0.3s ease 0.7s',
+                                letterSpacing: '0.04em',
+                              }}>
+                                {barTriggered ? '\u201380%' : ''}
+                              </div>
                             )}
-                          </AnimatePresence>
-
-                          {/* Edit chips */}
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-                            {[
-                              { label: c.dealLabel,                                    step: 'deal'  },
-                              { label: c.cycleLabel.toLowerCase() + ' cycle',          step: 'cycle' },
-                              { label: `${c.numReps} rep${c.numReps > 1 ? 's' : ''}`, step: 'team'  },
-                            ].map(chip => (
-                              <button
-                                key={chip.step}
-                                onClick={() => setStep(chip.step)}
-                                style={{
-                                  background: 'transparent',
-                                  border: '0.5px solid var(--border)',
-                                  borderRadius: 999,
-                                  padding: '6px 12px',
-                                  color: 'var(--text-sub)',
-                                  fontFamily: 'var(--font-mono)',
-                                  fontSize: 11,
-                                  letterSpacing: '0.04em',
-                                  cursor: 'pointer',
-                                  transition: 'border-color 0.15s, color 0.15s',
-                                }}
-                                onMouseEnter={e => {
-                                  e.currentTarget.style.borderColor = 'rgba(242,107,69,0.55)';
-                                  e.currentTarget.style.color = 'var(--text-primary)';
-                                }}
-                                onMouseLeave={e => {
-                                  e.currentTarget.style.borderColor = 'var(--border)';
-                                  e.currentTarget.style.color = 'var(--text-sub)';
-                                }}
-                              >
-                                {chip.label}
-                              </button>
-                            ))}
                           </div>
+                        ))}
+                      </div>
 
-                          {/* CTA button */}
-                          {showBarStats && (
-                            <div style={{ marginBottom: 20 }}>
-                              {!barTriggered ? (
-                                <motion.button
-                                  whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
-                                  whileTap={{ scale: 0.98 }}
-                                  onClick={triggerBar}
-                                  style={{
-                                    width: '100%',
-                                    background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
-                                    color: '#0a0a0b',
-                                    fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
-                                    padding: '14px 24px', borderRadius: 999, border: 'none',
-                                    cursor: 'pointer', minHeight: 48,
-                                    letterSpacing: '-0.01em',
-                                    boxShadow: '0 0 28px rgba(242,107,69,0.25)',
-                                  }}
-                                >
-                                  Upgrade your pipeline
-                                </motion.button>
-                              ) : (
-                                <button
-                                  onClick={resetBar}
-                                  style={{
-                                    width: '100%',
-                                    background: 'transparent',
-                                    color: 'var(--text-muted)',
-                                    fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500,
-                                    padding: '11px 24px', borderRadius: 10,
-                                    border: '0.5px solid var(--border)',
-                                    cursor: 'pointer', minHeight: 44,
-                                    letterSpacing: '0.02em',
-                                  }}
-                                >
-                                  Reset
-                                </button>
-                              )}
+                      {/* ── Label row ── */}
+                      <div style={{ display: 'flex', width: '100%', marginTop: 8, alignItems: 'flex-start' }}>
+                        {BAR_SEGS.map(seg => (
+                          <div
+                            key={seg.id}
+                            style={{
+                              flexGrow: BarSegGrow(seg, barTriggered),
+                              flexShrink: 1, flexBasis: 0, minWidth: 0,
+                              paddingRight: 3, overflow: 'hidden',
+                              opacity: seg.coral ? (barTriggered ? 0 : 1) : 1,
+                              transition: seg.coral
+                                ? 'flex-grow 0.6s ease-out, opacity 0.2s ease'
+                                : 'flex-grow 0.5s ease-in-out 0.3s',
+                            }}
+                          >
+                            <div style={{
+                              fontFamily: 'var(--font-mono)', fontSize: 9,
+                              color: seg.coral ? 'var(--coral)' : 'var(--text-muted)',
+                              letterSpacing: '0.06em', textTransform: 'uppercase',
+                              lineHeight: 1.3, whiteSpace: 'nowrap',
+                            }}>
+                              {seg.label}
                             </div>
-                          )}
+                            <div style={{
+                              fontFamily: 'var(--font-body)', fontSize: 11,
+                              color: seg.id === 'selling' && barTriggered ? '#4ba3e3' : 'var(--text-muted)',
+                              whiteSpace: 'nowrap',
+                              transition: 'color 0.3s ease',
+                            }}>
+                              {seg.id === 'selling' && barTriggered
+                                ? `2.3h \u2192 ${(2.3 + BAR_REC_H).toFixed(1)}h`
+                                : `${seg.hours}h`}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
 
-                          {/* Methodology footnote */}
-                          <div style={{ borderTop: '0.5px solid var(--border)', paddingTop: 16, marginBottom: 8 }}>
-                            <button
-                              onClick={() => setShowMethod(m => !m)}
-                              style={{
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                padding: 0,
-                                display: 'inline-flex', alignItems: 'center', gap: 8,
-                                fontFamily: 'var(--font-mono)', fontSize: 11,
-                                color: 'var(--text-muted)', letterSpacing: '0.08em',
-                              }}
-                            >
-                              <span>How we calculated this</span>
-                              <Chevron open={showMethod} />
-                            </button>
+                      {/* ── Stats ── */}
+                      <AnimatePresence>
+                        {showBarStats && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, ease: [0.0, 0.0, 0.2, 1] }}
+                            style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}
+                          >
+                            {/* Selling time */}
+                            <div style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              padding: '12px 16px',
+                              background: 'rgba(255,255,255,0.03)',
+                              border: '0.5px solid var(--border)',
+                              borderRadius: 10,
+                            }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                                Selling time
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                <span style={{
+                                  fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700,
+                                  color: barTriggered ? 'rgba(75,163,227,0.3)' : '#4ba3e3',
+                                  transition: 'color 0.5s ease',
+                                }}>
+                                  {BEFORE_SELL_PCT}%
+                                </span>
+                                {barTriggered && (
+                                  <motion.span
+                                    initial={{ opacity: 0, x: -4 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)' }}
+                                  >
+                                    →
+                                  </motion.span>
+                                )}
+                                {barTriggered && (
+                                  <motion.span
+                                    initial={{ opacity: 0, x: -4 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.2, delay: 0.05 }}
+                                    style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: '#4ba3e3' }}
+                                  >
+                                    {AFTER_SELL_PCT}%
+                                  </motion.span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Pipeline never built */}
+                            <div style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              padding: '12px 16px',
+                              background: 'rgba(242,107,69,0.06)',
+                              border: '0.5px solid rgba(242,107,69,0.18)',
+                              borderRadius: 10,
+                            }}>
+                              <div>
+                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(242,107,69,0.55)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>
+                                  Pipeline never built &middot; per month
+                                </div>
+                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(242,107,69,0.4)' }}>
+                                  {c.numReps} rep{c.numReps !== 1 ? 's' : ''} &middot; {c.cycleLabel.toLowerCase()} &middot; 3% close
+                                </div>
+                              </div>
+                              <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: 'var(--coral)', lineHeight: 1, textAlign: 'right' }}>
+                                <CountingNumber
+                                  key={barTriggered ? 'lost-after' : 'lost-before'}
+                                  target={barTriggered ? (c.annualLost - c.annualRecovered) / 12 : c.annualLost / 12}
+                                  from={barTriggered ? c.annualLost / 12 : 0}
+                                  duration={barTriggered ? 900 : 1200}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Recovered */}
                             <AnimatePresence>
-                              {showMethod && (
+                              {showAfterStats && (
                                 <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.25, ease: [0.0, 0.0, 0.2, 1] }}
-                                  style={{ overflow: 'hidden' }}
+                                  initial={{ opacity: 0, y: 8 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1] }}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '12px 16px',
+                                    background: 'rgba(34,197,94,0.06)',
+                                    border: '0.5px solid rgba(34,197,94,0.22)',
+                                    borderRadius: 10,
+                                  }}
                                 >
-                                  <div style={{ paddingTop: 14 }}>
-                                    {proofRows.map((row, i) => (
-                                      <CollapsibleStep key={i} num={i + 1} summary={row.summary} working={row.working} source={row.source} delay={0} />
-                                    ))}
-                                    <div style={{
-                                      fontFamily: 'var(--font-mono)', fontSize: 10,
-                                      color: 'var(--text-muted)', lineHeight: 1.6,
-                                      fontStyle: 'italic', opacity: 0.7, paddingTop: 12,
-                                    }}>
-                                      Figures shown are pipeline value (deals \u00d7 ACV), not closed revenue. Assumes 8 connected calls per rep per day at the SDR benchmark and a 5-day working week.
+                                  <div>
+                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(34,197,94,0.65)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>
+                                      Pipeline recovered &middot; per month
                                     </div>
+                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(34,197,94,0.4)' }}>
+                                      with Outround &middot; your numbers
+                                    </div>
+                                  </div>
+                                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: '#22c55e', lineHeight: 1 }}>
+                                    <CountingNumber key="recovered" target={c.annualRecovered / 12} from={0} duration={900} />
                                   </div>
                                 </motion.div>
                               )}
                             </AnimatePresence>
-                          </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
-                        </div>{/* end right column */}
-                      </div>{/* end two-column */}
+                      {/* ── Edit chips ── */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 28, marginBottom: 20 }}>
+                        {[
+                          { label: c.dealLabel,                                    step: 'deal'  },
+                          { label: c.cycleLabel.toLowerCase() + ' cycle',          step: 'cycle' },
+                          { label: `${c.numReps} rep${c.numReps > 1 ? 's' : ''}`, step: 'team'  },
+                        ].map(chip => (
+                          <button
+                            key={chip.step}
+                            onClick={() => setStep(chip.step)}
+                            style={{
+                              background: 'transparent',
+                              border: '0.5px solid var(--border)',
+                              borderRadius: 999,
+                              padding: '6px 12px',
+                              color: 'var(--text-sub)',
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 11,
+                              letterSpacing: '0.04em',
+                              cursor: 'pointer',
+                              transition: 'border-color 0.15s, color 0.15s',
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.borderColor = 'rgba(242,107,69,0.55)';
+                              e.currentTarget.style.color = 'var(--text-primary)';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.borderColor = 'var(--border)';
+                              e.currentTarget.style.color = 'var(--text-sub)';
+                            }}
+                          >
+                            {chip.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* ── CTA button ── */}
+                      {showBarStats && (
+                        <div style={{ marginBottom: 20 }}>
+                          {!barTriggered ? (
+                            <motion.button
+                              whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={triggerBar}
+                              style={{
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
+                                color: '#0a0a0b',
+                                fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
+                                padding: '14px 24px', borderRadius: 999, border: 'none',
+                                cursor: 'pointer', minHeight: 48,
+                                letterSpacing: '-0.01em',
+                                boxShadow: '0 0 28px rgba(242,107,69,0.25)',
+                              }}
+                            >
+                              Upgrade your pipeline
+                            </motion.button>
+                          ) : (
+                            <button
+                              onClick={resetBar}
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                color: 'var(--text-muted)',
+                                fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500,
+                                padding: '11px 24px', borderRadius: 10,
+                                border: '0.5px solid var(--border)',
+                                cursor: 'pointer', minHeight: 44,
+                                letterSpacing: '0.02em',
+                              }}
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ── Methodology footnote ── */}
+                      <div style={{ borderTop: '0.5px solid var(--border)', paddingTop: 16, marginBottom: 8 }}>
+                        <button
+                          onClick={() => setShowMethod(m => !m)}
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            padding: 0,
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            fontFamily: 'var(--font-mono)', fontSize: 11,
+                            color: 'var(--text-muted)', letterSpacing: '0.08em',
+                          }}
+                        >
+                          <span>How we calculated this</span>
+                          <Chevron open={showMethod} />
+                        </button>
+                        <AnimatePresence>
+                          {showMethod && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.25, ease: [0.0, 0.0, 0.2, 1] }}
+                              style={{ overflow: 'hidden' }}
+                            >
+                              <div style={{ paddingTop: 14 }}>
+                                {proofRows.map((row, i) => (
+                                  <CollapsibleStep key={i} num={i + 1} summary={row.summary} working={row.working} source={row.source} delay={0} />
+                                ))}
+                                <div style={{
+                                  fontFamily: 'var(--font-mono)', fontSize: 10,
+                                  color: 'var(--text-muted)', lineHeight: 1.6,
+                                  fontStyle: 'italic', opacity: 0.7, paddingTop: 12,
+                                }}>
+                                  Figures shown are pipeline value (deals \u00d7 ACV), not closed revenue. Assumes 8 connected calls per rep per day at the SDR benchmark and a 5-day working week.
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
