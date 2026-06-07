@@ -14,8 +14,8 @@ export default function HomePage() {
         <Hero />
       </section>
       <RevenueCalculator />
-      <SolutionSection />
       <HowOutroundWorks />
+      <SolutionSection />
       <OrbSection />
       <FinalCTA />
     </main>
