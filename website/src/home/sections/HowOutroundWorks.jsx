@@ -19,7 +19,7 @@ const ORBIT_DURATION = 28; // seconds for one full revolution
 
 function IntegrationNetwork({ isInView }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '24px 0' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '0' }}>
       <div style={{ position: 'relative', width: ORBIT_SIZE, height: ORBIT_SIZE }}>
 
         {/* Rotating ring — each icon placed on the ring, counter-rotated to stay upright */}
@@ -190,7 +190,7 @@ export default function HowOutroundWorks() {
             display: 'grid',
             gridTemplateColumns: 'minmax(0, 0.9fr) minmax(0, 1.1fr)',
             gap: 'clamp(40px, 6vw, 96px)',
-            alignItems: 'center',
+            alignItems: 'start',
             marginBottom: 'clamp(80px, 10vw, 140px)',
           }}
         >
