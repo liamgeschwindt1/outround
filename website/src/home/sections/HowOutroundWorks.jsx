@@ -5,18 +5,22 @@ import { motion, useInView } from 'framer-motion';
 
 const NET_W = 480;
 const NET_H = 300;
+const CX = 240, CY = 150, R = 118;
 
+// 7 icons evenly spaced at 360/7° intervals, starting from top (-90°)
+// centroid of all positions == (CX, CY) exactly
 const NET_NODES = [
-  { id: 'meets',   src: '/icons/meets.png',   label: 'Meet',    cx: 62,  cy: 48  },
-  { id: 'teams',   src: '/icons/teams.png',   label: 'Teams',   cx: 418, cy: 48  },
-  { id: 'slack',   src: '/icons/slack.png',   label: 'Slack',   cx: 14,  cy: 150 },
-  { id: 'zoom',    src: '/icons/zoom.png',    label: 'Zoom',    cx: 466, cy: 150 },
-  { id: 'hubspot', src: '/icons/hubspot.png', label: 'HubSpot', cx: 62,  cy: 252 },
-  { id: 'apollo',  src: '/icons/apollo.png',  label: 'Apollo',  cx: 418, cy: 252 },
-  { id: 'chat',    src: '/icons/chat.png',    label: 'Chat',    cx: 240, cy: 270 },
-];
-
-const HUB = { cx: 240, cy: 150 };
+  { id: 'meets',   src: '/icons/meets.png',   label: 'Meet'    },
+  { id: 'teams',   src: '/icons/teams.png',   label: 'Teams'   },
+  { id: 'zoom',    src: '/icons/zoom.png',    label: 'Zoom'    },
+  { id: 'apollo',  src: '/icons/apollo.png',  label: 'Apollo'  },
+  { id: 'chat',    src: '/icons/chat.png',    label: 'Chat'    },
+  { id: 'hubspot', src: '/icons/hubspot.png', label: 'HubSpot' },
+  { id: 'slack',   src: '/icons/slack.png',   label: 'Slack'   },
+].map((n, i) => {
+  const angle = (-Math.PI / 2) + (2 * Math.PI / 7) * i;
+  return { ...n, cx: Math.round(CX + R * Math.cos(angle)), cy: Math.round(CY + R * Math.sin(angle)) };
+});
 
 // Lightweight dot-sphere orb for the hub
 function MiniOrb({ size = 72 }) {
@@ -151,7 +155,7 @@ function IntegrationNetwork({ isInView }) {
             alt={node.label}
             width={36}
             height={36}
-            style={{ objectFit: 'contain', display: 'block', borderRadius: 8 }}
+            style={{ objectFit: 'cover', display: 'block', borderRadius: '50%', width: 36, height: 36 }}
           />
         </motion.div>
       ))}
