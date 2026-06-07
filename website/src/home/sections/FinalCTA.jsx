@@ -54,7 +54,9 @@ export default function FinalCTA() {
     <section
       id="cta"
       style={{
-        background: '#111114',
+        background: '#0a0a0b',
+        backgroundImage: 'radial-gradient(circle, rgba(242,241,239,0.07) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',

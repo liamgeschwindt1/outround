@@ -284,9 +284,7 @@ export default function OrbSection() {
       id="orb"
       ref={ref}
       style={{
-        background: '#0a0a0b',
-        backgroundImage: 'radial-gradient(circle, rgba(242,241,239,0.07) 1px, transparent 1px)',
-        backgroundSize: '28px 28px',
+        background: '#111114',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
