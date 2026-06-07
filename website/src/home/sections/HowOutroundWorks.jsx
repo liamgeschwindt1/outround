@@ -133,48 +133,50 @@ function MiniOrb({ size = 72 }) {
 
 function IntegrationNetwork({ isInView }) {
   return (
-    <div style={{ position: 'relative', width: '100%', aspectRatio: `${NET_W} / ${NET_H}` }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+      <div style={{ position: 'relative', width: NET_W, height: NET_H, maxWidth: '100%' }}>
 
-      {/* Integration icon nodes — bare image, rounded, no card */}
-      {NET_NODES.map((node, i) => (
+        {/* Integration icon nodes */}
+        {NET_NODES.map((node, i) => (
+          <motion.div
+            key={node.id}
+            initial={{ opacity: 0, scale: 0.75 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.35, delay: 0.2 + i * 0.06, ease: [0.0, 0.0, 0.2, 1] }}
+            style={{
+              position: 'absolute',
+              left: node.cx,
+              top: node.cy,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1,
+            }}
+          >
+            <img
+              src={node.src}
+              alt={node.label}
+              width={40}
+              height={40}
+              style={{ objectFit: 'contain', display: 'block', width: 40, height: 40, borderRadius: 10 }}
+            />
+          </motion.div>
+        ))}
+
+        {/* Hub — dot-sphere orb, exact centre of coordinate space */}
         <motion.div
-          key={node.id}
-          initial={{ opacity: 0, scale: 0.75 }}
+          initial={{ opacity: 0, scale: 0.8 }}
           animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.35, delay: 0.2 + i * 0.06, ease: [0.0, 0.0, 0.2, 1] }}
+          transition={{ duration: 0.5, delay: 0.1 }}
           style={{
             position: 'absolute',
-            left: `${(node.cx / NET_W) * 100}%`,
-            top: `${(node.cy / NET_H) * 100}%`,
+            left: CX,
+            top: CY,
             transform: 'translate(-50%, -50%)',
-            zIndex: 1,
+            zIndex: 2,
           }}
         >
-          <img
-            src={node.src}
-            alt={node.label}
-            width={36}
-            height={36}
-            style={{ objectFit: 'contain', display: 'block', width: 36, height: 36 }}
-          />
+          <MiniOrb size={110} />
         </motion.div>
-      ))}
-
-      {/* Hub — dot-sphere orb, centred */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={isInView ? { opacity: 1, scale: 1 } : {}}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 2,
-        }}
-      >
-        <MiniOrb size={100} />
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -409,6 +411,7 @@ export default function HowOutroundWorks() {
             initial={{ opacity: 0, x: 12 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ ...EASE, delay: 0.25 }}
+            style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
           >
             <IntegrationNetwork isInView={isInView} />
           </motion.div>
