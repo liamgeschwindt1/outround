@@ -3,7 +3,75 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AnswerCard from '../../demo/components/AnswerCard';
 import EUBadge from '../../demo/components/EUBadge';
 
-// ─── Orb Canvas ───────────────────────────────────────────────────────────────
+// ─── Radar canvas (inline for rep modal) ──────────────────────────────────────
+
+const RADAR_AXES = ['Discovery', 'Objection\nHandling', 'Pricing', 'Closing', 'Talk\nRatio', 'Follow-up'];
+const RADAR_N = RADAR_AXES.length;
+const RADAR_MAX = 10;
+
+function toXY(angle, r, cx, cy) {
+  return { x: cx + r * Math.cos(angle - Math.PI / 2), y: cy + r * Math.sin(angle - Math.PI / 2) };
+}
+
+function RepRadarCanvas({ scores, strokeColor, size = 180 }) {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr; canvas.height = size * dpr;
+    canvas.style.width = `${size}px`; canvas.style.height = `${size}px`;
+    ctx.scale(dpr, dpr);
+    const cx = size / 2, cy = size / 2, maxR = size * 0.35, labelR = size * 0.46;
+    const startTime = performance.now(); const duration = 900;
+    function draw(p) {
+      ctx.clearRect(0, 0, size, size);
+      for (let ring = 1; ring <= 4; ring++) {
+        const r = (ring / 4) * maxR;
+        ctx.beginPath();
+        for (let i = 0; i < RADAR_N; i++) { const a = (i / RADAR_N) * Math.PI * 2; const pt = toXY(a, r, cx, cy); i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y); }
+        ctx.closePath(); ctx.strokeStyle = 'rgba(242,241,239,0.07)'; ctx.lineWidth = 0.5; ctx.stroke();
+      }
+      for (let i = 0; i < RADAR_N; i++) { const a = (i / RADAR_N) * Math.PI * 2; const pt = toXY(a, maxR, cx, cy); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(pt.x, pt.y); ctx.strokeStyle = 'rgba(242,241,239,0.09)'; ctx.lineWidth = 0.5; ctx.stroke(); }
+      const pts = scores.map((s, i) => { const a = (i / RADAR_N) * Math.PI * 2; return toXY(a, (s / RADAR_MAX) * maxR * p, cx, cy); });
+      ctx.beginPath(); pts.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)); ctx.closePath(); ctx.fillStyle = 'rgba(242,107,69,0.14)'; ctx.fill();
+      ctx.beginPath(); pts.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)); ctx.closePath(); ctx.strokeStyle = strokeColor; ctx.lineWidth = 1.5; ctx.stroke();
+      pts.forEach(pt => { ctx.beginPath(); ctx.arc(pt.x, pt.y, 2.5, 0, Math.PI * 2); ctx.fillStyle = strokeColor; ctx.fill(); });
+      ctx.save();
+      for (let i = 0; i < RADAR_N; i++) { const a = (i / RADAR_N) * Math.PI * 2; const pt = toXY(a, labelR, cx, cy); const lines = RADAR_AXES[i].split('\n'); ctx.font = `500 8px "JetBrains Mono", monospace`; ctx.fillStyle = 'rgba(242,241,239,0.35)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; lines.forEach((line, li) => ctx.fillText(line.toUpperCase(), pt.x, pt.y + (li - (lines.length - 1) / 2) * 11)); }
+      ctx.restore();
+    }
+    function frame(ts) { const p = Math.min(1 - Math.pow(1 - Math.min((ts - startTime) / duration, 1), 3), 1); draw(p); if (p < 1) animRef.current = requestAnimationFrame(frame); }
+    animRef.current = requestAnimationFrame(frame);
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, [size, scores, strokeColor]);
+  return <canvas ref={canvasRef} style={{ display: 'block' }} />;
+}
+
+const REPS = [
+  { name: 'Daan',  role: 'Account Executive', calls: 47, scores: [7.2, 6.1, 3.8, 7.5, 5.9, 8.1], strokeColor: '#4ba3e3', insight: 'Loses frame on pricing in 68% of deals',        insightColor: '#f59e0b' },
+  { name: 'Jana',  role: 'Account Executive', calls: 39, scores: [8.4, 7.2, 7.8, 6.9, 8.1, 6.3], strokeColor: '#f26b45', insight: 'Strong opener: discovery score 8.4/10',         insightColor: '#22c55e' },
+  { name: 'Lotte', role: 'SDR',               calls: 61, scores: [6.5, 5.8, 6.2, 5.1, 8.7, 6.8], strokeColor: '#a78bfa', insight: 'Talk ratio above team average on 80% of calls', insightColor: '#f26b45' },
+];
+
+function RepCard({ rep }) {
+  return (
+    <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border-md)', borderRadius: 12, padding: '20px 20px 18px', flex: '1 1 220px', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ marginBottom: 12 }}><RepRadarCanvas scores={rep.scores} strokeColor={rep.strokeColor} size={180} /></div>
+      <div style={{ textAlign: 'center', marginBottom: 8, width: '100%' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{rep.name}</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{rep.role}</div>
+      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>{rep.calls} calls captured</div>
+      <div style={{ width: '100%', background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 6, padding: '8px 10px', fontFamily: 'var(--font-body)', fontSize: 12, color: rep.insightColor, lineHeight: 1.5, textAlign: 'center', marginBottom: 6 }}>{rep.insight}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.06em', textAlign: 'center', opacity: 0.7 }}>sample · connect Outround for real data</div>
+    </div>
+  );
+}
+
+
 
 function OrbCanvas({ size }) {
   const canvasRef = useRef(null);
@@ -253,6 +321,7 @@ export default function OrbSection() {
   const [answeredQ, setAnsweredQ] = useState(new Set());
   const [orbVisible, setOrbVisible] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
+  const [repModalOpen, setRepModalOpen] = useState(false);
   const ref = useRef(null);
   const orbSize = isNarrow ? 260 : 420;
 
@@ -311,7 +380,7 @@ export default function OrbSection() {
           textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          04 / Query
+          05 / QUERY
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
@@ -455,33 +524,119 @@ export default function OrbSection() {
         ))}
       </div>
 
-      {/* CTA */}
+      {/* CTA + team metric */}
       {orbVisible && (
-        <motion.button
+        <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 280, damping: 28, delay: 0.6 }}
-          whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => document.getElementById('team')?.scrollIntoView({ behavior: 'smooth' })}
-          style={{
-            marginTop: 40,
-            background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
-            color: '#0a0a0b',
-            fontFamily: 'var(--font-body)',
-            fontSize: 15,
-            fontWeight: 700,
-            padding: '14px 36px',
-            borderRadius: 999,
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: '0 0 28px rgba(242,107,69,0.25)',
-            minHeight: 44,
-          }}
+          style={{ marginTop: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}
         >
-          See your team
-        </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setRepModalOpen(true)}
+            style={{
+              background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
+              color: '#0a0a0b',
+              fontFamily: 'var(--font-body)',
+              fontSize: 15,
+              fontWeight: 700,
+              padding: '14px 36px',
+              borderRadius: 999,
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 0 28px rgba(242,107,69,0.25)',
+              minHeight: 44,
+            }}
+          >
+            See rep profiles →
+          </motion.button>
+
+          {/* Sample data caption */}
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', textAlign: 'center', opacity: 0.7 }}>
+            Sample data. Connect Outround to see your real team.
+          </div>
+
+          {/* Team close rate metric */}
+          <div style={{
+            marginTop: 8,
+            background: 'rgba(255,255,255,0.03)',
+            border: '0.5px solid var(--border)',
+            borderRadius: 12,
+            padding: '16px 24px',
+            textAlign: 'center',
+            minWidth: 220,
+          }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              Team close rate this week
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700, color: 'var(--coral)', lineHeight: 1 }}>
+              +12%
+            </div>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+              vs last week
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-muted)', marginTop: 8, opacity: 0.6, fontStyle: 'italic' }}>
+              Illustrative. Based on sample data.
+            </div>
+          </div>
+        </motion.div>
       )}
+
+      {/* Rep profiles modal */}
+      <AnimatePresence>
+        {repModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setRepModalOpen(false)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(10,10,11,0.85)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 1000,
+              padding: '24px 16px',
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.93, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.93, opacity: 0, y: 16 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#111114',
+                border: '0.5px solid rgba(242,107,69,0.25)',
+                borderRadius: 16,
+                padding: 'clamp(20px, 3vw, 36px)',
+                maxWidth: 860,
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--coral)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                  Rep profiles
+                </div>
+                <button
+                  onClick={() => setRepModalOpen(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1, padding: 4 }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                {REPS.map(rep => <RepCard key={rep.name} rep={rep} />)}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

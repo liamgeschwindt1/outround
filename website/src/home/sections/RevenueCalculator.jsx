@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const DEAL_OPTIONS  = ['Under \u20ac5k', '\u20ac5k to \u20ac25k', '\u20ac25k to \u20ac100k', 'Over \u20ac100k'];
-const CYCLE_OPTIONS = ['Under 30 days', '30 to 90 days', '90 to 180 days', 'Over 180 days'];
+const CYCLE_OPTIONS = ['Under 30 days', '1 to 3 months', '3 to 6 months', 'Over 6 months'];
 
 const DEAL_MIDPOINTS = {
   'Under \u20ac5k':      3000,
@@ -15,10 +15,17 @@ const DEAL_MIDPOINTS = {
 
 const CYCLE_CONFIG = {
   'Under 30 days':  { weeks: 4,  cyclesPerYear: 12 },
-  '30 to 90 days':  { weeks: 8,  cyclesPerYear: 6  },
-  '90 to 180 days': { weeks: 16, cyclesPerYear: 3  },
-  'Over 180 days':  { weeks: 26, cyclesPerYear: 2  },
+  '1 to 3 months':  { weeks: 8,  cyclesPerYear: 6  },
+  '3 to 6 months':  { weeks: 16, cyclesPerYear: 3  },
+  'Over 6 months':  { weeks: 26, cyclesPerYear: 2  },
 };
+
+const TEAM_OPTIONS = [
+  { label: '1 rep',    value: 1  },
+  { label: '2 to 5',  value: 3  },
+  { label: '6 to 15', value: 10 },
+  { label: '16+',     value: 20 },
+];
 
 // Benchmark assumptions
 const CALLS_PER_REP_DAY            = 8;     // standard SDR benchmark
@@ -232,28 +239,13 @@ export default function RevenueCalculator() {
   const [step, setStep]             = useState('deal');
   const [dealLabel, setDealLabel]   = useState(null);
   const [cycleLabel, setCycleLabel] = useState(null);
-  const [teamInput, setTeamInput]   = useState('');
-  const [teamError, setTeamError]   = useState('');
   const [numReps, setNumReps]       = useState(null);
   const [showBigNum, setShowBigNum] = useState(false);
   const [showMethod, setShowMethod] = useState(false);
-  const teamInputRef = useRef(null);
 
   function selectDeal(label)  { setDealLabel(label);  setTimeout(() => setStep('cycle'), 280); }
   function selectCycle(label) { setCycleLabel(label); setTimeout(() => setStep('team'),  280); }
-
-  function submitTeam(e) {
-    e && e.preventDefault();
-    const n = parseInt(teamInput, 10);
-    if (!n || n < 1 || n > 9999) { setTeamError('Please enter a number between 1 and 9999.'); return; }
-    setTeamError('');
-    setNumReps(n);
-    setTimeout(() => setStep('results'), 280);
-  }
-
-  useEffect(() => {
-    if (step === 'team') setTimeout(() => teamInputRef.current && teamInputRef.current.focus(), 350);
-  }, [step]);
+  function selectTeam(value)  { setNumReps(value);    setTimeout(() => setStep('results'), 280); }
 
   useEffect(() => {
     if (step !== 'results') return;
@@ -314,7 +306,7 @@ export default function RevenueCalculator() {
 
   function reset() {
     setStep('deal'); setDealLabel(null); setCycleLabel(null);
-    setTeamInput(''); setNumReps(null);
+    setNumReps(null);
   }
   // reset retained for potential future use
   void reset;
@@ -371,7 +363,7 @@ export default function RevenueCalculator() {
           {step === 'deal' && (
             <motion.div key="deal" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator \u00b7 1 of 4
+                The revenue leak calculator \u00b7 1 of 3
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 What is your average deal size?
@@ -385,7 +377,7 @@ export default function RevenueCalculator() {
           {step === 'cycle' && (
             <motion.div key="cycle" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator \u00b7 2 of 4
+                The revenue leak calculator \u00b7 2 of 3
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
                 How long is your average sales cycle?
@@ -396,104 +388,17 @@ export default function RevenueCalculator() {
             </motion.div>
           )}
 
-          {step === 'close' && (
-            <motion.div key="close" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
+          {step === 'team' && (
+            <motion.div key="team" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator · 3 of 3
-              </div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, lineHeight: 1.15 }}>
-                What is your close rate from connected calls?
-              </h2>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', marginTop: 0, marginBottom: 24, lineHeight: 1.55 }}>
-                The percentage of connected calls that become closed deals. A VP Sales knows this number instantly.
-              </p>
-              <form onSubmit={submitCloseRate} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    ref={closeRateInputRef}
-                    type="number" min="0.1" max="100" step="0.1"
-                    value={closeRateInput}
-                    onChange={e => { setCloseRateInput(e.target.value); setCloseRateError(''); }}
-                    onKeyDown={e => { if (e.key === 'Enter') submitCloseRate(); }}
-                    placeholder="e.g. 3"
-                    style={{
-                      width: '100%', background: 'var(--bg-card)',
-                      border: `0.5px solid ${closeRateError ? '#ef4444' : 'rgba(242,107,69,0.45)'}`,
-                      borderRadius: 10, padding: '16px 56px 16px 20px',
-                      color: 'var(--text-primary)', fontFamily: 'var(--font-display)',
-                      fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 700,
-                      outline: 'none', boxSizing: 'border-box',
-                      MozAppearance: 'textfield', WebkitAppearance: 'none',
-                    }}
-                  />
-                  <span style={{
-                    position: 'absolute', right: 22, top: '50%', transform: 'translateY(-50%)',
-                    fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 4vw, 30px)',
-                    fontWeight: 700, color: 'var(--text-muted)', pointerEvents: 'none',
-                  }}>%</span>
-                </div>
-                {closeRateError && <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#ef4444' }}>{closeRateError}</div>}
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.015, boxShadow: '0 0 36px rgba(242,107,69,0.35)' }}
-                  whileTap={{ scale: 0.98 }}
-                  style={{
-                    background: closeRateInput ? 'linear-gradient(135deg, #f26b45, #4ba3e3)' : 'var(--bg-hover)',
-                    color: closeRateInput ? '#0a0a0b' : 'var(--text-muted)',
-                    fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
-                    padding: '14px 32px', borderRadius: 999, border: 'none',
-                    cursor: closeRateInput ? 'pointer' : 'default', minHeight: 44,
-                    transition: 'background 0.2s, color 0.2s', alignSelf: 'flex-start',
-                  }}
-                >
-                  Next →
-                </motion.button>
-              </form>
-            </motion.div>
-          )}
-
-          {step === 'team' && (            <motion.div key="team" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={STEP_SPRING}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 28 }}>
-                The revenue leak calculator \u00b7 4 of 4
+                The revenue leak calculator \u00b7 3 of 3
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.15 }}>
-                How many salespeople on your team?
+                How many sales reps on your team?
               </h2>
-              <form onSubmit={submitTeam} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <input
-                  ref={teamInputRef}
-                  type="number" min="1" max="9999"
-                  value={teamInput}
-                  onChange={e => { setTeamInput(e.target.value); setTeamError(''); }}
-                  onKeyDown={e => { if (e.key === 'Enter') submitTeam(); }}
-                  placeholder="e.g. 12"
-                  style={{
-                    width: '100%', background: 'var(--bg-card)',
-                    border: `0.5px solid ${teamError ? '#ef4444' : 'rgba(242,107,69,0.45)'}`,
-                    borderRadius: 10, padding: '16px 20px',
-                    color: 'var(--text-primary)', fontFamily: 'var(--font-display)',
-                    fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 700,
-                    outline: 'none', boxSizing: 'border-box',
-                    MozAppearance: 'textfield', WebkitAppearance: 'none',
-                  }}
-                />
-                {teamError && <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#ef4444' }}>{teamError}</div>}
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.015, boxShadow: '0 0 36px rgba(242,107,69,0.35)' }}
-                  whileTap={{ scale: 0.98 }}
-                  style={{
-                    background: teamInput ? 'linear-gradient(135deg, #f26b45, #4ba3e3)' : 'var(--bg-hover)',
-                    color: teamInput ? '#0a0a0b' : 'var(--text-muted)',
-                    fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
-                    padding: '14px 32px', borderRadius: 999, border: 'none',
-                    cursor: teamInput ? 'pointer' : 'default', minHeight: 44,
-                    transition: 'background 0.2s, color 0.2s', alignSelf: 'flex-start',
-                  }}
-                >
-                  Calculate the leak &rarr;
-                </motion.button>
-              </form>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {TEAM_OPTIONS.map(opt => <ChoiceButton key={opt.label} label={opt.label} onClick={() => selectTeam(opt.value)} />)}
+              </div>
             </motion.div>
           )}
 

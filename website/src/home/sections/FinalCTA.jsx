@@ -49,7 +49,10 @@ function RailStat({ label, value }) {
 }
 
 export default function FinalCTA() {
-  const [whyOpen, setWhyOpen] = useState(false);
+  const [emailOpen,      setEmailOpen]      = useState(false);
+  const [emailValue,     setEmailValue]     = useState('');
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [dataModalOpen,  setDataModalOpen]  = useState(false);
   return (
     <section
       id="cta"
@@ -83,14 +86,14 @@ export default function FinalCTA() {
           textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          05 / Get started
+          06 / GET STARTED
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
           color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65,
           whiteSpace: 'nowrap',
         }}>
-          {'/* founding cohort \u00b7 25 seats */'}
+          {'/* founding cohort */'}
         </div>
       </div>
 
@@ -155,24 +158,81 @@ export default function FinalCTA() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ type: 'spring', stiffness: 280, damping: 28, delay: 0.35 }}
-            style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}
+            style={{ marginBottom: 28 }}
           >
-            <motion.a
-              href="mailto:liam@outround.io"
-              whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
-              whileTap={{ scale: 0.98 }}
-              style={{ ...BTN, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-            >
-              Join the waitlist
-            </motion.a>
-            <motion.a
-              href="mailto:liam@outround.io?subject=Book%2020%20minutes"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              style={{ ...BTN_OUTLINE, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-            >
-              Book 20 minutes
-            </motion.a>
+            {!emailOpen && !emailSubmitted && (
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setEmailOpen(true)}
+                style={{ ...BTN }}
+              >
+                Sign up here. Launching soon.
+              </motion.button>
+            )}
+            <AnimatePresence>
+              {emailOpen && !emailSubmitted && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: [0.0, 0.0, 0.2, 1] }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', paddingTop: 4 }}>
+                    <input
+                      type="email"
+                      value={emailValue}
+                      onChange={e => setEmailValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && emailValue) setEmailSubmitted(true); }}
+                      placeholder="your@email.com"
+                      style={{
+                        flex: '1 1 220px',
+                        background: 'var(--bg-card)',
+                        border: '0.5px solid rgba(242,107,69,0.45)',
+                        borderRadius: 10,
+                        padding: '13px 18px',
+                        color: 'var(--text-primary)',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: 15,
+                        outline: 'none',
+                        minHeight: 48,
+                      }}
+                    />
+                    <motion.button
+                      whileHover={{ scale: 1.015, boxShadow: '0 0 36px rgba(242,107,69,0.35)' }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => { if (emailValue) setEmailSubmitted(true); }}
+                      style={{
+                        ...BTN,
+                        opacity: emailValue ? 1 : 0.55,
+                        cursor: emailValue ? 'pointer' : 'default',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Join the founding cohort →
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {emailSubmitted && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 15,
+                    color: 'var(--text-primary)',
+                    padding: '14px 0',
+                  }}
+                >
+                  {"You're in. We will be in touch before launch."}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
 
           <motion.div
@@ -188,6 +248,18 @@ export default function FinalCTA() {
             }}
           >
             EU hosted &middot; GDPR native &middot; No visible bot &middot; Your data stays yours
+            {' \u00b7 '}
+            <button
+              onClick={() => setDataModalOpen(true)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                fontFamily: 'var(--font-mono)', fontSize: 11,
+                color: 'var(--coral)', letterSpacing: '0.08em',
+                textDecoration: 'underline', textUnderlineOffset: 3,
+              }}
+            >
+              How we handle your data →
+            </button>
           </motion.div>
         </div>
 
@@ -217,98 +289,92 @@ export default function FinalCTA() {
           <div>
             <div style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(48px, 6.5vw, 76px)',
+              fontSize: 'clamp(20px, 2.8vw, 28px)',
               fontWeight: 700,
               color: 'var(--text-primary)',
-              lineHeight: 0.95,
-              letterSpacing: '-0.03em',
+              lineHeight: 1.2,
+              letterSpacing: '-0.02em',
+              marginBottom: 10,
             }}>
-              25<span style={{ color: 'var(--text-muted)', fontSize: '0.45em', fontWeight: 600, marginLeft: 6 }}>seats</span>
+              Join the founding cohort.
             </div>
             <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: 11,
-              color: 'var(--text-muted)', letterSpacing: '0.08em',
-              marginTop: 8,
+              fontFamily: 'var(--font-body)', fontSize: 14,
+              color: 'var(--text-muted)', lineHeight: 1.6,
             }}>
-              first cohort, opens Q3 2026
+              First access. Direct line to the founders. Shape the product before it launches.
             </div>
           </div>
           <div style={{ height: '0.5px', background: 'var(--border)' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <RailStat label="First-year price"        value="\u20ac49/seat/mo" />
-            <RailStat label="Onboarding window"       value="48 hours"          />
-            <RailStat label="Direct line to founders" value="Always"            />
+            <RailStat label="Onboarding window"       value="48 hours" />
+            <RailStat label="Direct line to founders" value="Always"   />
           </div>
         </motion.div>
       </div>
 
-      {/* ── Not convinced ───────────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.7 }}
-        style={{
-          textAlign: 'center',
-          marginTop: 'clamp(56px, 8vw, 88px)',
-          maxWidth: 600,
-        }}
-      >
-        <button
-          onClick={() => setWhyOpen(o => !o)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-body)',
-            fontSize: 14,
-            color: 'var(--text-sub)',
-            lineHeight: 1.5,
-            padding: 0,
-            textDecoration: 'underline',
-            textDecorationColor: 'rgba(242,107,69,0.45)',
-            textUnderlineOffset: 4,
-            fontWeight: 500,
-          }}
-        >
-          {whyOpen ? 'Hide' : 'Why Outround?'}
-        </button>
-
-        <AnimatePresence>
-          {whyOpen && (
+      {/* Data ownership modal */}
+      <AnimatePresence>
+        {dataModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setDataModalOpen(false)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(10,10,11,0.85)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 1000, padding: '24px 16px',
+            }}
+          >
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.28, ease: [0.0, 0.0, 0.2, 1] }}
-              style={{ overflow: 'hidden' }}
+              initial={{ scale: 0.93, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.93, opacity: 0, y: 16 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#111114',
+                border: '0.5px solid rgba(242,107,69,0.25)',
+                borderRadius: 16,
+                padding: 'clamp(24px, 3vw, 40px)',
+                maxWidth: 560, width: '100%',
+                maxHeight: '90vh', overflowY: 'auto',
+              }}
             >
-              <div style={{
-                maxWidth: 560,
-                margin: '24px auto 0',
-                padding: '24px 24px 20px',
-                background: 'var(--bg-card)',
-                border: '0.5px solid var(--border)',
-                borderRadius: 10,
-                textAlign: 'left',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 14,
-              }}>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.75, margin: 0 }}>
-                  Sales teams are losing a third of their selling time to work that could be automated. The calls happen. The insight exists. It is just never structured, stored, or made queryable.
-                </p>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.75, margin: 0 }}>
-                  Outround does not change how your team works. It captures what is already happening and makes it permanent. Searchable, structured, and available to the next rep before their next call.
-                </p>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.75, margin: 0 }}>
-                  The gap between your best rep and your average rep is not talent. It is information. One person remembers what works. Outround makes the whole team remember.
-                </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--coral)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                  How we handle your data
+                </div>
+                <button onClick={() => setDataModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1, padding: 4 }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {[
+                  'Your call recordings are stored in EU-based infrastructure, never on US servers.',
+                  'Your data is never used to train our models or shared with third parties.',
+                  'Every conversation is end-to-end encrypted in transit and at rest.',
+                  'You can export or delete your data at any time, immediately and completely.',
+                  'No data is retained after account deletion — 30 days maximum.',
+                  'GDPR-compliant by architecture, not by policy addendum.',
+                ].map((point, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <span style={{ color: 'var(--coral)', fontFamily: 'var(--font-mono)', fontSize: 11, flexShrink: 0, marginTop: 2 }}>✓</span>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.65 }}>{point}</span>
+                  </div>
+                ))}
+                <div style={{ borderTop: '0.5px solid var(--border)', paddingTop: 18, marginTop: 4 }}>
+                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0, lineHeight: 1.5 }}>
+                    Outround is the infrastructure. You are the landlord.
+                  </p>
+                </div>
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         @media (max-width: 880px) {

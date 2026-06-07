@@ -72,10 +72,8 @@ const HOW_STEPS = [
     text: 'Every prospect researched before your rep picks up the phone.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-        <rect x="9" y="3" width="6" height="4" rx="2"/>
-        <line x1="9" y1="12" x2="15" y2="12"/>
-        <line x1="9" y1="16" x2="12" y2="16"/>
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
     ),
   },
@@ -93,8 +91,10 @@ const HOW_STEPS = [
     text: 'Every CRM field updated automatically, linked to the exact second it was said.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 11A8 8 0 1 0 4.93 17"/>
-        <polyline points="20 4 20 11 13 11"/>
+        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+        <path d="M3 5v4c0 1.656 4.03 3 9 3s9-1.344 9-3V5"/>
+        <path d="M3 9v4c0 1.656 4.03 3 9 3s9-1.344 9-3V9"/>
+        <path d="M3 13v4c0 1.656 4.03 3 9 3s9-1.344 9-3v-4"/>
       </svg>
     ),
   },
@@ -112,10 +112,10 @@ const HOW_STEPS = [
     text: 'Every conversation adding to an intelligence layer that gets sharper with every call.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <ellipse cx="12" cy="5" rx="9" ry="3"/>
-        <path d="M3 5v4c0 1.656 4.03 3 9 3s9-1.344 9-3V5"/>
-        <path d="M3 9v4c0 1.656 4.03 3 9 3s9-1.344 9-3V9"/>
-        <path d="M3 13v4c0 1.656 4.03 3 9 3s9-1.344 9-3v-4"/>
+        <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5V11h2a2 2 0 0 1 2 2v1h1a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2h1v-1a2 2 0 0 1 2-2h2V9.5C8.8 8.8 8 7.5 8 6a4 4 0 0 1 4-4z"/>
+        <line x1="9" y1="14" x2="9" y2="19"/>
+        <line x1="12" y1="13" x2="12" y2="19"/>
+        <line x1="15" y1="14" x2="15" y2="19"/>
       </svg>
     ),
   },
@@ -168,7 +168,7 @@ export default function HowOutroundWorks() {
           textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          03 / How it works
+          04 / HOW IT WORKS
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,

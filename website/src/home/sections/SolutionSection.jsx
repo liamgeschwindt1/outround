@@ -8,10 +8,44 @@ function fmtEur(n) {
 }
 
 const STATEMENTS = [
-  { icon: '⏱', text: 'Brief delivered in Slack 15 minutes before every call.' },
-  { icon: '⚡', text: 'CRM updated automatically before you leave your desk.' },
-  { icon: '→',  text: 'Next steps assigned without you deciding them.' },
-  { icon: '✓',  text: 'Zero calls lost to admin.' },
+  {
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+    ),
+    text: 'Brief delivered 15 minutes before every call.',
+  },
+  {
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+    ),
+    text: 'CRM updated automatically before you leave your desk.',
+  },
+  {
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+    ),
+    text: 'Follow-up drafted automatically the moment the call ends.',
+  },
+  {
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    ),
+    text: 'Zero calls lost to admin.',
+  },
 ];
 
 export default function SolutionSection() {
@@ -82,7 +116,7 @@ export default function SolutionSection() {
             textTransform: 'uppercase',
           }}>
             <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-            What you get
+            03 / THE FIX
           </div>
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: 10,
@@ -124,64 +158,14 @@ export default function SolutionSection() {
           30 minutes of admin per call. Down to 2.
         </motion.h2>
 
-        {/* Calculator gate */}
-        {!hasUserData && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : {}}
-            transition={{ ...EASE, delay: 0.2 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              flexWrap: 'wrap',
-              padding: '14px 18px',
-              marginBottom: 36,
-              background: 'rgba(242,107,69,0.06)',
-              border: '0.5px solid rgba(242,107,69,0.35)',
-              borderRadius: 10,
-              maxWidth: 720,
-            }}
-          >
-            <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: 10,
-              color: 'var(--coral)', letterSpacing: '0.14em',
-              textTransform: 'uppercase', whiteSpace: 'nowrap',
-            }}>
-              Your numbers first
-            </span>
-            <span style={{
-              fontFamily: 'var(--font-body)', fontSize: 14,
-              color: 'var(--text-sub)', lineHeight: 1.5, flex: 1, minWidth: 220,
-            }}>
-              Run the calculator above to see this section calibrated to your team.
-            </span>
-            <button
-              onClick={() => {
-                const el = document.getElementById('calculator');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                else window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              style={{
-                background: 'var(--coral)', color: '#0a0a0b',
-                fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 700,
-                padding: '8px 16px', borderRadius: 999, border: 'none',
-                cursor: 'pointer', whiteSpace: 'nowrap', minHeight: 36,
-              }}
-            >
-              Run calculator ↑
-            </button>
-          </motion.div>
-        )}
-        {hasUserData && (
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 10,
-            color: 'var(--coral)', letterSpacing: '0.14em',
-            textTransform: 'uppercase', marginBottom: 36, opacity: 0.85,
-          }}>
-            {'\u2713 Calibrated to your ' + dispReps + '-rep team'}
-          </div>
-        )}
+        {/* Calibration line — always visible */}
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: 10,
+          color: 'var(--coral)', letterSpacing: '0.14em',
+          textTransform: 'uppercase', marginBottom: 36, opacity: 0.85,
+        }}>
+          {'\u2713 Calibrated to your ' + dispReps + '-rep team'}
+        </div>
 
         {/* Post-deployment statements */}
         <div
@@ -209,12 +193,12 @@ export default function SolutionSection() {
               }}
             >
               <span style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 16,
                 color: 'var(--coral)',
                 flexShrink: 0,
                 lineHeight: 1.4,
-                marginTop: 1,
+                marginTop: 2,
+                display: 'flex',
+                alignItems: 'center',
               }}>
                 {icon}
               </span>
@@ -231,8 +215,7 @@ export default function SolutionSection() {
           ))}
         </div>
 
-        {/* What this means — only shown after calculator is run */}
-        {hasUserData && (
+        {/* What this means */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -291,7 +274,6 @@ export default function SolutionSection() {
             </p>
           </div>
         </motion.div>
-        )}
 
       </div>
     </section>
