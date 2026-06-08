@@ -86,7 +86,7 @@ export default function FinalCTA() {
           textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          06 / GET STARTED
+          08 / GET STARTED
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
@@ -125,7 +125,7 @@ export default function FinalCTA() {
               marginBottom: 24,
             }}
           >
-            Stop losing what your conversations are telling you.
+            Be fully present. Outround remembers the rest.
           </motion.h2>
 
           <motion.p
@@ -142,14 +142,14 @@ export default function FinalCTA() {
               margin: '0 0 36px',
             }}
           >
-            78% of sellers missed quota in 2025. That is not a talent problem. It is a visibility problem. The signal that could fix it already exists in your calls.
+            Outround prepares every conversation and remembers everything after it. Your team owns the relationship. Outround owns the continuity and the coordination.
             <span style={{
               display: 'block', marginTop: 12,
               fontFamily: 'var(--font-mono)', fontSize: 10,
               color: 'var(--text-muted)', textTransform: 'uppercase',
               letterSpacing: '0.08em',
             }}>
-              Ebsta &times; Pavilion GTM Benchmarks, 2025
+              EU hosted &middot; GDPR native &middot; Your data stays yours
             </span>
           </motion.p>
 

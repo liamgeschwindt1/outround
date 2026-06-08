@@ -1,9 +1,11 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 
-// ─── Integration network ──────────────────────────────────────────────────────
+const EASE = { duration: 0.45, ease: [0.0, 0.0, 0.2, 1] };
 
-const ORBIT_ICONS = [
+// ─── Integration icons (static strip) ─────────────────────────────────────────
+
+const STACK_ICONS = [
   { id: 'meets',   src: '/icons/meets.png',   label: 'Meet'    },
   { id: 'teams',   src: '/icons/teams.png',   label: 'Teams'   },
   { id: 'zoom',    src: '/icons/zoom.png',    label: 'Zoom'    },
@@ -13,74 +15,26 @@ const ORBIT_ICONS = [
   { id: 'slack',   src: '/icons/slack.png',   label: 'Slack'   },
 ];
 
-const ORBIT_R = 110; // px, radius of the ring
-const ORBIT_SIZE = (ORBIT_R + 40) * 2; // container fits ring + icon half-size
-const ORBIT_DURATION = 28; // seconds for one full revolution
+// ─── Three phases of a call ───────────────────────────────────────────────────
 
-function IntegrationNetwork({ isInView }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '0' }}>
-      <div style={{ position: 'relative', width: ORBIT_SIZE, height: ORBIT_SIZE }}>
-
-        {/* Rotating ring — each icon placed on the ring, counter-rotated to stay upright */}
-        <motion.div
-          animate={isInView ? { rotate: 360 } : { rotate: 0 }}
-          transition={{ duration: ORBIT_DURATION, repeat: Infinity, ease: 'linear' }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-          }}
-        >
-          {ORBIT_ICONS.map((icon, i) => {
-            const angle = (2 * Math.PI / ORBIT_ICONS.length) * i - Math.PI / 2;
-            const x = ORBIT_SIZE / 2 + ORBIT_R * Math.cos(angle);
-            const y = ORBIT_SIZE / 2 + ORBIT_R * Math.sin(angle);
-            return (
-              <motion.div
-                key={icon.id}
-                animate={isInView ? { rotate: -360 } : { rotate: 0 }}
-                transition={{ duration: ORBIT_DURATION, repeat: Infinity, ease: 'linear' }}
-                style={{
-                  position: 'absolute',
-                  left: x,
-                  top: y,
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <motion.img
-                  src={icon.src}
-                  alt={icon.label}
-                  initial={{ opacity: 0 }}
-                  animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 + i * 0.07 }}
-                  style={{ width: 40, height: 40, objectFit: 'contain', display: 'block', borderRadius: 10 }}
-                />
-              </motion.div>
-            );
-          })}
-        </motion.div>
-
-      </div>
-    </div>
-  );
-}
-
-// ─── Step list ────────────────────────────────────────────────────────────────
-
-const HOW_STEPS = [
+const PHASES = [
   {
-    text: 'Every prospect researched before your rep picks up the phone.',
+    label: 'Before the call',
+    title: 'The brief arrives.',
+    body: '15 minutes before every meeting, Outround delivers a brief to Slack. Account history, prior objections, deal risks, and the next-best questions. No dashboard. No searching. It arrives.',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="11" cy="11" r="8"/>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
       </svg>
     ),
   },
   {
-    text: 'Every call captured, structured, and filed the moment it ends.',
+    label: 'During and after',
+    title: 'The record writes itself.',
+    body: 'Every call captured. Every CRM field updated automatically, linked to the exact line that generated it. Follow-up drafted. Next steps set. Before you leave your desk.',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 18.5a6.5 6.5 0 0 0 6.5-6.5V8a6.5 6.5 0 0 0-13 0v4A6.5 6.5 0 0 0 12 18.5z"/>
         <line x1="12" y1="18.5" x2="12" y2="22"/>
         <line x1="8" y1="22" x2="16" y2="22"/>
@@ -88,46 +42,22 @@ const HOW_STEPS = [
     ),
   },
   {
-    text: 'Every CRM field updated automatically, linked to the exact second it was said.',
+    label: 'Over time',
+    title: 'The intelligence compounds.',
+    body: 'Every conversation deepens the layer beneath your pipeline. Patterns surface. Deal risks get flagged. The system remembers everything your team has ever learned, and gets sharper with every call.',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <ellipse cx="12" cy="5" rx="9" ry="3"/>
-        <path d="M3 5v4c0 1.656 4.03 3 9 3s9-1.344 9-3V5"/>
-        <path d="M3 9v4c0 1.656 4.03 3 9 3s9-1.344 9-3V9"/>
-        <path d="M3 13v4c0 1.656 4.03 3 9 3s9-1.344 9-3v-4"/>
-      </svg>
-    ),
-  },
-  {
-    text: 'Every pattern across your pipeline surfaced before you think to ask.',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" y1="20" x2="18" y2="10"/>
         <line x1="12" y1="20" x2="12" y2="4"/>
         <line x1="6" y1="20" x2="6" y2="14"/>
       </svg>
     ),
   },
-  {
-    text: 'Every conversation adding to an intelligence layer that gets sharper with every call.',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5V11h2a2 2 0 0 1 2 2v1h1a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2h1v-1a2 2 0 0 1 2-2h2V9.5C8.8 8.8 8 7.5 8 6a4 4 0 0 1 4-4z"/>
-        <line x1="9" y1="14" x2="9" y2="19"/>
-        <line x1="12" y1="13" x2="12" y2="19"/>
-        <line x1="15" y1="14" x2="15" y2="19"/>
-      </svg>
-    ),
-  },
 ];
-
-// ─── Section ──────────────────────────────────────────────────────────────────
 
 export default function HowOutroundWorks() {
   const ref      = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
-
-  const EASE = { duration: 0.45, ease: [0.0, 0.0, 0.2, 1] };
 
   return (
     <section
@@ -142,221 +72,144 @@ export default function HowOutroundWorks() {
         position: 'relative',
       }}
     >
-      <style>{`
-        @keyframes how-pulse {
-          0%   { transform: translateX(-100%); opacity: 0; }
-          10%  { opacity: 1; }
-          90%  { opacity: 1; }
-          100% { transform: translateX(280%); opacity: 0; }
-        }
-      `}</style>
-
       {/* Corner metadata */}
       <div style={{
-        width: '100%',
-        maxWidth: 1200,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 'clamp(40px, 6vw, 72px)',
-        gap: 24,
+        width: '100%', maxWidth: 1200,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 'clamp(40px, 6vw, 72px)', gap: 24,
       }}>
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 10,
           fontFamily: 'var(--font-mono)', fontSize: 11,
-          color: 'var(--text-muted)', letterSpacing: '0.14em',
-          textTransform: 'uppercase',
+          color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
           04 / HOW IT WORKS
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
-          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65,
-          whiteSpace: 'nowrap',
+          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65, whiteSpace: 'nowrap',
         }}>
-          {'/* brief \u00b7 capture \u00b7 update \u00b7 coordinate \u00b7 query */'}
+          {'/* before \u00b7 during \u00b7 after */'}
         </div>
       </div>
 
       <div style={{ width: '100%', maxWidth: 1200 }}>
 
-        {/* ─────────────────────────────────────────────────────────────────── */}
-        {/* WHAT — 2-col: copy + workflow nodes */}
-        {/* ─────────────────────────────────────────────────────────────────── */}
-        <div
-          className="how-what-grid"
+        {/* Heading */}
+        <motion.h2
+          initial={{ opacity: 0, y: 10 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={EASE}
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 0.9fr) minmax(0, 1.1fr)',
-            gap: 'clamp(40px, 6vw, 96px)',
-            alignItems: 'start',
-            marginBottom: 'clamp(80px, 10vw, 140px)',
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(28px, 4vw, 44px)',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            lineHeight: 1.1,
+            letterSpacing: '-0.025em',
+            margin: '0 0 clamp(48px, 6vw, 72px)',
+            maxWidth: 720,
           }}
         >
-          <div>
+          One system, around every conversation your team has.
+        </motion.h2>
+
+        {/* Three phases */}
+        <div
+          className="how-phases-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            gap: 'clamp(24px, 3vw, 40px)',
+            marginBottom: 'clamp(56px, 7vw, 88px)',
+          }}
+        >
+          {PHASES.map((phase, i) => (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={EASE}
+              key={phase.label}
+              initial={{ opacity: 0, y: 16 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ ...EASE, delay: 0.15 + i * 0.12 }}
               style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                color: 'var(--coral)',
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                marginBottom: 18,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
+                paddingTop: 28,
+                borderTop: '1px solid rgba(242,107,69,0.3)',
               }}
             >
-              What
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ ...EASE, delay: 0.1 }}
-              style={{
+              <span style={{ color: 'var(--coral)' }}>{phase.icon}</span>
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 10,
+                color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase',
+              }}>
+                {phase.label}
+              </div>
+              <div style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(28px, 4vw, 44px)',
+                fontSize: 'clamp(19px, 2.2vw, 24px)',
                 fontWeight: 700,
                 color: 'var(--text-primary)',
-                lineHeight: 1.1,
-                letterSpacing: '-0.025em',
-                margin: '0 0 20px',
-              }}
-            >
-              Connects to the tools you already run on.
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ ...EASE, delay: 0.2 }}
-              style={{
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em',
+              }}>
+                {phase.title}
+              </div>
+              <p style={{
                 fontFamily: 'var(--font-body)',
-                fontSize: 'clamp(15px, 1.6vw, 17px)',
+                fontSize: 'clamp(14px, 1.5vw, 15px)',
                 color: 'var(--text-sub)',
-                lineHeight: 1.7,
-                margin: '0 0 20px',
-                maxWidth: 440,
-              }}
-            >
-              Outround sits behind your calendar, CRM, and messaging platform. 15 minutes to set up. Nothing changes in your workflow.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ ...EASE, delay: 0.3 }}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                color: 'var(--text-muted)',
-                letterSpacing: '0.07em',
-              }}
-            >
-              Connects in 15 minutes. Nothing else changes.
+                lineHeight: 1.65,
+                margin: 0,
+              }}>
+                {phase.body}
+              </p>
             </motion.div>
-          </div>
-
-          {/* Integration network */}
-          <motion.div
-            initial={{ opacity: 0, x: 12 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ ...EASE, delay: 0.25 }}
-            style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-          >
-            <IntegrationNetwork isInView={isInView} />
-          </motion.div>
+          ))}
         </div>
 
-        {/* ─────────────────────────────────────────────────────────────────── */}
-        {/* HOW — single-column list */}
-        {/* ─────────────────────────────────────────────────────────────────── */}
-        <div
-          className="how-steps-grid"
+        {/* Integration strip */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ ...EASE, delay: 0.5 }}
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 0.9fr) minmax(0, 1.1fr)',
-            gap: 'clamp(40px, 6vw, 96px)',
-            alignItems: 'start',
-            marginBottom: 'clamp(80px, 10vw, 140px)',
+            borderTop: '0.5px solid var(--border)',
+            paddingTop: 'clamp(32px, 4vw, 44px)',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 24,
           }}
         >
-          <div>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={EASE}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                color: 'var(--coral)',
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                marginBottom: 18,
-              }}
-            >
-              How
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ ...EASE, delay: 0.1 }}
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(28px, 4vw, 44px)',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                lineHeight: 1.1,
-                letterSpacing: '-0.025em',
-                margin: 0,
-                maxWidth: 420,
-              }}
-            >
-              Every conversation, captured and put to work.
-            </motion.h2>
+          <div style={{
+            fontFamily: 'var(--font-body)', fontSize: 'clamp(14px, 1.5vw, 16px)',
+            color: 'var(--text-sub)', lineHeight: 1.5, maxWidth: 360,
+          }}>
+            Sits behind your calendar, CRM, and messaging.
+            <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', marginTop: 6 }}>
+              15 minutes to set up. Nothing else changes.
+            </span>
           </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {HOW_STEPS.map((step, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ ...EASE, delay: 0.3 + i * 0.08 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 16,
-                  padding: '18px 0',
-                  borderBottom: i < HOW_STEPS.length - 1 ? '0.5px solid var(--border)' : 'none',
-                }}
-              >
-                <span style={{
-                  color: 'var(--coral)',
-                  flexShrink: 0,
-                  marginTop: 2,
-                  opacity: 0.9,
-                }}>
-                  {step.icon}
-                </span>
-                <p style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 'clamp(16px, 1.8vw, 19px)',
-                  color: 'var(--text-primary)',
-                  lineHeight: 1.65,
-                  margin: 0,
-                }}>
-                  {step.text}
-                </p>
-              </motion.div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center' }}>
+            {STACK_ICONS.map(icon => (
+              <img
+                key={icon.id}
+                src={icon.src}
+                alt={icon.label}
+                style={{ width: 36, height: 36, objectFit: 'contain', borderRadius: 9, opacity: 0.9 }}
+              />
             ))}
           </div>
-        </div>
+        </motion.div>
 
       </div>
 
       <style>{`
         @media (max-width: 880px) {
-          .how-what-grid, .how-steps-grid { grid-template-columns: 1fr !important; }
+          .how-phases-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </section>

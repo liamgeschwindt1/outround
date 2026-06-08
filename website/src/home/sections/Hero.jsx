@@ -105,9 +105,9 @@ export default function Hero() {
               margin: '0 0 24px',
             }}
           >
-            Your sales engine is leaking revenue.
+            CRMs store records.
             <br />
-            <span style={{ color: 'var(--text-sub)' }}>Find out where.</span>
+            <span style={{ color: 'var(--text-sub)' }}>Outround stores reality.</span>
           </motion.h1>
 
           <motion.div
@@ -123,7 +123,7 @@ export default function Hero() {
               lineHeight: 1.7,
             }}
           >
-            Outround captures every sales conversation, updates your CRM automatically, and turns your pipeline into a queryable intelligence layer.
+            Revenue teams don&rsquo;t lose because they lack data. They lose because context disappears between conversations. Outround is the commercial memory and coordination layer beneath every call your team makes.
           </motion.div>
 
           <motion.div
@@ -153,7 +153,7 @@ export default function Hero() {
               See what it&rsquo;s costing you
             </motion.button>
             <button
-              onClick={() => document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => document.getElementById('what')?.scrollIntoView({ behavior: 'smooth' })}
               style={{
                 background: 'transparent',
                 color: 'var(--text-sub)',
@@ -167,7 +167,7 @@ export default function Hero() {
                 minHeight: 44,
               }}
             >
-              How it works &rarr;
+              See the product &rarr;
             </button>
           </motion.div>
 
@@ -185,11 +185,10 @@ export default function Hero() {
             }}
           >
             {[
-              ['Brief',      'Pre-call intel'],
-              ['Capture',    '100% of calls'],
-              ['Update',     'Live to CRM'],
-              ['Coordinate', 'Next steps set'],
-              ['Query',      'Plain language'],
+              ['Before',    'Brief in Slack'],
+              ['After',     'CRM completed'],
+              ['Across',    'Every deal'],
+              ['Over time', 'Never resets'],
             ].map(([k, v]) => (
               <div key={k}>
                 <div style={{

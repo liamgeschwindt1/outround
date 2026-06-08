@@ -761,6 +761,38 @@ export default function RevenueCalculator() {
                           )}
                         </AnimatePresence>
                       </div>
+
+                      {/* ── Forward CTA — bridge to the product ── */}
+                      {showBarStats && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.2, ease: [0.0, 0.0, 0.2, 1] }}
+                          style={{ borderTop: '0.5px solid var(--border)', paddingTop: 24, marginTop: 20 }}
+                        >
+                          <div style={{
+                            fontFamily: 'var(--font-body)', fontSize: 'clamp(14px, 1.6vw, 16px)',
+                            color: 'var(--text-sub)', lineHeight: 1.6, marginBottom: 18, maxWidth: 520,
+                          }}>
+                            Every call resets memory. Every rep rebuilds context. That is where the pipeline goes.
+                          </div>
+                          <button
+                            onClick={() => document.getElementById('what')?.scrollIntoView({ behavior: 'smooth' })}
+                            style={{
+                              background: 'transparent',
+                              color: 'var(--text-primary)',
+                              fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600,
+                              padding: '12px 24px', borderRadius: 999,
+                              border: '0.5px solid rgba(242,107,69,0.45)',
+                              cursor: 'pointer', minHeight: 44,
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(242,107,69,0.8)'; e.currentTarget.style.background = 'rgba(242,107,69,0.06)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(242,107,69,0.45)'; e.currentTarget.style.background = 'transparent'; }}
+                          >
+                            Here&rsquo;s how Outround recovers it &rarr;
+                          </button>
+                        </motion.div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>

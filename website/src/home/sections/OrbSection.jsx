@@ -380,7 +380,7 @@ export default function OrbSection() {
           textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          05 / QUERY
+          05 / THE INTELLIGENCE LAYER
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
@@ -415,7 +415,7 @@ export default function OrbSection() {
           Ask your pipeline anything.
         </div>
         <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-muted)', fontStyle: 'italic' }}>
-          Click any question.
+          Not a dashboard. A plain-language interface to everything your team has ever said. Click any question.
         </div>
       </div>
 

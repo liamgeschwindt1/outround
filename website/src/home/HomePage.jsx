@@ -1,9 +1,11 @@
 import HeroDotGrid from './HeroDotGrid';
 import Hero from './sections/Hero';
 import RevenueCalculator from './sections/RevenueCalculator';
-import SolutionSection from './sections/SolutionSection';
+import WhatOutroundIs from './sections/WhatOutroundIs';
 import HowOutroundWorks from './sections/HowOutroundWorks';
 import OrbSection from './sections/OrbSection';
+import MoatSection from './sections/MoatSection';
+import Pricing from './sections/Pricing';
 import FinalCTA from './sections/FinalCTA';
 
 export default function HomePage() {
@@ -14,9 +16,11 @@ export default function HomePage() {
         <Hero />
       </section>
       <RevenueCalculator />
+      <WhatOutroundIs />
       <HowOutroundWorks />
-      <SolutionSection />
       <OrbSection />
+      <MoatSection />
+      <Pricing />
       <FinalCTA />
     </main>
   );
