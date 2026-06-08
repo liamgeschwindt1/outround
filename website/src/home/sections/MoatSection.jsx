@@ -51,7 +51,7 @@ export default function MoatSection() {
           color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          06 / WHY IT COMPOUNDS
+          04 / WHY IT COMPOUNDS
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
@@ -128,7 +128,7 @@ export default function MoatSection() {
       </div>
 
       <style>{`
-        @media (max-width: 720px) {
+        @media (max-width: 768px) {
           .moat-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>

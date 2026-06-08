@@ -84,7 +84,7 @@ export default function HowOutroundWorks() {
           color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          04 / HOW IT WORKS
+          02 / HOW IT WORKS
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
@@ -208,7 +208,7 @@ export default function HowOutroundWorks() {
       </div>
 
       <style>{`
-        @media (max-width: 880px) {
+        @media (max-width: 768px) {
           .how-phases-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>

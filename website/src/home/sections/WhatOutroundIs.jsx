@@ -40,7 +40,7 @@ export default function WhatOutroundIs() {
           color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          03 / WHAT IT IS
+          01 / WHAT IT IS
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
@@ -154,7 +154,7 @@ export default function WhatOutroundIs() {
       </div>
 
       <style>{`
-        @media (max-width: 880px) {
+        @media (max-width: 768px) {
           .what-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>

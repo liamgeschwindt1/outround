@@ -380,7 +380,7 @@ export default function OrbSection() {
           textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          05 / THE INTELLIGENCE LAYER
+          03 / THE INTELLIGENCE LAYER
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,

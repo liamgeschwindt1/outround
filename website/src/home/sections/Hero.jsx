@@ -56,7 +56,7 @@ export default function Hero() {
           width: '100%',
           maxWidth: 1200,
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 0.9fr)',
+          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.1fr)',
           gap: 'clamp(40px, 6vw, 88px)',
           alignItems: 'center',
         }}
@@ -221,7 +221,7 @@ export default function Hero() {
       </div>
 
       <style>{`
-        @media (max-width: 880px) {
+        @media (max-width: 768px) {
           .hero-grid { grid-template-columns: 1fr !important; }
           .hero-right { max-width: 520px; margin: 0 auto; width: 100%; }
         }

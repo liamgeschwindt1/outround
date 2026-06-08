@@ -86,7 +86,7 @@ export default function FinalCTA() {
           textTransform: 'uppercase',
         }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          08 / GET STARTED
+          05 / GET STARTED
         </div>
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
@@ -391,7 +391,7 @@ export default function FinalCTA() {
       </AnimatePresence>
 
       <style>{`
-        @media (max-width: 880px) {
+        @media (max-width: 768px) {
           .cta-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
