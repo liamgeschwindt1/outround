@@ -883,7 +883,10 @@ export default function RevenueCalculator() {
                             Every call resets memory. Every rep rebuilds context. That is where the pipeline goes.
                           </div>
                           <button
-                            onClick={() => document.getElementById('what')?.scrollIntoView({ behavior: 'smooth' })}
+                            onClick={() => {
+                              closeModal();
+                              setTimeout(() => document.getElementById('what')?.scrollIntoView({ behavior: 'smooth' }), 200);
+                            }}
                             style={{
                               background: 'transparent',
                               color: 'var(--text-primary)',
