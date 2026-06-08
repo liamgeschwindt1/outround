@@ -701,23 +701,7 @@ export default function RevenueCalculator() {
                             >
                               Upgrade your pipeline
                             </motion.button>
-                          ) : (
-                            <button
-                              onClick={resetBar}
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                color: 'var(--text-muted)',
-                                fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500,
-                                padding: '11px 24px', borderRadius: 10,
-                                border: '0.5px solid var(--border)',
-                                cursor: 'pointer', minHeight: 44,
-                                letterSpacing: '0.02em',
-                              }}
-                            >
-                              Reset
-                            </button>
-                          )}
+                          ) : null}
                         </div>
                       )}
 

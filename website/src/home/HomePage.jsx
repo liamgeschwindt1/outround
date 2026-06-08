@@ -5,7 +5,6 @@ import WhatOutroundIs from './sections/WhatOutroundIs';
 import HowOutroundWorks from './sections/HowOutroundWorks';
 import OrbSection from './sections/OrbSection';
 import MoatSection from './sections/MoatSection';
-import Pricing from './sections/Pricing';
 import FinalCTA from './sections/FinalCTA';
 
 export default function HomePage() {
@@ -20,7 +19,6 @@ export default function HomePage() {
       <HowOutroundWorks />
       <OrbSection />
       <MoatSection />
-      <Pricing />
       <FinalCTA />
     </main>
   );

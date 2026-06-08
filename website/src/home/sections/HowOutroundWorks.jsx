@@ -21,7 +21,7 @@ const PHASES = [
   {
     label: 'Before the call',
     title: 'The brief arrives.',
-    body: '15 minutes before every meeting, Outround delivers a brief to Slack. Account history, prior objections, deal risks, and the next-best questions. No dashboard. No searching. It arrives.',
+    body: '15 minutes before every meeting, Outround delivers a brief to your messaging platform. Account history, prior objections, deal risks, and the next-best questions. No dashboard. No searching. It arrives.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>

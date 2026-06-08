@@ -77,7 +77,7 @@ export default function MoatSection() {
             maxWidth: 720,
           }}
         >
-          The longer you use it, the harder it is to leave.
+          The system gets sharper with every conversation.
         </motion.h2>
 
         <div

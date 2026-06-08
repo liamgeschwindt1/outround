@@ -185,7 +185,7 @@ export default function Hero() {
             }}
           >
             {[
-              ['Before',    'Brief in Slack'],
+              ['Before',    'Brief delivered'],
               ['After',     'CRM completed'],
               ['Across',    'Every deal'],
               ['Over time', 'Never resets'],

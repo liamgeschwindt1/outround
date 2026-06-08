@@ -302,10 +302,24 @@ export default function FinalCTA() {
               fontFamily: 'var(--font-body)', fontSize: 14,
               color: 'var(--text-muted)', lineHeight: 1.6,
             }}>
-              First access. Direct line to the founders. Shape the product before it launches.
+              First access. Shape the product. Direct line to the founders.
             </div>
           </div>
           <div style={{ height: '0.5px', background: 'var(--border)' }} />
+          <div style={{
+            background: 'rgba(242,107,69,0.08)',
+            border: '0.5px solid rgba(242,107,69,0.3)',
+            borderRadius: 10,
+            padding: '14px 16px',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px, 3vw, 28px)', fontWeight: 700, color: 'var(--coral)', letterSpacing: '-0.02em', lineHeight: 1 }}>
+              50% off
+            </div>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
+              for founding cohort members &middot; first 6 months
+            </div>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <RailStat label="Onboarding window"       value="48 hours" />
             <RailStat label="Direct line to founders" value="Always"   />

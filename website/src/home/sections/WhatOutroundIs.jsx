@@ -4,7 +4,7 @@ import { motion, useInView } from 'framer-motion';
 const EASE = { duration: 0.5, ease: [0.0, 0.0, 0.2, 1] };
 
 const ROWS = [
-  ['Before the meeting', 'Intelligence arrives in Slack.'],
+  ['Before the meeting', 'Intelligence arrives automatically.'],
   ['After the meeting',  'CRM completed. Follow-up drafted.'],
   ['Over time',          'Sharper with every call.'],
 ];
