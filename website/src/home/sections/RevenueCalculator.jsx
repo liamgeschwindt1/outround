@@ -378,7 +378,7 @@ export default function RevenueCalculator() {
         style={{
           display: 'flex',
           justifyContent: 'center',
-          padding: '0 clamp(20px, 4vw, 56px) clamp(56px, 7vw, 88px)',
+          padding: '0 clamp(20px, 4vw, 56px) clamp(32px, 4vw, 48px)',
           background: '#0a0a0b',
         }}
       >
@@ -461,6 +461,15 @@ export default function RevenueCalculator() {
               }}
             />
 
+            {/* Centering wrapper — framer-motion overrides CSS transform so we use flex instead */}
+            <div
+              style={{
+                position: 'fixed', inset: 0, zIndex: 1000,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '24px 16px',
+                pointerEvents: 'none',
+              }}
+            >
             {/* Panel */}
             <motion.div
               key="panel"
@@ -469,11 +478,9 @@ export default function RevenueCalculator() {
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               style={{
-                position: 'fixed',
-                top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 1000,
-                width: 'min(760px, calc(100vw - 32px))',
+                position: 'relative',
+                pointerEvents: 'all',
+                width: 'min(760px, 100%)',
                 maxHeight: 'calc(100vh - 48px)',
                 overflowY: 'auto',
                 background: 'var(--bg-sub)',
@@ -902,6 +909,7 @@ export default function RevenueCalculator() {
         </AnimatePresence>
 
             </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
