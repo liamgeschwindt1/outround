@@ -301,6 +301,13 @@ export default function RevenueCalculator() {
     return () => { clearTimeout(t0); clearTimeout(t1); };
   }, [step]);
 
+  // Open from external trigger (e.g. Hero CTA)
+  useEffect(() => {
+    const handler = () => openModal();
+    window.addEventListener('outround:open-calculator', handler);
+    return () => window.removeEventListener('outround:open-calculator', handler);
+  }, []);
+
   // Close on Escape
   useEffect(() => {
     if (!open) return;

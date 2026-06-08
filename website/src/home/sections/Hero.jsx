@@ -13,40 +13,10 @@ export default function Hero() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 'clamp(96px, 12vw, 140px) clamp(20px, 4vw, 56px) clamp(64px, 8vw, 96px)',
+        padding: 'clamp(40px, 6vw, 72px) clamp(20px, 4vw, 56px) clamp(64px, 8vw, 96px)',
         overflow: 'hidden',
       }}
     >
-      {/* Top corner metadata */}
-      <div style={{
-        position: 'absolute',
-        top: 'clamp(20px, 3vw, 32px)',
-        left: 'clamp(20px, 4vw, 56px)',
-        right: 'clamp(20px, 4vw, 56px)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: 2,
-        fontFamily: 'var(--font-mono)',
-        fontSize: 10,
-        color: 'var(--text-muted)',
-        letterSpacing: '0.14em',
-        textTransform: 'uppercase',
-      }}>
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}
-        >
-          <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)' }} />
-          Outround &middot; v1.0
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.3 }}
-          style={{ opacity: 0.7 }}
-        >
-          {'/* '}EU hosted &middot; GDPR native{' */'}
-        </motion.div>
-      </div>
 
       <div
         className="hero-grid"
@@ -135,7 +105,7 @@ export default function Hero() {
             <motion.button
               whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(242,107,69,0.4)' }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => window.dispatchEvent(new CustomEvent('outround:open-calculator'))}
               style={{
                 background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
                 color: '#0a0a0b',
