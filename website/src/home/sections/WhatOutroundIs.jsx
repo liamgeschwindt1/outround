@@ -32,7 +32,7 @@ export default function WhatOutroundIs() {
       <div style={{
         width: '100%', maxWidth: 1200,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 'clamp(40px, 6vw, 72px)', gap: 24,
+        marginBottom: 'clamp(40px, 5vw, 56px)', gap: 24,
       }}>
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 10,
@@ -55,7 +55,7 @@ export default function WhatOutroundIs() {
         style={{
           width: '100%', maxWidth: 1200,
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 0.9fr)',
+          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
           gap: 'clamp(40px, 6vw, 88px)',
           alignItems: 'center',
         }}
@@ -71,7 +71,7 @@ export default function WhatOutroundIs() {
                 transition={{ ...EASE, delay: 0.1 + i * 0.08 }}
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontSize: 'clamp(24px, 3.6vw, 40px)',
+                  fontSize: 'clamp(28px, 4vw, 44px)',
                   fontWeight: 700,
                   color: 'var(--text-muted)',
                   lineHeight: 1.15,
@@ -96,7 +96,7 @@ export default function WhatOutroundIs() {
             transition={{ ...EASE, delay: 0.45 }}
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(24px, 3.6vw, 40px)',
+              fontSize: 'clamp(28px, 4vw, 44px)',
               fontWeight: 700,
               color: 'var(--text-primary)',
               lineHeight: 1.15,

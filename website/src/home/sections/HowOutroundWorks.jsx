@@ -76,7 +76,7 @@ export default function HowOutroundWorks() {
       <div style={{
         width: '100%', maxWidth: 1200,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 'clamp(40px, 6vw, 72px)', gap: 24,
+        marginBottom: 'clamp(40px, 5vw, 56px)', gap: 24,
       }}>
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 10,

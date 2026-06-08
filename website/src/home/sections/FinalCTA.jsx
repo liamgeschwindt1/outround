@@ -57,7 +57,7 @@ export default function FinalCTA() {
     <section
       id="cta"
       style={{
-        background: '#0a0a0b',
+        background: '#111114',
         backgroundImage: 'radial-gradient(circle, rgba(242,241,239,0.07) 1px, transparent 1px)',
         backgroundSize: '28px 28px',
         minHeight: '100vh',
@@ -65,7 +65,7 @@ export default function FinalCTA() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 'clamp(80px, 12vw, 120px) clamp(20px, 4vw, 56px)',
+        padding: 'clamp(72px, 9vw, 110px) clamp(20px, 4vw, 56px)',
         position: 'relative',
       }}
     >
@@ -76,7 +76,7 @@ export default function FinalCTA() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 'clamp(40px, 6vw, 64px)',
+        marginBottom: 'clamp(40px, 5vw, 56px)',
         gap: 24,
       }}>
         <div style={{

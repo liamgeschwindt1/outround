@@ -43,7 +43,7 @@ export default function MoatSection() {
       <div style={{
         width: '100%', maxWidth: 1200,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 'clamp(40px, 6vw, 64px)', gap: 24,
+        marginBottom: 'clamp(40px, 5vw, 56px)', gap: 24,
       }}>
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 10,
@@ -85,7 +85,7 @@ export default function MoatSection() {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-            gap: 'clamp(16px, 2.5vw, 28px)',
+            gap: 'clamp(20px, 2.5vw, 32px)',
           }}
         >
           {TILES.map((tile, i) => (

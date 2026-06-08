@@ -370,7 +370,7 @@ export default function OrbSection() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 'clamp(40px, 6vw, 64px)',
+        marginBottom: 'clamp(40px, 5vw, 56px)',
         gap: 24,
       }}>
         <div style={{
