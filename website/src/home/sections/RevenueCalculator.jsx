@@ -259,6 +259,7 @@ const STEP_SPRING = { type: 'spring', stiffness: 260, damping: 28 };
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function RevenueCalculator() {
+  const [open, setOpen]             = useState(false);
   const [step, setStep]             = useState('deal');
   const [dealLabel, setDealLabel]   = useState(null);
   const [cycleLabel, setCycleLabel] = useState(null);
@@ -278,6 +279,13 @@ export default function RevenueCalculator() {
     setShowAfterStats(false);
   };
 
+  function openModal() {
+    setStep('deal'); setDealLabel(null); setCycleLabel(null); setNumReps(null);
+    setShowBigNum(false); setShowBarStats(false); setBarTriggered(false); setShowAfterStats(false);
+    setOpen(true);
+  }
+  function closeModal() { setOpen(false); }
+
   function selectDeal(label)  { setDealLabel(label);  setTimeout(() => setStep('cycle'), 280); }
   function selectCycle(label) { setCycleLabel(label); setTimeout(() => setStep('team'),  280); }
   function selectTeam(value)  { setNumReps(value);    setTimeout(() => setStep('results'), 280); }
@@ -293,13 +301,25 @@ export default function RevenueCalculator() {
     return () => { clearTimeout(t0); clearTimeout(t1); };
   }, [step]);
 
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
   const c = dealLabel && cycleLabel && numReps ? calc(dealLabel, cycleLabel, numReps) : null;
 
   useEffect(() => {
     if (c) {
       try {
-        // Keep `outround_pipeline` mapped to currently-lost annual pipeline so
-        // downstream sections (HowOutroundWorks) continue to read a meaningful value.
         localStorage.setItem('outround_pipeline',     String(c.annualLost));
         localStorage.setItem('outround_reps',         String(c.numReps));
         localStorage.setItem('outround_missed_cycle', String(c.displacedCallsCycle));
@@ -343,60 +363,148 @@ export default function RevenueCalculator() {
     },
   ] : [];
 
-  function reset() {
-    setStep('deal'); setDealLabel(null); setCycleLabel(null);
-    setNumReps(null);
-  }
-  // reset retained for potential future use
-  void reset;
-
   return (
-    <section
-      id="calculator"
-      style={{
-        background: '#111114',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(72px, 9vw, 110px) clamp(20px, 4vw, 56px)',
-        position: 'relative',
-      }}
-    >
-      {/* Corner metadata */}
-      <div style={{
-        width: '100%',
-        maxWidth: 1200,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 'clamp(32px, 5vw, 56px)',
-        gap: 24,
-      }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 10,
-          fontFamily: 'var(--font-mono)', fontSize: 11,
-          color: 'var(--text-muted)', letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-        }}>
-          <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
-          02 / The leak
-        </div>
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 10,
-          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.55,
-          whiteSpace: 'nowrap',
-        }}>
-          {'/* sources cited in methodology */'}
-        </div>
+    <>
+      {/* ── Inline trigger card ──────────────────────────────────────────── */}
+      <div
+        id="calculator"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '0 clamp(20px, 4vw, 56px) clamp(56px, 7vw, 88px)',
+          background: '#0a0a0b',
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.5, ease: [0.0, 0.0, 0.2, 1] }}
+          style={{
+            width: '100%',
+            maxWidth: 760,
+            background: 'rgba(242,107,69,0.04)',
+            border: '0.5px solid rgba(242,107,69,0.22)',
+            borderRadius: 16,
+            padding: 'clamp(24px, 3vw, 36px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 24,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 10,
+              color: 'rgba(242,107,69,0.7)', letterSpacing: '0.14em',
+              textTransform: 'uppercase', marginBottom: 8,
+            }}>
+              Revenue leak calculator
+            </div>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: 'clamp(17px, 2vw, 21px)',
+              fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3,
+              letterSpacing: '-0.015em',
+            }}>
+              How much pipeline is your team losing to admin?
+            </div>
+            <div style={{
+              fontFamily: 'var(--font-body)', fontSize: 13,
+              color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.5,
+            }}>
+              3 questions &middot; 30 seconds &middot; your numbers
+            </div>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.03, boxShadow: '0 0 32px rgba(242,107,69,0.3)' }}
+            whileTap={{ scale: 0.97 }}
+            onClick={openModal}
+            style={{
+              background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
+              color: '#0a0a0b',
+              fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 700,
+              padding: '12px 28px', borderRadius: 999, border: 'none',
+              cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+              boxShadow: '0 0 20px rgba(242,107,69,0.2)',
+            }}
+          >
+            Calculate yours →
+          </motion.button>
+        </motion.div>
       </div>
 
-      <div style={{
-        width: '100%',
-        maxWidth: 760,
-        transition: 'max-width 0.4s ease',
-      }}>
+      {/* ── Modal overlay ────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {open && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={closeModal}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 999,
+                background: 'rgba(10,10,11,0.82)',
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
+              }}
+            />
+
+            {/* Panel */}
+            <motion.div
+              key="panel"
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              style={{
+                position: 'fixed',
+                top: '50%', left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 1000,
+                width: 'min(760px, calc(100vw - 32px))',
+                maxHeight: 'calc(100vh - 48px)',
+                overflowY: 'auto',
+                background: 'var(--bg-sub)',
+                border: '0.5px solid var(--border-md)',
+                borderRadius: 20,
+                padding: 'clamp(28px, 4vw, 44px)',
+                boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+              }}
+            >
+              {/* Close button */}
+              <button
+                onClick={closeModal}
+                aria-label="Close calculator"
+                style={{
+                  position: 'absolute', top: 16, right: 16,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--text-muted)', padding: 8, lineHeight: 1,
+                  borderRadius: 6,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+
+              {/* Header */}
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 10,
+                color: 'var(--text-muted)', letterSpacing: '0.14em',
+                textTransform: 'uppercase', marginBottom: 24,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', display: 'inline-block' }} />
+                Revenue leak calculator
+              </div>
+
         <AnimatePresence mode="wait">
 
           {step === 'deal' && (
@@ -785,7 +893,11 @@ export default function RevenueCalculator() {
           )}
 
         </AnimatePresence>
-      </div>
-    </section>
+
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
