@@ -85,6 +85,7 @@ export default function App() {
             <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
 
             <Route path="/"              element={<Guarded><Dashboard /></Guarded>} />
+            <Route path="/meetings"      element={<Guarded><CalendarPage /></Guarded>} />
             <Route path="/calendar"      element={<Guarded><CalendarPage /></Guarded>} />
             <Route path="/crm"           element={<Guarded><CRMPage /></Guarded>} />
             <Route path="/transcripts"   element={<Guarded><TranscriptsPage /></Guarded>} />

@@ -49,6 +49,9 @@ async function rcall(method, path, body, apiKey) {
  * @param {string} [apiKey] — Recall API key; falls back to RECALL_API_KEY env var
  */
 async function createBot({ meetingUrl, joinAt, botName = 'Outround Notetaker' }, apiKey) {
+  // Build the payload. Gladia is connected via the Recall dashboard integration,
+  // so Recall handles transcription automatically — no extra fields needed for EU region.
+  // We just need the webhook to fire when the bot is done so we can fetch the transcript.
   const payload = {
     meeting_url: meetingUrl,
     bot_name: botName,
