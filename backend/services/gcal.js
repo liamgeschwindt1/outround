@@ -220,4 +220,42 @@ async function isConnected(userId) {
   return rows.length > 0;
 }
 
-module.exports = { getAuthUrl, exchangeCode, refreshToken, listUpcomingEvents, isConnected };
+/**
+ * List upcoming calendar events using a raw access token (no DB lookup).
+ * Used by the multi-tenant calendar poller.
+ *
+ * @param {string} accessToken — Google OAuth access token
+ * @param {object} [opts]
+ * @param {number} [opts.days]         — look-ahead window (default 7)
+ * @param {number} [opts.maxResults]   — default 50
+ * @returns {Promise<Array>}           — raw Google Calendar event items
+ */
+async function listUpcomingEventsWithToken(accessToken, opts = {}) {
+  const days       = opts.days       || 7;
+  const maxResults = opts.maxResults || 50;
+  const timeMin    = new Date().toISOString();
+  const timeMax    = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+  const params = new URLSearchParams({
+    timeMin,
+    timeMax,
+    singleEvents: 'true',
+    orderBy:      'startTime',
+    maxResults:   String(maxResults),
+  });
+
+  const resp = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
+    { headers: { 'Authorization': `Bearer ${accessToken}` } }
+  );
+
+  if (!resp.ok) {
+    const txt = await resp.text();
+    throw new Error(`Google Calendar API error: ${resp.status} ${txt}`);
+  }
+
+  const data = await resp.json();
+  return data.items || [];
+}
+
+module.exports = { getAuthUrl, exchangeCode, refreshToken, listUpcomingEvents, listUpcomingEventsWithToken, isConnected };

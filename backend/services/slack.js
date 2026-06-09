@@ -3,36 +3,51 @@
 /**
  * Slack DM delivery service.
  *
- * Env vars required:
- *   SLACK_BOT_TOKEN  — xoxb-... bot token with chat:write scope
- *   SLACK_USER_ID    — Slack user ID to DM (e.g. U01XXXXXXX)
+ * Functions now accept a `creds` object as their first argument:
+ *   { botToken, slackUserId }
  *
- * All functions no-op gracefully when env vars are missing.
+ * Falls back to env vars (SLACK_BOT_TOKEN / SLACK_USER_ID) when creds are
+ * omitted, so existing call-sites continue to work without changes.
+ *
+ * Env vars (fallback only — prefer storing tokens in Supabase integrations):
+ *   SLACK_BOT_TOKEN
+ *   SLACK_USER_ID
  */
 
-function isConfigured() {
-  return !!(process.env.SLACK_BOT_TOKEN && process.env.SLACK_USER_ID);
+function _resolve(creds) {
+  return {
+    botToken:   creds?.botToken   || process.env.SLACK_BOT_TOKEN  || null,
+    slackUserId: creds?.slackUserId || process.env.SLACK_USER_ID   || null,
+  };
+}
+
+function isConfigured(creds) {
+  const r = _resolve(creds);
+  return !!(r.botToken && r.slackUserId);
 }
 
 /**
- * Send a plain-text DM to the configured SLACK_USER_ID.
+ * Send a plain-text DM.
+ *
+ * @param {object} [creds]  — { botToken, slackUserId } — omit to use env vars
+ * @param {string} text
  */
-async function sendDM(text) {
-  if (!isConfigured()) {
-    console.warn('[slack] SLACK_BOT_TOKEN or SLACK_USER_ID not set — skipping DM');
+async function sendDM(creds, text) {
+  // Back-compat: if creds is a string, treat as (text) call
+  if (typeof creds === 'string') { text = creds; creds = null; }
+  const { botToken, slackUserId } = _resolve(creds);
+  if (!botToken || !slackUserId) {
+    console.warn('[slack] credentials missing — skipping DM');
     return null;
   }
 
   const resp = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+      'Authorization': `Bearer ${botToken}`,
       'Content-Type': 'application/json; charset=utf-8',
     },
-    body: JSON.stringify({
-      channel: process.env.SLACK_USER_ID,
-      text,
-    }),
+    body: JSON.stringify({ channel: slackUserId, text }),
   });
 
   const data = await resp.json();
@@ -41,25 +56,28 @@ async function sendDM(text) {
 }
 
 /**
- * Send a rich DM with Block Kit blocks.
+ * Send a Block Kit DM.
+ *
+ * @param {object} [creds]  — { botToken, slackUserId }
+ * @param {string} text     — fallback notification text
+ * @param {Array}  blocks
  */
-async function sendBlocksDM(text, blocks) {
-  if (!isConfigured()) {
-    console.warn('[slack] SLACK_BOT_TOKEN or SLACK_USER_ID not set — skipping DM');
+async function sendBlocksDM(creds, text, blocks) {
+  // Back-compat: if creds is a string, treat as (text, blocks) call
+  if (typeof creds === 'string') { blocks = text; text = creds; creds = null; }
+  const { botToken, slackUserId } = _resolve(creds);
+  if (!botToken || !slackUserId) {
+    console.warn('[slack] credentials missing — skipping DM');
     return null;
   }
 
   const resp = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+      'Authorization': `Bearer ${botToken}`,
       'Content-Type': 'application/json; charset=utf-8',
     },
-    body: JSON.stringify({
-      channel: process.env.SLACK_USER_ID,
-      text,   // fallback for notifications
-      blocks,
-    }),
+    body: JSON.stringify({ channel: slackUserId, text, blocks }),
   });
 
   const data = await resp.json();
@@ -70,15 +88,15 @@ async function sendBlocksDM(text, blocks) {
 /**
  * Send the standard post-call briefing DM.
  *
- * @param {object} opts
- * @param {string} opts.contactName
- * @param {string} opts.summary
- * @param {string[]} opts.nextSteps
- * @param {string} [opts.dealUrl]   — Pipedrive deal URL
- * @param {string} [opts.meetingTitle]
+ * @param {object} [creds]  — { botToken, slackUserId } — omit to use env vars
+ * @param {object} opts     — { contactName, summary, nextSteps, dealUrl, meetingTitle }
  */
-async function sendCallBriefing({ contactName, summary, nextSteps, dealUrl, meetingTitle }) {
-  const title = meetingTitle ? `*${meetingTitle}*` : `*Call with ${contactName}*`;
+async function sendCallBriefing(creds, opts) {
+  // Back-compat: if creds has contactName it is the opts object
+  if (creds && creds.contactName) { opts = creds; creds = null; }
+
+  const { contactName, summary, nextSteps, dealUrl, meetingTitle } = opts || {};
+
   const steps = nextSteps?.length
     ? nextSteps.map((s, i) => `${i + 1}. ${s}`).join('\n')
     : '_None identified_';
@@ -89,32 +107,24 @@ async function sendCallBriefing({ contactName, summary, nextSteps, dealUrl, meet
       text: { type: 'plain_text', text: `📞 Post-call brief: ${contactName}`, emoji: true },
     },
     { type: 'divider' },
-    {
-      type: 'section',
-      text: { type: 'mrkdwn', text: `*Summary*\n${summary}` },
-    },
-    {
-      type: 'section',
-      text: { type: 'mrkdwn', text: `*Next steps*\n${steps}` },
-    },
+    { type: 'section', text: { type: 'mrkdwn', text: `*Summary*\n${summary}` } },
+    { type: 'section', text: { type: 'mrkdwn', text: `*Next steps*\n${steps}` } },
   ];
 
   if (dealUrl) {
     blocks.push({
       type: 'actions',
-      elements: [
-        {
-          type: 'button',
-          text: { type: 'plain_text', text: 'Open in Pipedrive', emoji: true },
-          url: dealUrl,
-          action_id: 'open_pipedrive',
-        },
-      ],
+      elements: [{
+        type: 'button',
+        text: { type: 'plain_text', text: 'Open in Pipedrive', emoji: true },
+        url: dealUrl,
+        action_id: 'open_pipedrive',
+      }],
     });
   }
 
   const fallbackText = `Post-call brief: ${contactName} — ${summary}`;
-  return sendBlocksDM(fallbackText, blocks);
+  return sendBlocksDM(creds, fallbackText, blocks);
 }
 
 module.exports = { isConfigured, sendDM, sendBlocksDM, sendCallBriefing };

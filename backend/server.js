@@ -82,8 +82,9 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, '::', () => {
   console.log(`Outround backend running on port ${PORT} (binding ::)`);
 
-  // Start the calendar poller only if Google credentials are configured
-  if (process.env.GOOGLE_REFRESH_TOKEN) {
+  // Start the calendar poller if Google credentials or Supabase multi-tenant is configured
+  const pollerReady = process.env.GOOGLE_REFRESH_TOKEN || process.env.SUPABASE_URL;
+  if (pollerReady) {
     try {
       require('./services/calendar-poller').start();
     } catch (err) {

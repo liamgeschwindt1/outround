@@ -136,3 +136,39 @@ CREATE INDEX IF NOT EXISTS idx_meeting_bots_status ON meeting_bots (status);
 ALTER TABLE meetings ADD COLUMN IF NOT EXISTS prep_data        JSONB;
 ALTER TABLE meetings ADD COLUMN IF NOT EXISTS prep_generated_at TIMESTAMPTZ;
 ALTER TABLE meetings ADD COLUMN IF NOT EXISTS prep_persona_prompt TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Multi-tenant credential layer (meeting intelligence pipeline)
+-- ---------------------------------------------------------------------------
+
+-- One organisation per company. Users belong to one org.
+CREATE TABLE IF NOT EXISTS organisations (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name           TEXT NOT NULL,
+  company_domain TEXT,                    -- e.g. "acme.com" — used to detect external attendees
+  created_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Per-org integration tokens (Google, Pipedrive, Slack, Recall).
+-- access_token / refresh_token stored in plain text at the Supabase layer;
+-- Supabase RLS + service-role key restriction provide the security boundary.
+CREATE TABLE IF NOT EXISTS integrations (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id        UUID NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+  provider      TEXT NOT NULL,            -- 'google' | 'pipedrive' | 'slack' | 'recall'
+  access_token  TEXT NOT NULL,
+  refresh_token TEXT,
+  expires_at    TIMESTAMPTZ,
+  metadata      JSONB DEFAULT '{}',       -- e.g. { slack_user_id, domain, company_domain }
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (org_id, provider)
+);
+
+-- Link users to orgs (nullable — existing rows unaffected until backfilled)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organisations(id);
+
+-- Link meeting_bots to orgs so the webhook can look up credentials
+ALTER TABLE meeting_bots ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organisations(id);
+-- make user_id nullable so org-dispatched bots don't require a users row
+ALTER TABLE meeting_bots ALTER COLUMN user_id DROP NOT NULL;

@@ -23,6 +23,7 @@ const pipedrive = require('../services/pipedrive');
 const gcal = require('../services/gcal');
 const { requireAuth } = require('../middleware/auth');
 const { getPool } = require('../db/client');
+const tokenManager = require('../services/token-manager');
 
 let pushEvent = () => {};
 try { pushEvent = require('./debug').pushEvent; } catch {}
@@ -334,7 +335,31 @@ router.get('/pipedrive/callback', async (req, res) => {
   }
 
   try {
-    await pipedrive.exchangeCode(code, userId);
+    const tokenData = await pipedrive.exchangeCode(code, userId);
+
+    // Also save to multi-tenant integrations table
+    if (tokenManager.isConfigured() && userId && tokenData) {
+      try {
+        const pool = getPool();
+        let userEmail = null;
+        if (pool) {
+          const { rows } = await pool.query('SELECT email FROM users WHERE id = $1', [userId]).catch(() => ({ rows: [] }));
+          userEmail = rows[0]?.email || null;
+        }
+        const orgId = await tokenManager.ensureOrgForUser(userId, userEmail);
+        const expiresAt = tokenData.expires_in
+          ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+          : null;
+        await tokenManager.saveIntegration(orgId, 'pipedrive', {
+          accessToken:  tokenData.access_token,
+          refreshToken: tokenData.refresh_token || null,
+          expiresAt,
+        }, { domain: tokenData.api_domain || null });
+      } catch (e) {
+        console.error('[auth] pipedrive integrations save failed:', e.message);
+      }
+    }
+
     res.redirect(`${getAppUrl()}${returnTo}?pipedrive=connected`);
   } catch (err) {
     console.error('[auth] Pipedrive token exchange error:', err.message);
@@ -396,7 +421,31 @@ router.get('/gcal/callback', async (req, res) => {
   }
 
   try {
-    await gcal.exchangeCode(code, userId);
+    const tokenData = await gcal.exchangeCode(code, userId);
+
+    // Also save to multi-tenant integrations table
+    if (tokenManager.isConfigured() && userId && tokenData) {
+      try {
+        const pool = getPool();
+        let userEmail = null;
+        if (pool) {
+          const { rows } = await pool.query('SELECT email FROM users WHERE id = $1', [userId]).catch(() => ({ rows: [] }));
+          userEmail = rows[0]?.email || null;
+        }
+        const orgId = await tokenManager.ensureOrgForUser(userId, userEmail);
+        const expiresAt = tokenData.expires_in
+          ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+          : null;
+        await tokenManager.saveIntegration(orgId, 'google', {
+          accessToken:  tokenData.access_token,
+          refreshToken: tokenData.refresh_token || null,
+          expiresAt,
+        });
+      } catch (e) {
+        console.error('[auth] gcal integrations save failed:', e.message);
+      }
+    }
+
     res.redirect(`${getAppUrl()}${returnTo}?gcal=connected`);
   } catch (err) {
     console.error('[auth] GCal token exchange error:', err.message);
@@ -419,6 +468,104 @@ router.delete('/gcal', requireAuth, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Slack OAuth (saves bot token + user ID to integrations table)
+// Requires env vars: SLACK_CLIENT_ID, SLACK_CLIENT_SECRET
+// ---------------------------------------------------------------------------
+
+router.get('/slack', requireAuth, (req, res) => {
+  const clientId = process.env.SLACK_CLIENT_ID;
+  if (!clientId) return res.status(503).json({ error: 'Slack integration not configured' });
+
+  const userId   = req.user?.id || req.supabaseUser?.id;
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' });
+
+  const returnTo  = req.query.return_to || '/settings';
+  const stateData = Buffer.from(JSON.stringify({ userId, returnTo })).toString('base64url');
+  const redirectUri = `${process.env.BACKEND_URL || req.protocol + '://' + req.get('host')}/auth/slack/callback`;
+
+  const params = new URLSearchParams({
+    client_id:    clientId,
+    scope:        'chat:write',
+    redirect_uri: redirectUri,
+    state:        stateData,
+  });
+  res.redirect('https://slack.com/oauth/v2/authorize?' + params);
+});
+
+router.get('/slack/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  if (error || !code || !state) {
+    return res.redirect(`${getAppUrl()}/settings?error=slack_denied`);
+  }
+
+  let userId;
+  let returnTo = '/settings';
+  try {
+    const decoded = JSON.parse(Buffer.from(state, 'base64url').toString('utf8'));
+    userId  = decoded.userId;
+    returnTo = decoded.returnTo || '/settings';
+  } catch {
+    return res.redirect(`${getAppUrl()}/settings?error=invalid_state`);
+  }
+
+  const clientId     = process.env.SLACK_CLIENT_ID;
+  const clientSecret = process.env.SLACK_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return res.redirect(`${getAppUrl()}${returnTo}?error=slack_not_configured`);
+  }
+
+  const redirectUri = `${process.env.BACKEND_URL || req.protocol + '://' + req.get('host')}/auth/slack/callback`;
+
+  try {
+    const resp = await fetch('https://slack.com/api/oauth.v2.access', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    new URLSearchParams({ code, client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri }),
+    });
+    const data = await resp.json();
+    if (!data.ok) throw new Error('Slack OAuth error: ' + data.error);
+
+    const botToken   = data.access_token;
+    const slackUserId = data.authed_user?.id || null;
+
+    if (tokenManager.isConfigured() && userId) {
+      const pool = getPool();
+      let userEmail = null;
+      if (pool) {
+        const { rows } = await pool.query('SELECT email FROM users WHERE id = $1', [userId]).catch(() => ({ rows: [] }));
+        userEmail = rows[0]?.email || null;
+      }
+      const orgId = await tokenManager.ensureOrgForUser(userId, userEmail);
+      await tokenManager.saveIntegration(orgId, 'slack', { accessToken: botToken }, { slack_user_id: slackUserId });
+    }
+
+    res.redirect(`${getAppUrl()}${returnTo}?slack=connected`);
+  } catch (err) {
+    console.error('[auth] Slack OAuth error:', err.message);
+    res.redirect(`${getAppUrl()}${returnTo}?error=slack_exchange_failed`);
+  }
+});
+
+router.delete('/slack', requireAuth, async (req, res) => {
+  const userId = req.user?.id || req.supabaseUser?.id;
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' });
+
+  if (tokenManager.isConfigured()) {
+    try {
+      const sb = tokenManager.getClient();
+      // Look up orgId from users table
+      const { data: user } = await sb.from('users').select('org_id').eq('id', userId).maybeSingle();
+      if (user?.org_id) {
+        await sb.from('integrations').delete().eq('org_id', user.org_id).eq('provider', 'slack');
+      }
+    } catch (err) {
+      console.error('[auth] slack disconnect error:', err.message);
+    }
+  }
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
 // Current user profile
 // ---------------------------------------------------------------------------
 router.get('/me', requireAuth, async (req, res) => {
@@ -436,6 +583,20 @@ router.get('/me', requireAuth, async (req, res) => {
     gcal.isConnected(userId).catch(() => false),
   ]);
 
+  // Slack connection status (from integrations table)
+  let slackConnected = false;
+  if (tokenManager.isConfigured()) {
+    try {
+      const sb = tokenManager.getClient();
+      const { data: userRow } = await sb.from('users').select('org_id').eq('id', userId).maybeSingle();
+      if (userRow?.org_id) {
+        const { data: slack } = await sb.from('integrations')
+          .select('id').eq('org_id', userRow.org_id).eq('provider', 'slack').maybeSingle();
+        slackConnected = !!slack;
+      }
+    } catch { /* ignore */ }
+  }
+
   res.json({
     id: userId,
     email: user?.email || supabaseUser?.email || null,
@@ -447,6 +608,7 @@ router.get('/me', requireAuth, async (req, res) => {
     integrations: {
       pipedrive: pipedriveConnected,
       gcal: gcalConnected,
+      slack: slackConnected,
     },
   });
 });

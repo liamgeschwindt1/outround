@@ -1,36 +1,33 @@
 'use strict';
 
 /**
- * Meeting intelligence routes — manual triggers and test endpoints.
+ * Meeting intelligence routes -- manual triggers and test endpoints.
  * Mounted at /api/intel
  *
- * Endpoints (all require internal auth or admin token in production):
+ * Multi-tenant: all pipeline endpoints accept an org ID so the right
+ * credentials are fetched from Supabase. Supply via:
+ *   Header:  X-Org-Id: <uuid>
+ *   Body:    { orgId: "<uuid>", ... }
+ *   Query:   ?orgId=<uuid>
  *
- *   POST /api/intel/test-pipeline
- *     Body: { transcript?, prospectEmail?, prospectName?, meetingTitle? }
- *     Runs the full pipeline with a fake transcript if none supplied.
- *     Proves Pipedrive + Slack are wired correctly — Step 1 of the build order.
+ * If no orgId is provided and Supabase is not configured, credentials
+ * fall through to env-var fallbacks inside each service.
  *
- *   POST /api/intel/extract
- *     Body: { transcript, context? }
- *     Runs Claude extraction only — returns the intel JSON.
+ * Endpoints:
  *
- *   POST /api/intel/transcribe
- *     Body: { audioUrl }
- *     Submits audio to Gladia and polls until done.
- *
- *   POST /api/intel/poll-calendar
- *     Manually trigger the calendar poller tick.
- *
- *   GET  /api/intel/processed-events
- *     Returns the local processed-events state.
+ *   POST /api/intel/test-pipeline      -- Step 1: prove Pipedrive + Slack
+ *   POST /api/intel/extract            -- Step 2: Claude extraction only
+ *   POST /api/intel/transcribe         -- Step 3: Gladia transcription
+ *   POST /api/intel/poll-calendar      -- Step 5: manual calendar poll
+ *   GET  /api/intel/processed-events   -- show dedup state
  */
 
 const express = require('express');
 const router = express.Router();
-const meetingIntel = require('../services/meeting-intel');
-const gladia = require('../services/gladia');
-const calendarPoller = require('../services/calendar-poller');
+const meetingIntel    = require('../services/meeting-intel');
+const gladia          = require('../services/gladia');
+const calendarPoller  = require('../services/calendar-poller');
+const tokenManager    = require('../services/token-manager');
 
 // ── Internal auth guard ─────────────────────────────────────────────────────
 // Protected by a shared secret in INTEL_SECRET env var.
@@ -74,19 +71,20 @@ router.post('/test-pipeline', guard, async (req, res) => {
     transcript = FAKE_TRANSCRIPT,
     prospectEmail = null,
     prospectName = 'Henrik van der Berg',
-    meetingTitle = 'Test cold call — Outround pipeline check',
+    meetingTitle = 'Test cold call -- Outround pipeline check',
     attendees = [],
     date = new Date().toISOString().slice(0, 10),
   } = req.body;
 
   try {
+    const creds = await resolveCreds(req);
     const result = await meetingIntel.runPipeline(transcript, {
       prospectEmail,
       prospectName,
       meetingTitle,
       attendees,
       date,
-    });
+    }, creds);
     res.json({ ok: true, result });
   } catch (err) {
     console.error('[intel/test-pipeline]', err);
@@ -103,7 +101,8 @@ router.post('/extract', guard, async (req, res) => {
   if (!transcript) return res.status(400).json({ error: '`transcript` is required' });
 
   try {
-    const intel = await meetingIntel.extractIntelligence(transcript, context);
+    const creds = await resolveCreds(req);
+    const intel = await meetingIntel.extractIntelligence(transcript, context, creds);
     res.json({ ok: true, intel });
   } catch (err) {
     console.error('[intel/extract]', err);
@@ -118,10 +117,13 @@ router.post('/extract', guard, async (req, res) => {
 router.post('/transcribe', guard, async (req, res) => {
   const { audioUrl, language, numSpeakers } = req.body;
   if (!audioUrl) return res.status(400).json({ error: '`audioUrl` is required' });
-  if (!gladia.isConfigured()) return res.status(503).json({ error: 'GLADIA_API_KEY not set' });
+
+  const creds   = await resolveCreds(req);
+  const apiKey  = creds.gladiaApiKey || process.env.GLADIA_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'GLADIA_API_KEY not set' });
 
   try {
-    const result = await gladia.transcribe(audioUrl, { language, numSpeakers });
+    const result = await gladia.transcribe(audioUrl, { language, numSpeakers, apiKey });
     res.json({ ok: true, ...result });
   } catch (err) {
     console.error('[intel/transcribe]', err);

@@ -13,13 +13,15 @@
 
 const GLADIA_BASE = 'https://api.gladia.io';
 
-function isConfigured() {
-  return !!process.env.GLADIA_API_KEY;
+function isConfigured(apiKey) {
+  return !!(apiKey || process.env.GLADIA_API_KEY);
 }
 
-function headers() {
+function headers(apiKey) {
+  const key = apiKey || process.env.GLADIA_API_KEY;
+  if (!key) throw new Error('GLADIA_API_KEY not provided and not set in env');
   return {
-    'x-gladia-key': process.env.GLADIA_API_KEY,
+    'x-gladia-key': key,
     'Content-Type': 'application/json',
   };
 }
@@ -30,12 +32,14 @@ function headers() {
  *
  * @param {string} audioUrl — publicly accessible URL to the audio file
  * @param {object} [opts]
- * @param {string} [opts.language]       — e.g. 'en' (auto-detected if omitted)
- * @param {boolean} [opts.diarization]   — default true
+ * @param {string} [opts.apiKey]       — Gladia API key (falls back to GLADIA_API_KEY env)
+ * @param {string} [opts.language]     — e.g. 'en' (auto-detected if omitted)
+ * @param {boolean} [opts.diarization] — default true
  * @returns {Promise<string>} transcription id
  */
 async function submitTranscription(audioUrl, opts = {}) {
-  if (!isConfigured()) throw new Error('GLADIA_API_KEY not configured');
+  const apiKey = opts.apiKey || process.env.GLADIA_API_KEY;
+  if (!apiKey) throw new Error('GLADIA_API_KEY not provided');
 
   const body = {
     audio_url: audioUrl,
@@ -48,7 +52,7 @@ async function submitTranscription(audioUrl, opts = {}) {
 
   const resp = await fetch(`${GLADIA_BASE}/v2/transcription`, {
     method: 'POST',
-    headers: headers(),
+    headers: headers(apiKey),
     body: JSON.stringify(body),
   });
 
@@ -71,7 +75,8 @@ async function submitTranscription(audioUrl, opts = {}) {
  * @param {number} [opts.timeoutMs]       — default 10 minutes
  */
 async function pollUntilDone(transcriptionId, opts = {}) {
-  if (!isConfigured()) throw new Error('GLADIA_API_KEY not configured');
+  const apiKey = opts.apiKey || process.env.GLADIA_API_KEY;
+  if (!apiKey) throw new Error('GLADIA_API_KEY not provided');
 
   const interval = opts.pollIntervalMs || 3000;
   const timeout = opts.timeoutMs || 10 * 60 * 1000;
@@ -80,7 +85,7 @@ async function pollUntilDone(transcriptionId, opts = {}) {
   while (Date.now() < deadline) {
     const resp = await fetch(
       `${GLADIA_BASE}/v2/transcription/${transcriptionId}`,
-      { headers: { 'x-gladia-key': process.env.GLADIA_API_KEY } }
+      { headers: { 'x-gladia-key': apiKey } }
     );
 
     if (!resp.ok) {

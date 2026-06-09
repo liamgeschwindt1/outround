@@ -20,16 +20,17 @@ function baseUrl() {
   return `https://${region}.recall.ai/api/v1`;
 }
 
-function isConfigured() {
-  return !!process.env.RECALL_API_KEY;
+function isConfigured(apiKey) {
+  return !!(apiKey || process.env.RECALL_API_KEY);
 }
 
-async function rcall(method, path, body) {
-  if (!isConfigured()) return null;
+async function rcall(method, path, body, apiKey) {
+  const key = apiKey || process.env.RECALL_API_KEY;
+  if (!key) return null;
   const resp = await fetch(`${baseUrl()}${path}`, {
     method,
     headers: {
-      'Authorization': `Token ${process.env.RECALL_API_KEY}`,
+      'Authorization': `Token ${key}`,
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -43,8 +44,11 @@ async function rcall(method, path, body) {
 
 /**
  * Create (schedule) a bot to join a meeting.
+ *
+ * @param {object} opts
+ * @param {string} [apiKey] — Recall API key; falls back to RECALL_API_KEY env var
  */
-async function createBot({ meetingUrl, joinAt, botName = 'Outround Notetaker' }) {
+async function createBot({ meetingUrl, joinAt, botName = 'Outround Notetaker' }, apiKey) {
   const payload = {
     meeting_url: meetingUrl,
     bot_name: botName,
@@ -53,19 +57,19 @@ async function createBot({ meetingUrl, joinAt, botName = 'Outround Notetaker' })
   };
   if (process.env.RECALL_WEBHOOK_URL) payload.webhook_url = process.env.RECALL_WEBHOOK_URL;
   if (joinAt) payload.join_at = joinAt;
-  return rcall('POST', '/bot/', payload);
+  return rcall('POST', '/bot/', payload, apiKey);
 }
 
-async function getBot(botId) {
-  return rcall('GET', `/bot/${botId}/`);
+async function getBot(botId, apiKey) {
+  return rcall('GET', `/bot/${botId}/`, undefined, apiKey);
 }
 
-async function deleteBot(botId) {
-  return rcall('DELETE', `/bot/${botId}/`);
+async function deleteBot(botId, apiKey) {
+  return rcall('DELETE', `/bot/${botId}/`, undefined, apiKey);
 }
 
-async function getTranscript(botId) {
-  return rcall('GET', `/bot/${botId}/transcript/`);
+async function getTranscript(botId, apiKey) {
+  return rcall('GET', `/bot/${botId}/transcript/`, undefined, apiKey);
 }
 
 /**

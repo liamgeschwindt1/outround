@@ -12,6 +12,7 @@ const express = require('express');
 const { getPool } = require('../db/client');
 const recall = require('../services/recall');
 const meetingIntel = require('../services/meeting-intel');
+const tokenManager = require('../services/token-manager');
 
 const router = express.Router();
 
@@ -71,11 +72,12 @@ router.post('/bots/webhook', async (req, res) => {
       // Kick off Claude post-call analysis + Pipedrive + Slack (non-blocking)
       setImmediate(async () => {
         try {
-          // Fetch meeting metadata from DB so we have prospect email etc.
+          // Fetch meeting metadata + org_id from DB
           let meetingMeta = {};
+          let orgId = null;
           if (pool) {
             const { rows } = await pool.query(
-              `SELECT m.title, m.prospect_email, m.prospect_name, m.starts_at
+              `SELECT b.org_id, m.title, m.prospect_email, m.prospect_name, m.starts_at
                  FROM meeting_bots b
                  LEFT JOIN meetings m ON m.id = b.meeting_id
                 WHERE b.recall_bot_id = $1
@@ -83,24 +85,32 @@ router.post('/bots/webhook', async (req, res) => {
               [botId]
             ).catch(() => ({ rows: [] }));
             if (rows[0]) {
+              orgId = rows[0].org_id || null;
               meetingMeta = {
-                meetingTitle: rows[0].title,
+                meetingTitle:  rows[0].title,
                 prospectEmail: rows[0].prospect_email,
-                prospectName: rows[0].prospect_name,
+                prospectName:  rows[0].prospect_name,
                 date: rows[0].starts_at?.toISOString?.()?.slice(0, 10),
               };
             }
           }
 
+          // Fetch per-org credentials from Supabase (falls back to empty {} so
+          // each service uses its own env-var fallback if Supabase is not set up)
+          const creds = (orgId && tokenManager.isConfigured())
+            ? await tokenManager.getOrgCredentials(orgId).catch(() => ({}))
+            : {};
+
           // If Recall gave us a transcript use it; otherwise fall back to audio URL
           let transcriptSource = transcript;
 
           if (!transcriptSource && bot?.video_url) {
-            // No transcript yet — transcribe via Gladia if configured
+            // No transcript yet -- transcribe via Gladia if configured
             const gladia = require('../services/gladia');
-            if (gladia.isConfigured()) {
+            const gladiaKey = creds.gladiaApiKey || process.env.GLADIA_API_KEY;
+            if (gladiaKey) {
               const audioUrl = bot.video_url;
-              const result = await gladia.transcribe(audioUrl);
+              const result = await gladia.transcribe(audioUrl, { apiKey: gladiaKey });
               transcriptSource = result.utterances;
               meetingMeta.transcriptUrl = audioUrl;
             }
@@ -109,11 +119,11 @@ router.post('/bots/webhook', async (req, res) => {
           }
 
           if (!transcriptSource) {
-            console.warn(`[webhook] no transcript available for bot ${botId} — skipping intel`);
+            console.warn(`[webhook] no transcript available for bot ${botId} -- skipping intel`);
             return;
           }
 
-          await meetingIntel.runPipeline(transcriptSource, meetingMeta);
+          await meetingIntel.runPipeline(transcriptSource, meetingMeta, creds);
         } catch (err) {
           console.error('[webhook] post-call pipeline error:', err.message);
         }

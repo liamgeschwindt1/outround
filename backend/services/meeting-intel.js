@@ -3,20 +3,20 @@
 /**
  * Meeting intelligence — Claude-powered post-call extraction.
  *
- * Takes a transcript (array of utterances or plain text) and returns a
- * structured JSON object with summary, next steps, objections, deal signals,
- * and CRM fields. Every extractable field includes a source citation (timestamp
- * or speaker label from the transcript).
+ * All public functions now accept a `creds` argument (third param for most)
+ * so per-org credentials fetched from Supabase can be threaded through.
+ * Falls back to env vars when creds are omitted, preserving backward compat.
  *
- * Env vars required:
- *   ANTHROPIC_API_KEY  — Claude API key
+ * Shared service credentials that remain as env vars per spec:
+ *   ANTHROPIC_API_KEY
  *
- * Also contains the Pipedrive push helper that uses PIPEDRIVE_API_KEY directly.
+ * Per-org credentials (now fetched from Supabase integrations table):
+ *   pipedriveApiKey, pipedriveDomain, slackBotToken, slackUserId
  */
 
 const Anthropic = require('@anthropic-ai/sdk').default || require('@anthropic-ai/sdk');
 
-// ── Claude extraction ──────────────────────────────────────────────────────
+// ── Claude extraction ──────────────────────────────────────────────────────────────
 
 const EXTRACTION_PROMPT = `You are a post-call intelligence engine for a B2B sales team. You receive a meeting transcript and extract structured data that will be pushed directly into a CRM.
 
@@ -60,10 +60,11 @@ Schema:
  *
  * @param {string|Array} transcript — plain text or array of {speaker, text, start} utterances
  * @param {object} [context]        — optional metadata (meetingTitle, attendees, date)
+ * @param {object} [creds]          — { anthropicApiKey } — falls back to ANTHROPIC_API_KEY env
  * @returns {Promise<object>}       — parsed extraction result
  */
-async function extractIntelligence(transcript, context = {}) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+async function extractIntelligence(transcript, context = {}, creds = {}) {
+  const apiKey = creds.anthropicApiKey || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
 
   const client = new Anthropic({ apiKey });
@@ -110,26 +111,25 @@ function formatTimestamp(seconds) {
 
 const PIPEDRIVE_BASE = process.env.PIPEDRIVE_API_URL || 'https://api.pipedrive.com/v1';
 
-function pdHeaders() {
-  const key = process.env.PIPEDRIVE_API_KEY;
-  if (!key) throw new Error('PIPEDRIVE_API_KEY not configured');
+function pdHeaders(apiKey) {
+  if (!apiKey) throw new Error('Pipedrive API key not provided');
   return { 'Content-Type': 'application/json' };
 }
 
-function pdUrl(path) {
-  return `${PIPEDRIVE_BASE}${path}?api_token=${process.env.PIPEDRIVE_API_KEY}`;
+function pdUrl(path, apiKey) {
+  return `${PIPEDRIVE_BASE}${path}?api_token=${apiKey}`;
 }
 
-async function pdGet(path) {
-  const resp = await fetch(pdUrl(path));
+async function pdGet(path, apiKey) {
+  const resp = await fetch(pdUrl(path, apiKey));
   if (!resp.ok) throw new Error(`Pipedrive GET ${path} → ${resp.status}`);
   return resp.json();
 }
 
-async function pdPost(path, body) {
-  const resp = await fetch(pdUrl(path), {
+async function pdPost(path, body, apiKey) {
+  const resp = await fetch(pdUrl(path, apiKey), {
     method: 'POST',
-    headers: pdHeaders(),
+    headers: pdHeaders(apiKey),
     body: JSON.stringify(body),
   });
   if (!resp.ok) {
@@ -139,10 +139,10 @@ async function pdPost(path, body) {
   return resp.json();
 }
 
-async function pdPut(path, body) {
-  const resp = await fetch(pdUrl(path), {
+async function pdPut(path, body, apiKey) {
+  const resp = await fetch(pdUrl(path, apiKey), {
     method: 'PUT',
-    headers: pdHeaders(),
+    headers: pdHeaders(apiKey),
     body: JSON.stringify(body),
   });
   if (!resp.ok) {
@@ -156,11 +156,12 @@ async function pdPut(path, body) {
  * Find a Pipedrive person by email address.
  * Returns the first match or null.
  */
-async function findPersonByEmail(email) {
-  if (!process.env.PIPEDRIVE_API_KEY || !email) return null;
+async function findPersonByEmail(email, apiKey) {
+  if (!apiKey || !email) return null;
   try {
     const data = await pdGet(
-      `/persons/search?term=${encodeURIComponent(email)}&fields=email&exact_match=true&limit=1`
+      `/persons/search?term=${encodeURIComponent(email)}&fields=email&exact_match=true&limit=1`,
+      apiKey
     );
     return data?.data?.items?.[0]?.item || null;
   } catch {
@@ -171,30 +172,21 @@ async function findPersonByEmail(email) {
 /**
  * Find the most recent open deal for a Pipedrive person.
  */
-async function findOpenDeal(personId) {
+async function findOpenDeal(personId, apiKey) {
   if (!personId) return null;
   try {
-    const data = await pdGet(`/persons/${personId}/deals?status=open&limit=1`);
+    const data = await pdGet(`/persons/${personId}/deals?status=open&limit=1`, apiKey);
     return data?.data?.[0] || null;
   } catch {
     return null;
   }
 }
 
-const STAGE_MAP = {
-  prospecting: null,   // resolve dynamically if needed
-  qualification: null,
-  proposal: null,
-  negotiation: null,
-  closed_won: null,
-  closed_lost: null,
-};
-
 /**
  * Add a note to a Pipedrive deal.
  */
-async function addDealNote(dealId, content) {
-  return pdPost('/notes', { deal_id: dealId, content });
+async function addDealNote(dealId, content, apiKey) {
+  return pdPost('/notes', { deal_id: dealId, content }, apiKey);
 }
 
 /**
@@ -210,16 +202,18 @@ async function addDealNote(dealId, content) {
  * @param {string} meta.prospectEmail
  * @param {string} [meta.transcriptUrl]
  * @param {string} [meta.meetingTitle]
+ * @param {object} [creds]  — { pipedriveApiKey, pipedriveDomain } — falls back to env
  * @returns {{ person, deal, note, dealUrl }}
  */
-async function pushToPipedrive(intel, meta = {}) {
-  if (!process.env.PIPEDRIVE_API_KEY) {
-    console.warn('[meeting-intel] PIPEDRIVE_API_KEY not set — skipping Pipedrive push');
+async function pushToPipedrive(intel, meta = {}, creds = {}) {
+  const apiKey = creds.pipedriveApiKey || process.env.PIPEDRIVE_API_KEY || null;
+  if (!apiKey) {
+    console.warn('[meeting-intel] Pipedrive API key not available — skipping Pipedrive push');
     return null;
   }
 
-  const person = await findPersonByEmail(meta.prospectEmail);
-  const deal = person ? await findOpenDeal(person.id) : null;
+  const person = await findPersonByEmail(meta.prospectEmail, apiKey);
+  const deal = person ? await findOpenDeal(person.id, apiKey) : null;
 
   // Build note content
   const nextStepsText = (intel.next_steps || [])
@@ -245,21 +239,19 @@ async function pushToPipedrive(intel, meta = {}) {
   let dealUrl = null;
 
   if (deal) {
-    note = await addDealNote(deal.id, noteLines);
+    note = await addDealNote(deal.id, noteLines, apiKey);
 
     // Update deal fields if we have them
     const updates = {};
     if (intel.crm_fields?.close_date) updates.expected_close_date = intel.crm_fields.close_date;
     if (Object.keys(updates).length) {
-      await pdPut(`/deals/${deal.id}`, updates).catch(err =>
+      await pdPut(`/deals/${deal.id}`, updates, apiKey).catch(err =>
         console.warn('[meeting-intel] deal update failed:', err.message)
       );
     }
 
-    const companyDomain = process.env.COMPANY_DOMAIN;
-    dealUrl = companyDomain
-      ? `https://${companyDomain}.pipedrive.com/deal/${deal.id}`
-      : null;
+    const domain = creds.pipedriveDomain || process.env.PIPEDRIVE_DOMAIN || process.env.COMPANY_DOMAIN;
+    dealUrl = domain ? `https://${domain}.pipedrive.com/deal/${deal.id}` : null;
   } else {
     console.warn(`[meeting-intel] No open deal found for ${meta.prospectEmail} — note not added`);
   }
@@ -280,9 +272,10 @@ async function pushToPipedrive(intel, meta = {}) {
  * @param {string} [meta.meetingTitle]
  * @param {string[]} [meta.attendees]
  * @param {string} [meta.date]
+ * @param {object} [creds]  — { anthropicApiKey, pipedriveApiKey, pipedriveDomain, slackBotToken, slackUserId }
  * @returns {Promise<{ intel, pipedrive, slack }>}
  */
-async function runPipeline(transcript, meta = {}) {
+async function runPipeline(transcript, meta = {}, creds = {}) {
   const slack = require('./slack');
 
   // Step 1: Claude extraction
@@ -290,20 +283,23 @@ async function runPipeline(transcript, meta = {}) {
     meetingTitle: meta.meetingTitle,
     date: meta.date,
     attendees: meta.attendees,
-  });
+  }, creds);
 
   // Step 2: Pipedrive push
   let pipedriveResult = null;
   try {
-    pipedriveResult = await pushToPipedrive(intel, meta);
+    pipedriveResult = await pushToPipedrive(intel, meta, creds);
   } catch (err) {
     console.error('[meeting-intel] Pipedrive push failed:', err.message);
   }
 
   // Step 3: Slack DM
   let slackResult = null;
+  const slackCreds = (creds.slackBotToken || creds.slackUserId)
+    ? { botToken: creds.slackBotToken, slackUserId: creds.slackUserId }
+    : null; // null lets sendCallBriefing fall back to env vars
   try {
-    slackResult = await slack.sendCallBriefing({
+    slackResult = await slack.sendCallBriefing(slackCreds, {
       contactName: meta.prospectName || meta.prospectEmail || 'Unknown contact',
       summary: intel.summary,
       nextSteps: (intel.next_steps || []).map(s => s.action),
