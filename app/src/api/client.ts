@@ -1,4 +1,5 @@
 // Thin fetch wrapper. Cookies are sent automatically (httpOnly sb_token from backend).
+import { captureError } from '../utils/errorCapture';
 
 class ApiError extends Error {
   status: number;
@@ -14,15 +15,22 @@ async function request<T>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
-  const res = await fetch(path, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(init.headers || {}),
-    },
-    ...init,
-  });
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        ...(init.headers || {}),
+      },
+      ...init,
+    });
+  } catch (networkErr) {
+    const msg = networkErr instanceof Error ? networkErr.message : 'Network error';
+    captureError(`Network error — ${path}`, msg);
+    throw networkErr;
+  }
 
   const text = await res.text();
   let body: unknown = null;
@@ -35,6 +43,12 @@ async function request<T>(
       (body && typeof body === 'object' && 'error' in body && typeof (body as { error: unknown }).error === 'string')
         ? (body as { error: string }).error
         : `Request failed: ${res.status}`;
+
+    // Capture unexpected errors (not 401 auth checks — those are routine)
+    if (res.status !== 401 && res.status !== 403) {
+      captureError(`API ${res.status} — ${path.split('?')[0]}`, msg);
+    }
+
     throw new ApiError(msg, res.status, body);
   }
 

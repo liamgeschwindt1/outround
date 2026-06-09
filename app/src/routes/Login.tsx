@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth, readAuthError } from '../auth/AuthProvider';
 import { T, R } from '../design/tokens';
 import { Button } from '../design/primitives/Button';
 
@@ -15,8 +15,16 @@ export default function Login() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Handle OAuth error params returned from backend
+  // Handle errors from AuthProvider (email confirmation failures, Supabase error hashes)
+  // and OAuth error params returned from the backend redirect.
   useEffect(() => {
+    // Read any persisted error (survives page redirects via sessionStorage)
+    const stored = readAuthError();
+    if (stored) {
+      setErr(stored);
+      return;
+    }
+    // OAuth error query params
     const params = new URLSearchParams(window.location.search);
     const e = params.get('error');
     if (e) {

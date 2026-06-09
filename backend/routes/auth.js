@@ -24,6 +24,7 @@ const gcal = require('../services/gcal');
 const { requireAuth } = require('../middleware/auth');
 const { getPool } = require('../db/client');
 const tokenManager = require('../services/token-manager');
+const { getUserFromToken, getOrCreateLocalUser } = require('../services/auth');
 
 let pushEvent = () => {};
 try { pushEvent = require('./debug').pushEvent; } catch {}
@@ -76,11 +77,13 @@ async function supabaseAuthRequest(path, body) {
 router.post('/confirm', async (req, res) => {
   const { access_token } = req.body;
   if (!access_token || typeof access_token !== 'string') {
+    pushEvent('warn', 'auth', 'Confirm called without access_token');
     return res.status(400).json({ error: 'access_token required' });
   }
 
   // Basic sanity: must look like a JWT (three base64url segments)
   if ((access_token.match(/\./g) || []).length !== 2) {
+    pushEvent('warn', 'auth', 'Confirm called with malformed token (not a JWT)');
     return res.status(400).json({ error: 'Invalid token format' });
   }
 
@@ -92,7 +95,29 @@ router.post('/confirm', async (req, res) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
-  res.json({ ok: true });
+  // Ensure the local users row exists immediately so /auth/me works right away.
+  // Without this, the first /auth/me after email confirmation returns 401 because
+  // the user doesn't exist in the local DB yet.
+  let userId = null;
+  try {
+    const pool = getPool();
+    if (pool) {
+      const supabaseUser = await getUserFromToken(access_token);
+      if (supabaseUser) {
+        await getOrCreateLocalUser(pool, supabaseUser);
+        userId = supabaseUser.id;
+        pushEvent('success', 'auth', `Email confirmed — user upserted: ${supabaseUser.email}`, { email: supabaseUser.email });
+      } else {
+        pushEvent('warn', 'auth', 'Confirm: token valid but getUserFromToken returned null');
+      }
+    }
+  } catch (err) {
+    // Non-fatal: requireAuth middleware will create the user on the next request
+    pushEvent('warn', 'auth', `Confirm: user upsert failed (non-fatal): ${err.message}`, { error: err.message });
+    console.error('[auth/confirm] user upsert failed:', err.message);
+  }
+
+  res.json({ ok: true, user_id: userId });
 });
 
 router.post('/login', async (req, res) => {

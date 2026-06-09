@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { T, R } from '../design/tokens';
 import { useAuth } from '../auth/AuthProvider';
+import { ErrorLog } from './ErrorLog';
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
@@ -271,6 +272,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
+      <ErrorLog />
     </div>
   );
 }
