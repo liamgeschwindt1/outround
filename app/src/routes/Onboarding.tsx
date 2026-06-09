@@ -2,12 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { api } from '../api/client';
-import type { Coach } from '../api/types';
 import { T, R } from '../design/tokens';
 import { Button } from '../design/primitives/Button';
-import { Tag } from '../design/primitives/Text';
 import { useToast } from '../design/primitives/Toast';
-import { Skeleton } from '../design/primitives/Skeleton';
 
 type Step = 1 | 2 | 3;
 
@@ -17,8 +14,6 @@ export default function Onboarding() {
   const [params, setParams] = useSearchParams();
   const toast = useToast();
   const [step, setStep] = useState<Step>(1);
-  const [coaches, setCoaches] = useState<Coach[] | null>(null);
-  const [chosenCoach, setChosenCoach] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   // Handle OAuth return: ?pipedrive=connected or ?gcal=connected
@@ -40,13 +35,8 @@ export default function Onboarding() {
     if (!user) return;
     if (user.integrations.pipedrive && step === 1) setStep(2);
     if (user.integrations.gcal && step === 2) setStep(3);
+    if (user.integrations.slack && step === 3) void complete();
   }, [user, step]);
-
-  // Load coaches when entering step 3
-  useEffect(() => {
-    if (step !== 3 || coaches) return;
-    api.get<Coach[]>('/api/coaches').then(setCoaches).catch(() => setCoaches([]));
-  }, [step, coaches]);
 
   // Bail out if already done
   useEffect(() => {
@@ -54,10 +44,9 @@ export default function Onboarding() {
   }, [user, loading, nav]);
 
   const complete = async () => {
-    if (!chosenCoach) return;
     setBusy(true);
     try {
-      await api.post('/auth/onboarding/complete', { coach_id: chosenCoach });
+      await api.post('/auth/onboarding/complete', {});
       await refresh();
       toast.push('Welcome to Outround.', 'success');
       nav('/', { replace: true });
@@ -108,11 +97,8 @@ export default function Onboarding() {
           {step === 1 && <StepPipedrive onSkip={() => setStep(2)} />}
           {step === 2 && <StepGCal onSkip={() => setStep(3)} />}
           {step === 3 && (
-            <StepCoach
-              coaches={coaches}
-              chosen={chosenCoach}
-              onChoose={setChosenCoach}
-              onContinue={complete}
+            <StepSlack
+              onSkip={complete}
               busy={busy}
             />
           )}
@@ -208,99 +194,31 @@ function StepGCal({ onSkip }: { onSkip: () => void }) {
   );
 }
 
-function StepCoach({
-  coaches,
-  chosen,
-  onChoose,
-  onContinue,
-  busy,
-}: {
-  coaches: Coach[] | null;
-  chosen: string | null;
-  onChoose: (id: string) => void;
-  onContinue: () => void;
-  busy: boolean;
-}) {
+function StepSlack({ onSkip, busy }: { onSkip: () => void; busy: boolean }) {
   return (
     <>
       <StepHeader
-        kicker="STEP 03 — COACH"
-        title="Pick your coach."
-        body="They'll deliver your feedback after every round. You can change this later."
+        kicker="STEP 03 — SLACK"
+        title="Get briefed in Slack."
+        body="We'll deliver your pre-meeting brief 15 minutes before every call. No dashboard. No searching. It arrives before you need it."
       />
-
-      {!coaches && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Skeleton h={64} />
-          <Skeleton h={64} />
-        </div>
-      )}
-
-      {coaches && coaches.length === 0 && (
-        <div style={{ color: T.t2, fontSize: 13, padding: 12 }}>No coaches available.</div>
-      )}
-
-      {coaches && coaches.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {coaches.map((c) => {
-            const active = chosen === c.id;
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => onChoose(c.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  padding: 14,
-                  background: active ? T.bgElevate : T.bgSub,
-                  border: `1px solid ${active ? T.coral : T.border}`,
-                  borderRadius: R.lg,
-                  textAlign: 'left',
-                  width: '100%',
-                  transition: 'all 120ms',
-                }}
-              >
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: R.pill,
-                    background: T.grad,
-                    flexShrink: 0,
-                  }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: T.display,
-                      fontWeight: 600,
-                      fontSize: 15,
-                      color: T.t1,
-                      marginBottom: 2,
-                    }}
-                  >
-                    {c.name}
-                  </div>
-                  <div style={{ fontSize: 12, color: T.t2 }}>{c.tagline}</div>
-                </div>
-                {active && <Tag kind="coral">SELECTED</Tag>}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      <div style={{ marginTop: 24 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <Button
           variant="primary"
           size="lg"
           fullWidth
-          disabled={!chosen || busy}
-          onClick={onContinue}
+          onClick={() => { window.location.href = '/auth/slack?return_to=/onboarding'; }}
         >
-          {busy ? 'Finishing…' : 'Enter the round →'}
+          Connect Slack
+        </Button>
+        <Button
+          variant="ghost"
+          size="md"
+          fullWidth
+          disabled={busy}
+          onClick={onSkip}
+        >
+          {busy ? 'Finishing…' : 'Skip for now — enter the round →'}
         </Button>
       </div>
     </>
