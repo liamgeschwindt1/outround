@@ -1,6 +1,8 @@
 'use strict';
 
 const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
 
 let pool = null;
 
@@ -33,4 +35,33 @@ async function query(text, params) {
   return p.query(text, params);
 }
 
-module.exports = { query, getPool };
+/**
+ * Apply schema.sql against the Postgres database on boot.
+ *
+ * The schema is fully idempotent (every statement uses IF NOT EXISTS /
+ * ADD COLUMN IF NOT EXISTS / CREATE OR REPLACE), so it is safe to run on
+ * every startup. This keeps the live database in sync with the checked-in
+ * schema without a manual migration step.
+ *
+ * No-ops gracefully when DATABASE_URL is not configured.
+ */
+async function applySchema() {
+  const p = getPool();
+  if (!p) return;
+  const schemaPath = path.join(__dirname, 'schema.sql');
+  let sql;
+  try {
+    sql = fs.readFileSync(schemaPath, 'utf8');
+  } catch (err) {
+    console.error('[db] could not read schema.sql:', err.message);
+    return;
+  }
+  try {
+    await p.query(sql);
+    console.log('[db] schema applied');
+  } catch (err) {
+    console.error('[db] schema apply failed:', err.message);
+  }
+}
+
+module.exports = { query, getPool, applySchema };
