@@ -1,0 +1,155 @@
+'use strict';
+
+/**
+ * Meeting intelligence routes — manual triggers and test endpoints.
+ * Mounted at /api/intel
+ *
+ * Endpoints (all require internal auth or admin token in production):
+ *
+ *   POST /api/intel/test-pipeline
+ *     Body: { transcript?, prospectEmail?, prospectName?, meetingTitle? }
+ *     Runs the full pipeline with a fake transcript if none supplied.
+ *     Proves Pipedrive + Slack are wired correctly — Step 1 of the build order.
+ *
+ *   POST /api/intel/extract
+ *     Body: { transcript, context? }
+ *     Runs Claude extraction only — returns the intel JSON.
+ *
+ *   POST /api/intel/transcribe
+ *     Body: { audioUrl }
+ *     Submits audio to Gladia and polls until done.
+ *
+ *   POST /api/intel/poll-calendar
+ *     Manually trigger the calendar poller tick.
+ *
+ *   GET  /api/intel/processed-events
+ *     Returns the local processed-events state.
+ */
+
+const express = require('express');
+const router = express.Router();
+const meetingIntel = require('../services/meeting-intel');
+const gladia = require('../services/gladia');
+const calendarPoller = require('../services/calendar-poller');
+
+// ── Internal auth guard ─────────────────────────────────────────────────────
+// Protected by a shared secret in INTEL_SECRET env var.
+// If not set, only allow in non-production environments.
+
+function guard(req, res, next) {
+  const secret = process.env.INTEL_SECRET;
+  if (secret) {
+    const provided = req.headers['x-intel-secret'] || req.query.secret;
+    if (provided !== secret) return res.status(401).json({ error: 'unauthorized' });
+  } else if (process.env.NODE_ENV === 'production') {
+    return res.status(401).json({ error: 'INTEL_SECRET must be set in production' });
+  }
+  next();
+}
+
+// ── Fake transcript used for Step 1 testing ────────────────────────────────
+
+const FAKE_TRANSCRIPT = [
+  { speaker: 'Rep', text: "Hi, is this Henrik? Great — this is James from Outround. I'll keep it short. We help B2B sales teams cut cold-call prep time by 60%. Given your team size at Vandermeer, that's probably 2 hours per rep per week. Worth 15 minutes?", start: 0 },
+  { speaker: 'Prospect', text: "I have five minutes. What exactly are you offering?", start: 18 },
+  { speaker: 'Rep', text: "We give reps a realistic AI persona to practise against before the real call — they go in scored and briefed, not guessing. Teams using it see 30% more meetings booked in the first month.", start: 28 },
+  { speaker: 'Prospect', text: "We already use a training platform. I don't see why we need another tool.", start: 52 },
+  { speaker: 'Rep', text: "Understood. The difference is we're not training — we're readiness. Your reps aren't slow because they haven't been trained, they're slow because they haven't warmed up for this specific call. Different problem.", start: 62 },
+  { speaker: 'Prospect', text: "That's an interesting distinction. What does it cost?", start: 88 },
+  { speaker: 'Rep', text: "For a team your size, €99 per seat per month. Most teams get ROI in the first week if they close one extra deal.", start: 98 },
+  { speaker: 'Prospect', text: "I'd need to see data on that. Can you send me a case study and we'll talk next week?", start: 112 },
+  { speaker: 'Rep', text: "Absolutely. I'll send it today. Does Thursday at 10am CET work for a 15-minute follow-up?", start: 128 },
+  { speaker: 'Prospect', text: "Yes, Thursday works.", start: 140 },
+];
+
+// ── Routes ─────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/intel/test-pipeline
+ * Step 1: prove Pipedrive + Slack are wired up correctly.
+ * Uses FAKE_TRANSCRIPT unless a transcript is supplied in the body.
+ */
+router.post('/test-pipeline', guard, async (req, res) => {
+  const {
+    transcript = FAKE_TRANSCRIPT,
+    prospectEmail = null,
+    prospectName = 'Henrik van der Berg',
+    meetingTitle = 'Test cold call — Outround pipeline check',
+    attendees = [],
+    date = new Date().toISOString().slice(0, 10),
+  } = req.body;
+
+  try {
+    const result = await meetingIntel.runPipeline(transcript, {
+      prospectEmail,
+      prospectName,
+      meetingTitle,
+      attendees,
+      date,
+    });
+    res.json({ ok: true, result });
+  } catch (err) {
+    console.error('[intel/test-pipeline]', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/intel/extract
+ * Step 2: Claude extraction only — useful for testing quality.
+ */
+router.post('/extract', guard, async (req, res) => {
+  const { transcript, context = {} } = req.body;
+  if (!transcript) return res.status(400).json({ error: '`transcript` is required' });
+
+  try {
+    const intel = await meetingIntel.extractIntelligence(transcript, context);
+    res.json({ ok: true, intel });
+  } catch (err) {
+    console.error('[intel/extract]', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/intel/transcribe
+ * Step 3: Gladia transcription — submit audio URL and get back a transcript.
+ */
+router.post('/transcribe', guard, async (req, res) => {
+  const { audioUrl, language, numSpeakers } = req.body;
+  if (!audioUrl) return res.status(400).json({ error: '`audioUrl` is required' });
+  if (!gladia.isConfigured()) return res.status(503).json({ error: 'GLADIA_API_KEY not set' });
+
+  try {
+    const result = await gladia.transcribe(audioUrl, { language, numSpeakers });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[intel/transcribe]', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/intel/poll-calendar
+ * Step 5: manually trigger the calendar poller.
+ */
+router.post('/poll-calendar', guard, async (req, res) => {
+  try {
+    await calendarPoller.runNow();
+    const state = calendarPoller.readState();
+    res.json({ ok: true, processed_count: state.processed_events.length, state });
+  } catch (err) {
+    console.error('[intel/poll-calendar]', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/intel/processed-events
+ */
+router.get('/processed-events', guard, (req, res) => {
+  const state = calendarPoller.readState();
+  res.json(state);
+});
+
+module.exports = router;

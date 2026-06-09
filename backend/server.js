@@ -65,6 +65,7 @@ safeMount('/api/coaches', './routes/coaches');
 safeMount('/api/debug', './routes/debug');
 safeMount('/api', './routes/meetings');
 safeMount('/api', './routes/webhooks');
+safeMount('/api/intel', './routes/intel');
 
 // Global error & rejection guards — never crash on a single bad request
 process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));
@@ -80,4 +81,13 @@ const PORT = process.env.PORT || 3001;
 // hostnames hang and surface as 504s at the edge.
 app.listen(PORT, '::', () => {
   console.log(`Outround backend running on port ${PORT} (binding ::)`);
+
+  // Start the calendar poller only if Google credentials are configured
+  if (process.env.GOOGLE_REFRESH_TOKEN) {
+    try {
+      require('./services/calendar-poller').start();
+    } catch (err) {
+      console.error('[server] calendar poller failed to start:', err.message);
+    }
+  }
 });
