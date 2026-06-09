@@ -66,6 +66,8 @@ safeMount('/api/debug', './routes/debug');
 safeMount('/api', './routes/meetings');
 safeMount('/api', './routes/webhooks');
 safeMount('/api/intel', './routes/intel');
+safeMount('/api', './routes/crm');
+safeMount('/api', './routes/transcripts');
 
 // Global error & rejection guards — never crash on a single bad request
 process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));

@@ -14,34 +14,22 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [shellAvailable, setShellAvailable] = useState(false);
-  const [shellBusy, setShellBusy] = useState(false);
 
-  // Check if shell login is available
+  // Handle OAuth error params returned from backend
   useEffect(() => {
-    fetch('/auth/shell-config', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.shell_available) setShellAvailable(true); })
-      .catch(() => {});
-  }, []);
-
-  const shellLogin = async () => {
-    setShellBusy(true);
-    setErr(null);
-    try {
-      const r = await fetch('/auth/dev-login', { method: 'POST', credentials: 'include' });
-      if (!r.ok) {
-        const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || `Shell unavailable (${r.status}) — set ALLOW_DEV_LOGIN=true or SHELL_MODE=true on backend`);
-      }
-      await refresh();
-      nav('/');
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Shell login failed');
-    } finally {
-      setShellBusy(false);
+    const params = new URLSearchParams(window.location.search);
+    const e = params.get('error');
+    if (e) {
+      const msgs: Record<string, string> = {
+        oauth_failed: 'Google sign-in failed — please try again.',
+        oauth_denied: 'Google sign-in was cancelled.',
+        exchange_failed: 'Could not complete Google sign-in.',
+        auth_not_configured: 'Auth is not configured yet.',
+      };
+      setErr(msgs[e] || 'Sign-in failed.');
+      window.history.replaceState(null, '', window.location.pathname);
     }
-  };
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,6 +189,42 @@ export default function Login() {
               {busy ? (isSignUp ? 'Creating account…' : 'Signing in…') : (isSignUp ? 'Create account →' : 'Sign in →')}
             </Button>
 
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '16px 0' }}>
+              <div style={{ flex: 1, height: 1, background: T.border }} />
+              <span style={{ fontSize: 11, color: T.t4, letterSpacing: 0.3 }}>OR</span>
+              <div style={{ flex: 1, height: 1, background: T.border }} />
+            </div>
+
+            {/* Google OAuth */}
+            <button
+              type="button"
+              onClick={() => { window.location.href = '/auth/google'; }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                width: '100%',
+                padding: '11px 0',
+                background: T.bgSub,
+                border: `1px solid ${T.borderMd}`,
+                borderRadius: R.md,
+                color: T.t1,
+                fontSize: 14,
+                fontFamily: 'DM Sans, sans-serif',
+                cursor: 'pointer',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+                <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+              </svg>
+              Continue with Google
+            </button>
+
             <div style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: T.t3 }}>
               {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
               <button
@@ -211,34 +235,6 @@ export default function Login() {
                 {isSignUp ? 'Sign in' : 'Create one'}
               </button>
             </div>
-
-            {/* Shell access — visible when ALLOW_DEV_LOGIN or SHELL_MODE is enabled on backend */}
-            {shellAvailable && (
-              <div style={{ marginTop: 24, borderTop: `1px solid ${T.border}`, paddingTop: 20 }}>
-                <div style={{ fontSize: 11, color: T.t4, textAlign: 'center', marginBottom: 10, letterSpacing: 0.3 }}>
-                  SHELL ACCESS
-                </div>
-                <button
-                  type="button"
-                  onClick={shellLogin}
-                  disabled={shellBusy}
-                  style={{
-                    width: '100%',
-                    padding: '10px 0',
-                    background: 'transparent',
-                    border: `1px solid ${T.borderMd}`,
-                    borderRadius: R.md,
-                    color: T.t2,
-                    fontSize: 13,
-                    fontFamily: T.mono,
-                    cursor: shellBusy ? 'not-allowed' : 'pointer',
-                    letterSpacing: 0.3,
-                  }}
-                >
-                  {shellBusy ? 'entering shell…' : '$ enter shell — no auth'}
-                </button>
-              </div>
-            )}
           </>
         )}
       </form>

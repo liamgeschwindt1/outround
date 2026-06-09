@@ -367,4 +367,44 @@ router.get('/bots', requireAuth, async (req, res) => {
   res.json(rows);
 });
 
+// POST /api/bots/dispatch — send a bot to any meeting URL (no calendar meeting required)
+router.post('/bots/dispatch', requireAuth, async (req, res) => {
+  const userId = req.user?.id || req.supabaseUser?.id;
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' });
+
+  if (!recall.isConfigured()) {
+    return res.status(503).json({ error: 'Meeting bot not configured', code: 'recall_missing' });
+  }
+
+  const { meeting_url, join_at, bot_name } = req.body;
+  if (!meeting_url) return res.status(400).json({ error: 'meeting_url required' });
+
+  const pool = getPool();
+
+  try {
+    const bot = await recall.createBot({
+      meetingUrl: meeting_url,
+      joinAt: join_at || null,
+      botName: bot_name || 'Outround Notetaker',
+    });
+
+    let inserted = null;
+    if (pool) {
+      const { rows } = await pool.query(
+        `INSERT INTO meeting_bots
+           (user_id, recall_bot_id, conference_url, join_at, status)
+         VALUES ($1,$2,$3,$4,$5)
+         RETURNING *`,
+        [userId, bot.id, meeting_url, join_at || null, 'scheduled']
+      );
+      inserted = rows[0];
+    }
+
+    res.json({ ok: true, bot: inserted || { recall_bot_id: bot.id, conference_url: meeting_url, status: 'scheduled' } });
+  } catch (err) {
+    console.error('[bots] dispatch failed:', err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
 module.exports = router;

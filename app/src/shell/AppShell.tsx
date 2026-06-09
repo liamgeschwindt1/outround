@@ -13,6 +13,55 @@ function IconMeetings() {
     </svg>
   );
 }
+function IconCalendar() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+  );
+}
+function IconCRM() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3S3 13.66 3 12"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/>
+    </svg>
+  );
+}
+function IconTranscripts() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+    </svg>
+  );
+}
+function IconIntelligence() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+  );
+}
+function IconTeam() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+    </svg>
+  );
+}
+function IconBot() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><line x1="8" y1="15" x2="8" y2="15"/><line x1="16" y1="15" x2="16" y2="15"/>
+    </svg>
+  );
+}
+function IconLogs() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+    </svg>
+  );
+}
 function IconSettings() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -24,10 +73,20 @@ function IconSettings() {
 // ─── Nav structure ────────────────────────────────────────────────────────────
 
 type NavItem = { to: string; label: string; Icon: () => JSX.Element };
+type NavEntry = NavItem | 'divider';
 
-const NAV: NavItem[] = [
-  { to: '/',         label: 'Meetings', Icon: IconMeetings },
-  { to: '/settings', label: 'Settings', Icon: IconSettings },
+const NAV: NavEntry[] = [
+  { to: '/',              label: 'Dashboard',   Icon: IconMeetings },
+  { to: '/calendar',      label: 'Calendar',    Icon: IconCalendar },
+  { to: '/crm',           label: 'CRM',         Icon: IconCRM },
+  { to: '/transcripts',   label: 'Transcripts', Icon: IconTranscripts },
+  'divider',
+  { to: '/intelligence',  label: 'Intelligence', Icon: IconIntelligence },
+  { to: '/team',          label: 'Team',        Icon: IconTeam },
+  'divider',
+  { to: '/bot',           label: 'Meeting Bot', Icon: IconBot },
+  { to: '/logs',          label: 'Logs',        Icon: IconLogs },
+  { to: '/settings',      label: 'Settings',    Icon: IconSettings },
 ];
 
 // ─── Profile popup ────────────────────────────────────────────────────────────
@@ -120,31 +179,37 @@ function Sidebar() {
       </div>
 
       {/* Nav items */}
-      {NAV.map(({ to, label, Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={to === '/'}
-          style={({ isActive }) => ({
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '8px 10px',
-            borderRadius: R.md,
-            color: isActive ? T.t1 : T.t2,
-            background: isActive ? T.bgHover : 'transparent',
-            border: `1px solid ${isActive ? T.borderMd : 'transparent'}`,
-            cursor: 'pointer',
-            transition: 'all 120ms',
-            textDecoration: 'none',
-            fontSize: 13,
-            fontWeight: isActive ? 500 : 400,
-          })}
-        >
-          <Icon />
-          {label}
-        </NavLink>
-      ))}
+      {NAV.map((item, i) => {
+        if (item === 'divider') {
+          return <div key={`div-${i}`} style={{ height: 1, background: T.border, margin: '4px 0' }} />;
+        }
+        const { to, label, Icon } = item;
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '8px 10px',
+              borderRadius: R.md,
+              color: isActive ? T.t1 : T.t2,
+              background: isActive ? T.bgHover : 'transparent',
+              border: `1px solid ${isActive ? T.borderMd : 'transparent'}`,
+              cursor: 'pointer',
+              transition: 'all 120ms',
+              textDecoration: 'none',
+              fontSize: 13,
+              fontWeight: isActive ? 500 : 400,
+            })}
+          >
+            <Icon />
+            {label}
+          </NavLink>
+        );
+      })}
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />

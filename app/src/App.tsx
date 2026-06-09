@@ -40,6 +40,13 @@ import Onboarding from './routes/Onboarding';
 import Dashboard from './routes/dashboard/Dashboard';
 import Settings from './routes/settings/Settings';
 import MeetingPrep from './routes/MeetingPrep';
+import CalendarPage from './routes/Calendar';
+import CRMPage from './routes/CRM';
+import TranscriptsPage from './routes/Transcripts';
+import IntelligencePage from './routes/Intelligence';
+import TeamPage from './routes/Team';
+import MeetingBotPage from './routes/MeetingBot';
+import LogsPage from './routes/Logs';
 
 function LoginGate() {
   const { user, loading } = useAuth();
@@ -77,8 +84,15 @@ export default function App() {
             <Route path="/login" element={<LoginGate />} />
             <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
 
-            <Route path="/"            element={<Guarded><Dashboard /></Guarded>} />
-            <Route path="/settings"    element={<Guarded><Settings /></Guarded>} />
+            <Route path="/"              element={<Guarded><Dashboard /></Guarded>} />
+            <Route path="/calendar"      element={<Guarded><CalendarPage /></Guarded>} />
+            <Route path="/crm"           element={<Guarded><CRMPage /></Guarded>} />
+            <Route path="/transcripts"   element={<Guarded><TranscriptsPage /></Guarded>} />
+            <Route path="/intelligence"  element={<Guarded><IntelligencePage /></Guarded>} />
+            <Route path="/team"          element={<Guarded><TeamPage /></Guarded>} />
+            <Route path="/bot"           element={<Guarded><MeetingBotPage /></Guarded>} />
+            <Route path="/logs"          element={<Guarded><LogsPage /></Guarded>} />
+            <Route path="/settings"      element={<Guarded><Settings /></Guarded>} />
 
             <Route
               path="/meeting/:id"
