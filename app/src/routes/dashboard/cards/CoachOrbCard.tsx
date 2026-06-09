@@ -10,7 +10,7 @@ export function CoachOrbCard() {
   const activate = () => {
     setPulsing(true);
     toast.push('Coach — coming soon. They’ll meet you here after every round.', 'info');
-    setTimeout(() => setPulsing(false), 900);
+    setTimeout(() => { setPulsing(false); }, 900);
   };
 
   return (

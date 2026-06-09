@@ -34,7 +34,7 @@ export default function MeetingPrep() {
           <EmptyState
             title={error || 'Not found'}
             body="Try refreshing, or head back to the dashboard."
-            cta={<Button variant="primary" size="md" onClick={() => navigate('/')}>Back to dashboard</Button>}
+            cta={<Button variant="primary" size="md" onClick={() => { navigate('/'); }}>Back to dashboard</Button>}
           />
         </Card>
       </div>
@@ -61,12 +61,12 @@ export default function MeetingPrep() {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {data.cached && <Tag kind="neutral">CACHED</Tag>}
-          <Button variant="ghost" size="sm" onClick={() => refetch()}>Refresh intel</Button>
+          <Button variant="ghost" size="sm" onClick={() => { refetch(); }}>Refresh intel</Button>
           <Button
             variant="primary"
             size="md"
             disabled={!data.persona_summary}
-            onClick={() => navigate(`/practice?meeting=${m.id}`)}
+            onClick={() => { navigate(`/practice?meeting=${m.id}`); }}
           >
             Get ready
           </Button>
@@ -162,7 +162,7 @@ function ProspectBlock({ data }: { data: MeetingPrepResponse }) {
         <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
           {p?.email && <Tag kind="neutral">{p.email}</Tag>}
           {p?.linkedin && <a href={p.linkedin} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}><Tag kind="sky">LinkedIn ↗</Tag></a>}
-          {p && p.open_deals_count != null && <Tag kind="neutral">{p.open_deals_count} open · {p.closed_deals_count ?? 0} closed</Tag>}
+          {p?.open_deals_count != null && <Tag kind="neutral">{p.open_deals_count} open · {p.closed_deals_count ?? 0} closed</Tag>}
         </div>
       </div>
     </div>

@@ -30,7 +30,7 @@ export default function Welcome() {
     speedMs: lines[0].speed,
     startDelayMs: lines[0].delay,
     enabled: step >= 0,
-    onDone: () => setStep(1),
+    onDone: () => { setStep(1); },
   });
 
   const line2 = useTypewriter({
@@ -38,7 +38,7 @@ export default function Welcome() {
     speedMs: lines[1].speed,
     startDelayMs: 250,
     enabled: step >= 1,
-    onDone: () => setStep(2),
+    onDone: () => { setStep(2); },
   });
 
   const tagTw = useTypewriter({
@@ -47,8 +47,8 @@ export default function Welcome() {
     startDelayMs: 450,
     enabled: step >= 2,
     onDone: () => {
-      setTimeout(() => setShowBeats(true), 350);
-      setTimeout(() => setShowCTA(true), 1100);
+      setTimeout(() => { setShowBeats(true); }, 350);
+      setTimeout(() => { setShowCTA(true); }, 1100);
     },
   });
 

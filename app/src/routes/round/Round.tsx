@@ -103,8 +103,8 @@ function PersonaCard({ persona, onSelect }: { persona: Persona; onSelect: () => 
         position: 'relative',
       }}
       onClick={() => !persona.locked && onSelect()}
-      onMouseEnter={e => { if (!persona.locked) (e.currentTarget as HTMLDivElement).style.borderColor = T.borderStr; }}
-      onMouseLeave={e => { if (!persona.locked) (e.currentTarget as HTMLDivElement).style.borderColor = T.border; }}
+      onMouseEnter={e => { if (!persona.locked) (e.currentTarget).style.borderColor = T.borderStr; }}
+      onMouseLeave={e => { if (!persona.locked) (e.currentTarget).style.borderColor = T.border; }}
     >
       {persona.locked && !faded && (
         <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 10, fontFamily: T.mono, color: T.t3, background: T.bgSub, padding: '2px 6px', borderRadius: R.sm, border: `1px solid ${T.border}` }}>
@@ -177,14 +177,14 @@ export default function Round() {
         return s - 1;
       });
     }, 1000);
-    return () => clearInterval(timerRef.current!);
+    return () => { clearInterval(timerRef.current!); };
   }, [state]);
 
   // Call timer
   useEffect(() => {
     if (state !== 'live') return;
-    timerRef.current = window.setInterval(() => setCallSeconds(s => s + 1), 1000);
-    return () => clearInterval(timerRef.current!);
+    timerRef.current = window.setInterval(() => { setCallSeconds(s => s + 1); }, 1000);
+    return () => { clearInterval(timerRef.current!); };
   }, [state]);
 
   // Loading pipeline
@@ -195,13 +195,13 @@ export default function Round() {
       step++;
       if (step >= LOADING_STEPS.length) {
         clearInterval(iv);
-        setTimeout(() => setState('analysis'), 400);
+        setTimeout(() => { setState('analysis'); }, 400);
       } else {
         setLoadingStep(step);
       }
     };
     const iv = window.setInterval(advance, 1200);
-    return () => clearInterval(iv);
+    return () => { clearInterval(iv); };
   }, [state]);
 
   const startRound = (persona: Persona) => {
@@ -282,7 +282,7 @@ export default function Round() {
 
             {/* Actions */}
             <button
-              onClick={() => setState('choose')}
+              onClick={() => { setState('choose'); }}
               style={{ padding: '10px', background: T.grad, border: 'none', borderRadius: R.md, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >
               Go again →
@@ -448,7 +448,7 @@ export default function Round() {
             <PersonaCard
               key={persona.id}
               persona={persona}
-              onSelect={() => startRound(persona)}
+              onSelect={() => { startRound(persona); }}
             />
           ))}
         </div>

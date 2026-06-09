@@ -35,5 +35,5 @@ export function useApi<T>(path: string | null): AsyncState<T> {
     return () => { cancelled = true; };
   }, [path, tick]);
 
-  return { data, loading, error, refetch: () => setTick((t) => t + 1) };
+  return { data, loading, error, refetch: () => { setTick((t) => t + 1); } };
 }

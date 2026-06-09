@@ -290,7 +290,7 @@ export default function LogBook() {
   useEffect(() => {
     if (!autoRefresh) return;
     const id = setInterval(fetchLogs, 4000);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); };
   }, [autoRefresh, fetchLogs]);
 
   const toggleRow = (id: string) => {
@@ -370,7 +370,7 @@ export default function LogBook() {
             Copy
           </button>
           <button
-            onClick={() => setAutoRefresh(v => !v)}
+            onClick={() => { setAutoRefresh(v => !v); }}
             style={{
               padding: '7px 14px', background: 'transparent',
               border: `1px solid ${autoRefresh ? 'rgba(22,163,74,0.4)' : T.borderMd}`,
@@ -396,7 +396,7 @@ export default function LogBook() {
           {LEVELS.map(l => (
             <button
               key={l}
-              onClick={() => setLevelFilter(l)}
+              onClick={() => { setLevelFilter(l); }}
               style={{
                 padding: '4px 10px',
                 background: levelFilter === l ? T.bgElevate : 'transparent',
@@ -421,7 +421,7 @@ export default function LogBook() {
           {TAGS.map(t => (
             <button
               key={t}
-              onClick={() => setTagFilter(t)}
+              onClick={() => { setTagFilter(t); }}
               style={{
                 padding: '4px 10px',
                 background: tagFilter === t ? T.bgElevate : 'transparent',
@@ -444,7 +444,7 @@ export default function LogBook() {
           type="text"
           placeholder="search logs…"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); }}
           style={{
             marginLeft: 'auto',
             height: 30,
@@ -512,7 +512,7 @@ export default function LogBook() {
                 key={id}
                 entry={entry}
                 expanded={expanded.has(id)}
-                onToggle={() => toggleRow(id)}
+                onToggle={() => { toggleRow(id); }}
               />
             );
           })}
@@ -535,7 +535,7 @@ export default function LogBook() {
           <div style={{ display: 'flex', gap: 12 }}>
             {limit < 500 && (
               <button
-                onClick={() => setLimit(l => Math.min(l + 100, 500))}
+                onClick={() => { setLimit(l => Math.min(l + 100, 500)); }}
                 style={{ background: 'none', border: 'none', color: T.t3, fontSize: 11, cursor: 'pointer', fontFamily: T.mono }}
               >
                 load more ↓

@@ -94,8 +94,8 @@ export default function Onboarding() {
             padding: 40,
           }}
         >
-          {step === 1 && <StepPipedrive onSkip={() => setStep(2)} />}
-          {step === 2 && <StepGCal onSkip={() => setStep(3)} />}
+          {step === 1 && <StepPipedrive onSkip={() => { setStep(2); }} />}
+          {step === 2 && <StepGCal onSkip={() => { setStep(3); }} />}
           {step === 3 && (
             <StepSlack
               onSkip={complete}

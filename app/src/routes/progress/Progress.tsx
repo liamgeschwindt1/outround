@@ -165,7 +165,7 @@ export default function Progress() {
               </div>
             ))}
             <button
-              onClick={() => nav('/round')}
+              onClick={() => { nav('/round'); }}
               style={{ marginTop: 4, padding: '8px 16px', background: T.grad, border: 'none', borderRadius: R.md, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
             >
               Run a targeted round →
@@ -191,7 +191,7 @@ export default function Progress() {
                     <tr
                       key={row.id}
                       style={{ borderTop: `1px solid ${T.border}`, cursor: 'pointer' }}
-                      onClick={() => nav(`/analysis/${row.id}`)}
+                      onClick={() => { nav(`/analysis/${row.id}`); }}
                     >
                       <td style={{ padding: '10px 12px 10px 0', color: T.t3 }}>
                         {new Date(row.created_at).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}

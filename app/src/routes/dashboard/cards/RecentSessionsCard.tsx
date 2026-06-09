@@ -33,7 +33,7 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
         kicker="RECENT"
         title="Your rounds"
         right={
-          <Button variant="ghost" size="sm" onClick={() => nav('/sessions')}>
+          <Button variant="ghost" size="sm" onClick={() => { nav('/sessions'); }}>
             All
           </Button>
         }
@@ -41,12 +41,12 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
 
       {loading && <SkeletonLines count={5} />}
       {!loading && error && <EmptyState title="Couldn’t load" body={error} />}
-      {!loading && !error && data && data.length === 0 && (
+      {!loading && !error && data?.length === 0 && (
         <EmptyState
           title="No rounds yet"
           body="One round and the history starts."
           cta={
-            <Button variant="primary" size="md" onClick={() => nav('/practice')}>
+            <Button variant="primary" size="md" onClick={() => { nav('/practice'); }}>
               Start a round
             </Button>
           }
@@ -58,7 +58,7 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
           {data.slice(0, 5).map((s) => (
             <li key={s.id}>
               <button
-                onClick={() => nav(`/analysis/${s.id}`)}
+                onClick={() => { nav(`/analysis/${s.id}`); }}
                 style={{
                   width: '100%',
                   display: 'flex',

@@ -105,7 +105,7 @@ export default function TeamPage() {
         <div style={{ display: 'flex', gap: 8 }}>
           <input
             value={inviteEmail}
-            onChange={e => setInviteEmail(e.target.value)}
+            onChange={e => { setInviteEmail(e.target.value); }}
             onKeyDown={e => e.key === 'Enter' && sendInvite()}
             placeholder="colleague@company.com"
             type="email"
@@ -117,7 +117,7 @@ export default function TeamPage() {
           />
           <select
             value={inviteRole}
-            onChange={e => setInviteRole(e.target.value)}
+            onChange={e => { setInviteRole(e.target.value); }}
             style={{
               height: 40, background: T.bgSub, border: `1px solid ${T.borderMd}`,
               borderRadius: R.md, padding: '0 10px', color: T.t2, fontSize: 13, cursor: 'pointer',

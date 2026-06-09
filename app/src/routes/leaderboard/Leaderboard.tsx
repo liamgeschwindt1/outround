@@ -55,7 +55,7 @@ export default function Leaderboard() {
           {TABS.map(t => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => { setTab(t.id); }}
               style={{
                 padding: '7px 16px',
                 background: tab === t.id ? T.bgHover : 'transparent',

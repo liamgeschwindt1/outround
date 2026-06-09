@@ -108,7 +108,7 @@ export default function CalendarPage() {
           return (
             <button
               key={d.toISOString()}
-              onClick={() => setSelectedDate(d)}
+              onClick={() => { setSelectedDate(d); }}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -142,7 +142,7 @@ export default function CalendarPage() {
         <div style={{ padding: 24, background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: R.xl, textAlign: 'center' }}>
           <div style={{ fontSize: 14, color: T.t2, marginBottom: 12 }}>Google Calendar not connected.</div>
           <button
-            onClick={() => navigate('/settings')}
+            onClick={() => { navigate('/settings'); }}
             style={{ padding: '8px 20px', background: T.grad, border: 'none', borderRadius: R.md, color: '#fff', fontSize: 13, cursor: 'pointer' }}
           >
             Connect in Settings →
@@ -219,7 +219,7 @@ export default function CalendarPage() {
               <MeetingBlock
                 key={m.id}
                 meeting={m}
-                onClick={() => navigate(`/meeting/${m.id}`)}
+                onClick={() => { navigate(`/meeting/${m.id}`); }}
               />
             ))}
 

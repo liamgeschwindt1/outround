@@ -21,7 +21,7 @@ export function LeaderboardCard({ data, loading, error }: Props) {
 
       {loading && <SkeletonLines count={5} />}
       {!loading && error && <EmptyState title="Couldn’t load" body={error} />}
-      {!loading && !error && data && data.entries.length === 0 && (
+      {!loading && !error && data?.entries.length === 0 && (
         <EmptyState title="No scores yet" body="Be first on the board." />
       )}
 

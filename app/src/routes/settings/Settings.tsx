@@ -267,7 +267,7 @@ export default function Settings() {
           {TABS.map(t => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => { setTab(t.id); }}
               style={{
                 padding: '8px 12px',
                 background: tab === t.id ? T.bgHover : 'transparent',

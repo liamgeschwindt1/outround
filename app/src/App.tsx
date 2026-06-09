@@ -23,7 +23,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { err: Error | nu
             <pre style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#888', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {this.state.err.message}
             </pre>
-            <button onClick={() => window.location.reload()} style={{ marginTop: 20, padding: '8px 20px', background: '#f05a32', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
+            <button onClick={() => { window.location.reload(); }} style={{ marginTop: 20, padding: '8px 20px', background: '#f05a32', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
               Reload
             </button>
           </div>

@@ -254,7 +254,7 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
             >
               View report
             </Button>
-            <Button variant="primary" size="sm" onClick={() => nav('/round')}>
+            <Button variant="primary" size="sm" onClick={() => { nav('/round'); }}>
               Go again
             </Button>
           </div>
@@ -267,7 +267,7 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
           <div style={{ fontSize: 12, color: T.t3, lineHeight: 1.5 }}>
             No round before this meeting.
           </div>
-          <Button variant="primary" size="sm" onClick={() => nav('/round')}>
+          <Button variant="primary" size="sm" onClick={() => { nav('/round'); }}>
             Run a round now
           </Button>
         </div>
@@ -286,7 +286,7 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
             variant="primary"
             size="md"
             style={{ width: '100%' }}
-            onClick={() => (m.id ? nav(`/meeting/${m.id}`) : nav('/round'))}
+            onClick={() => { m.id ? nav(`/meeting/${m.id}`) : nav('/round'); }}
           >
             Get ready →
           </Button>
@@ -338,11 +338,11 @@ export function WeekCalendar({ data, loading }: Props) {
             {monthLabel}
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <Button variant="ghost" size="sm" onClick={() => setWeekOffset((o) => o - 1)}>‹</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setWeekOffset((o) => o - 1); }}>‹</Button>
             {weekOffset !== 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>Today</Button>
+              <Button variant="ghost" size="sm" onClick={() => { setWeekOffset(0); }}>Today</Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setWeekOffset((o) => o + 1)}>›</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setWeekOffset((o) => o + 1); }}>›</Button>
           </div>
         </div>
 
@@ -529,7 +529,7 @@ export function WeekCalendar({ data, loading }: Props) {
                           m={m}
                           isPast={new Date(m.starts_at) < today}
                           selected={selected?.id === m.id}
-                          onClick={() => setSelected((s) => (s?.id === m.id ? null : m))}
+                          onClick={() => { setSelected((s) => (s?.id === m.id ? null : m)); }}
                         />
                       ))}
                     </div>
@@ -542,7 +542,7 @@ export function WeekCalendar({ data, loading }: Props) {
       </div>
 
       {/* ── Side panel ────────────────────────────────────────────────────── */}
-      {selected && <SidePanel m={selected} onClose={() => setSelected(null)} />}
+      {selected && <SidePanel m={selected} onClose={() => { setSelected(null); }} />}
     </div>
   );
 }

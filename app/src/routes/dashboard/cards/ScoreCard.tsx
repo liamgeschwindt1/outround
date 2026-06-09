@@ -18,7 +18,7 @@ export function ScoreCard({ data, loading, error }: Props) {
       {error && !loading && (
         <EmptyState title="Score unavailable" body={error} />
       )}
-      {!loading && !error && data && data.total_sessions === 0 && (
+      {!loading && !error && data?.total_sessions === 0 && (
         <EmptyState
           title="No score yet"
           body="One round and you're on the board."

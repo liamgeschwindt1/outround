@@ -90,7 +90,7 @@ export default function IntelligencePage() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {messages.length === 0 ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 32 }}>
-            <Orb active={active} onClick={() => setActive(a => !a)} />
+            <Orb active={active} onClick={() => { setActive(a => !a); }} />
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 14, color: T.t2, marginBottom: 8 }}>What do you want to know?</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 480 }}>
@@ -152,7 +152,7 @@ export default function IntelligencePage() {
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
         <input
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={e => { setInput(e.target.value); }}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
           placeholder="Ask anything about your deals, contacts, or calls…"
           style={{

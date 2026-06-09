@@ -144,7 +144,7 @@ export default function Login() {
                   required
                   autoFocus={isSignUp}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => { setName(e.target.value); }}
                   placeholder="Your full name"
                   style={inputStyle}
                 />
@@ -158,7 +158,7 @@ export default function Login() {
                 required
                 autoFocus={!isSignUp}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); }}
                 placeholder="you@company.com"
                 style={inputStyle}
               />
@@ -171,7 +171,7 @@ export default function Login() {
                 required
                 minLength={8}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); }}
                 placeholder={isSignUp ? 'At least 8 characters' : ''}
                 style={inputStyle}
               />

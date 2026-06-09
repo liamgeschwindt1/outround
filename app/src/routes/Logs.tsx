@@ -161,7 +161,7 @@ export default function LogsPage() {
             Refresh
           </button>
           <button
-            onClick={() => setAutoRefresh(a => !a)}
+            onClick={() => { setAutoRefresh(a => !a); }}
             style={{
               padding: '6px 12px',
               background: autoRefresh ? 'rgba(22,163,74,0.12)' : T.bgElevate,
@@ -179,7 +179,7 @@ export default function LogsPage() {
         {(['all', 'info', 'success', 'warn', 'error'] as const).map(l => (
           <button
             key={l}
-            onClick={() => setFilter(l)}
+            onClick={() => { setFilter(l); }}
             style={{
               padding: '4px 10px', borderRadius: R.md, fontSize: 11,
               fontFamily: "'JetBrains Mono', monospace",
@@ -194,7 +194,7 @@ export default function LogsPage() {
         ))}
         <input
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); }}
           placeholder="Search logs…"
           style={{
             marginLeft: 'auto', height: 28, background: T.bgSub,
@@ -217,7 +217,7 @@ export default function LogsPage() {
             key={e.id}
             entry={e}
             expanded={expandedId === e.id}
-            onToggle={() => setExpandedId(expandedId === e.id ? null : e.id)}
+            onToggle={() => { setExpandedId(expandedId === e.id ? null : e.id); }}
           />
         ))}
       </div>

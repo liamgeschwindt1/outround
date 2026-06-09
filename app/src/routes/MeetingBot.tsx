@@ -53,7 +53,7 @@ export default function MeetingBotPage() {
       setUrl('');
       setJoinAt('');
       setDispatchOk(true);
-      setTimeout(() => setDispatchOk(false), 4000);
+      setTimeout(() => { setDispatchOk(false); }, 4000);
       refetch?.();
     } catch (e) {
       setDispatchErr(e instanceof Error ? e.message : 'Dispatch failed');
@@ -77,7 +77,7 @@ export default function MeetingBotPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <input
             value={url}
-            onChange={e => setUrl(e.target.value)}
+            onChange={e => { setUrl(e.target.value); }}
             placeholder="https://zoom.us/j/123456789 or Google Meet link…"
             style={{
               height: 42, background: T.bgSub, border: `1px solid ${T.borderMd}`,
@@ -90,7 +90,7 @@ export default function MeetingBotPage() {
               <input
                 type="datetime-local"
                 value={joinAt}
-                onChange={e => setJoinAt(e.target.value)}
+                onChange={e => { setJoinAt(e.target.value); }}
                 style={{
                   width: '100%', height: 40, background: T.bgSub,
                   border: `1px solid ${T.borderMd}`, borderRadius: R.md,

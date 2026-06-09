@@ -73,7 +73,7 @@ function IconSettings() {
 
 // ─── Nav structure ────────────────────────────────────────────────────────────
 
-type NavItem = { to: string; label: string; Icon: () => JSX.Element };
+interface NavItem { to: string; label: string; Icon: () => JSX.Element }
 type NavEntry = NavItem | 'divider';
 
 const NAV: NavEntry[] = [
@@ -217,9 +217,9 @@ function Sidebar() {
 
       {/* Profile */}
       <div style={{ position: 'relative' }}>
-        {profileOpen && <ProfilePopup onClose={() => setProfileOpen(false)} />}
+        {profileOpen && <ProfilePopup onClose={() => { setProfileOpen(false); }} />}
         <button
-          onClick={() => setProfileOpen(o => !o)}
+          onClick={() => { setProfileOpen(o => !o); }}
           style={{
             display: 'flex',
             alignItems: 'center',

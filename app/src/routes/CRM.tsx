@@ -80,7 +80,7 @@ export default function CRMPage() {
           {(['deals', 'contacts'] as const).map(t => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => { setTab(t); }}
               style={{
                 padding: '6px 14px',
                 borderRadius: R.md,
@@ -102,7 +102,7 @@ export default function CRMPage() {
         <div style={{ padding: 24, background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: R.xl, textAlign: 'center' }}>
           <div style={{ fontSize: 14, color: T.t2, marginBottom: 12 }}>Pipedrive is not connected.</div>
           <button
-            onClick={() => navigate('/settings')}
+            onClick={() => { navigate('/settings'); }}
             style={{ padding: '8px 20px', background: T.grad, border: 'none', borderRadius: R.md, color: '#fff', fontSize: 13, cursor: 'pointer' }}
           >
             Connect in Settings →

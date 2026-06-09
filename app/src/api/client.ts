@@ -40,7 +40,7 @@ async function request<T>(
 
   if (!res.ok) {
     const msg =
-      (body && typeof body === 'object' && 'error' in body && typeof (body as { error: unknown }).error === 'string')
+      (body && typeof body === 'object' && 'error' in body && typeof (body).error === 'string')
         ? (body as { error: string }).error
         : `Request failed: ${res.status}`;
 

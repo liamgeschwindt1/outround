@@ -16,7 +16,7 @@ export function ErrorLog() {
 
   // Subscribe to the global error stream + window events
   useEffect(() => {
-    const cb = (e: ErrorEntry) => setErrors(prev => [e, ...prev].slice(0, 100));
+    const cb = (e: ErrorEntry) => { setErrors(prev => [e, ...prev].slice(0, 100)); };
     errorSubscribers.push(cb);
 
     const onRejection = (ev: PromiseRejectionEvent) => {
@@ -48,7 +48,7 @@ export function ErrorLog() {
       }
     };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    return () => { document.removeEventListener('mousedown', handler); };
   }, [open]);
 
   const unseen = errors.length - seenCount;
@@ -116,7 +116,7 @@ export function ErrorLog() {
             {errors.map(e => (
               <div key={e.id}>
                 <button
-                  onClick={() => setExpanded(expanded === e.id ? null : e.id)}
+                  onClick={() => { setExpanded(expanded === e.id ? null : e.id); }}
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',

@@ -9,7 +9,7 @@ export interface ErrorEntry {
 }
 
 let _id = 0;
-export const errorSubscribers: Array<(e: ErrorEntry) => void> = [];
+export const errorSubscribers: ((e: ErrorEntry) => void)[] = [];
 
 export function captureError(msg: string, detail?: string) {
   const entry: ErrorEntry = {
@@ -18,5 +18,5 @@ export function captureError(msg: string, detail?: string) {
     msg: String(msg).slice(0, 400),
     detail: detail ? String(detail).slice(0, 800) : undefined,
   };
-  errorSubscribers.forEach(fn => fn(entry));
+  errorSubscribers.forEach(fn => { fn(entry); });
 }

@@ -217,11 +217,11 @@ export default function TranscriptsPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {transcripts.map(t => (
-          <TranscriptCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} />
+          <TranscriptCard key={t.id} t={t} onOpen={() => { setOpenId(t.id); }} />
         ))}
       </div>
 
-      {openId && <TranscriptDrawer id={openId} onClose={() => setOpenId(null)} />}
+      {openId && <TranscriptDrawer id={openId} onClose={() => { setOpenId(null); }} />}
     </div>
   );
 }

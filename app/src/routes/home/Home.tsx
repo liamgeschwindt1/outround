@@ -86,7 +86,7 @@ export default function Home() {
   const totalRounds = stats.data?.total_sessions ?? 23;
   const usageMin = 67;
   const usageMax = 150;
-  const upcomingMeetings = (meetings.data?.meetings?.length ? meetings.data.meetings : SEED_MEETINGS) as Array<{ id: string; title: string; starts_at: string }>;
+  const upcomingMeetings = (meetings.data?.meetings?.length ? meetings.data.meetings : SEED_MEETINGS) as { id: string; title: string; starts_at: string }[];
   const lastRound = (history.data?.length ? history.data[0] : SEED_HISTORY[0]) as { id: string; score: number; created_at: string; persona_name?: string; mode?: string; summary?: string };
 
   return (
@@ -112,7 +112,7 @@ export default function Home() {
                 : 'No meetings today. Run a round anyway.'}
             </div>
           </div>
-          <GetReadyBtn onClick={() => nav('/round')} />
+          <GetReadyBtn onClick={() => { nav('/round'); }} />
         </Card>
 
         {/* READINESS SCORE */}
@@ -177,7 +177,7 @@ export default function Home() {
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.t1 }}>{m.title}</div>
                   <div style={{ fontSize: 11, color: T.t3, marginTop: 2 }}>{fmtRelative(m.starts_at)}</div>
                 </div>
-                <GetReadyBtn onClick={() => nav('/round')} />
+                <GetReadyBtn onClick={() => { nav('/round'); }} />
               </div>
             ))}
           </div>
@@ -193,7 +193,7 @@ export default function Home() {
             </div>
             <MiniBar value={(usageMin / usageMax) * 100} />
             <button
-              onClick={() => nav('/settings/billing')}
+              onClick={() => { nav('/settings/billing'); }}
               style={{ marginTop: 8, padding: '5px 10px', background: 'transparent', border: `1px solid ${T.borderMd}`, borderRadius: R.md, color: T.t2, fontSize: 11, cursor: 'pointer' }}
             >
               Upgrade
@@ -223,14 +223,14 @@ export default function Home() {
               )}
               <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
                 <button
-                  onClick={() => nav('/round')}
+                  onClick={() => { nav('/round'); }}
                   style={{ padding: '7px 14px', background: T.bgHover, border: `1px solid ${T.borderMd}`, borderRadius: R.md, color: T.t1, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                 >
                   Go again
                 </button>
                 {lastRound?.id && (
                   <button
-                    onClick={() => nav(`/analysis/${lastRound.id}`)}
+                    onClick={() => { nav(`/analysis/${lastRound.id}`); }}
                     style={{ padding: '7px 14px', background: 'transparent', border: `1px solid ${T.border}`, borderRadius: R.md, color: T.t2, fontSize: 12, cursor: 'pointer' }}
                   >
                     View report
@@ -258,7 +258,7 @@ export default function Home() {
               Current best: <span style={{ color: T.t1, fontWeight: 600 }}>{lastRound?.score ?? 67}</span> / 100
             </div>
           </div>
-          <GetReadyBtn onClick={() => nav('/round')} />
+          <GetReadyBtn onClick={() => { nav('/round'); }} />
         </Card>
       </div>
     </div>

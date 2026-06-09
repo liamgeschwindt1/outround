@@ -121,7 +121,7 @@ export function CoachOrb() {
     <>
       {/* Orb button */}
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => { setOpen(o => !o); }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -152,7 +152,7 @@ export function CoachOrb() {
       {/* Slide-in panel */}
       {open && (
         <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 299 }} />
+          <div onClick={() => { setOpen(false); }} style={{ position: 'fixed', inset: 0, zIndex: 299 }} />
           <div
             style={{
               position: 'fixed',
@@ -174,7 +174,7 @@ export function CoachOrb() {
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: T.coral, animation: 'orb-pulse 2.4s ease-in-out infinite' }} />
                 <span style={{ fontSize: 14, fontWeight: 600 }}>Coach</span>
               </div>
-              <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: T.t3, cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>✕</button>
+              <button onClick={() => { setOpen(false); }} style={{ background: 'none', border: 'none', color: T.t3, cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>✕</button>
             </div>
 
             {/* Insight */}

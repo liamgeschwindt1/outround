@@ -55,7 +55,7 @@ export function LogsCard() {
   useEffect(() => {
     if (!autoRefresh) return;
     const id = setInterval(refetch, 5000);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); };
   }, [autoRefresh, refetch]);
 
   const logs = data?.logs ?? [];
@@ -78,7 +78,7 @@ export function LogsCard() {
               type="text"
               placeholder="filter…"
               value={filter}
-              onChange={e => setFilter(e.target.value)}
+              onChange={e => { setFilter(e.target.value); }}
               style={{
                 height: 28,
                 padding: '0 10px',
@@ -95,7 +95,7 @@ export function LogsCard() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setAutoRefresh(v => !v)}
+              onClick={() => { setAutoRefresh(v => !v); }}
               style={{ color: autoRefresh ? T.green : T.t2 }}
             >
               {autoRefresh ? '● live' : '○ live'}
