@@ -207,19 +207,14 @@ function StepSlack({ onSkip, busy }: { onSkip: () => void; busy: boolean }) {
           variant="primary"
           size="lg"
           fullWidth
-          onClick={() => { window.location.href = '/auth/slack?return_to=/onboarding'; }}
-        >
-          Connect Slack
-        </Button>
-        <Button
-          variant="ghost"
-          size="md"
-          fullWidth
           disabled={busy}
           onClick={onSkip}
         >
-          {busy ? 'Finishing…' : 'Skip for now — enter the round →'}
+          {busy ? 'Finishing…' : 'Enter the round →'}
         </Button>
+        <p style={{ fontSize: 12, color: T.t3, textAlign: 'center', margin: 0 }}>
+          You can connect Slack later from Settings.
+        </p>
       </div>
     </>
   );
