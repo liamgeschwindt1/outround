@@ -11,6 +11,7 @@ export interface User {
   integrations: {
     pipedrive: boolean;
     gcal: boolean;
+    slack: boolean;
   };
 }
 
