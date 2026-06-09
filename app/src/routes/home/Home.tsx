@@ -87,7 +87,7 @@ export default function Home() {
   const usageMin = 67;
   const usageMax = 150;
   const upcomingMeetings = (meetings.data?.meetings?.length ? meetings.data.meetings : SEED_MEETINGS) as Array<{ id: string; title: string; starts_at: string }>;
-  const lastRound = (history.data?.length ? history.data[0] : SEED_HISTORY[0]) as { id: string; score: number; created_at: string; persona_name?: string; mode?: string; summary?: string };
+  const lastRound = (history.data?.sessions?.length ? history.data.sessions[0] : SEED_HISTORY[0]) as { id: string; score: number; created_at: string; persona_name?: string; mode?: string; summary?: string };
 
   return (
     <div>

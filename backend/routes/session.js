@@ -59,7 +59,8 @@ function normalisePersona(raw) {
 router.get('/history', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query(
-      `SELECT id, persona_id, mode, score, score_breakdown, duration_seconds, started_at
+      `SELECT id, persona_id, mode, score, score_breakdown, duration_seconds,
+              started_at, started_at AS created_at
        FROM sessions
        WHERE user_id = $1 AND score IS NOT NULL
        ORDER BY started_at DESC LIMIT 20`,

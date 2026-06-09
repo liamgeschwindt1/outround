@@ -169,7 +169,7 @@ function RecentRounds({ history }: { history: SessionHistoryItem[] }) {
               {s.persona_id ? s.persona_id.replace(/_/g, ' ') : 'Round'}
             </div>
             <div style={{ fontSize: 11, color: T.t3, fontFamily: T.mono }}>
-              {new Date(s.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+              {new Date(s.created_at || s.started_at || '').toLocaleDateString([], { month: 'short', day: 'numeric' })}
               {s.duration_seconds && ` · ${Math.round(s.duration_seconds / 60)}m`}
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function Dashboard() {
     ?? allMeetings[allMeetings.length - 1] ?? null;
 
   const s = stats.data;
-  const recentHistory = history.data ?? [];
+  const recentHistory = history.data?.sessions ?? [];
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 1100, margin: '0 auto' }}>
