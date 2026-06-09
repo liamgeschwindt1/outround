@@ -5,7 +5,16 @@
 // Session steps: mode=0, character=1, persona=2, brief=3, call=4, loading=5, finish=6 (total 7)
 // Pitch steps:   mode=0, character=1, pitchprep=2, call=3, loading=4, finish=5 (total 6)
 // ---------------------------------------------------------------------------
-const STEP_DOT_IDX = { mode: 0, character: 1, persona: 2, brief: 3, pitchprep: 2, call: 4, loading: 5, finish: 6 };
+const STEP_DOT_IDX = {
+  mode: 0,
+  character: 1,
+  persona: 2,
+  brief: 3,
+  pitchprep: 2,
+  call: 4,
+  loading: 5,
+  finish: 6,
+};
 
 function renderDots(activeIdx, total) {
   const el = document.getElementById('progressDots');
@@ -33,7 +42,7 @@ function renderOnboardingDots() {
 function sbNav(view) {
   // Set active icon
   const icons = { sessions: 'sbSessions', leaderboard: 'sbLeaderboard', practice: 'sbPractice' };
-  document.querySelectorAll('.sidebar .sb-icon').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sidebar .sb-icon').forEach((el) => el.classList.remove('active'));
   if (icons[view]) {
     const el = document.getElementById(icons[view]);
     if (el) el.classList.add('active');
@@ -49,7 +58,9 @@ function sbNav(view) {
   } else if (view === 'leaderboard') {
     // Show leaderboard panel only
     if (leftCol) leftCol.style.display = 'none';
-    if (rightCol) { rightCol.style.display = ''; }
+    if (rightCol) {
+      rightCol.style.display = '';
+    }
   } else {
     // Default: show everything
     if (leftCol) leftCol.style.display = '';
@@ -65,8 +76,10 @@ function handleOAuthRedirectParams() {
   if (pipedriveConnected || gcalConnected) {
     // Update integration status in authUser state if available
     if (_s.authUser) {
-      if (pipedriveConnected) _s.authUser.integrations = { ...(_s.authUser.integrations || {}), pipedrive: true };
-      if (gcalConnected) _s.authUser.integrations = { ...(_s.authUser.integrations || {}), gcal: true };
+      if (pipedriveConnected)
+        _s.authUser.integrations = { ...(_s.authUser.integrations || {}), pipedrive: true };
+      if (gcalConnected)
+        _s.authUser.integrations = { ...(_s.authUser.integrations || {}), gcal: true };
     }
 
     // Determine which onboarding sub-step to resume at

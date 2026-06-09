@@ -9,7 +9,9 @@
 const { createClient } = require('@supabase/supabase-js');
 
 let pushEvent = () => {};
-try { pushEvent = require('../routes/debug').pushEvent; } catch {}
+try {
+  pushEvent = require('../routes/debug').pushEvent;
+} catch {}
 
 let _client = null;
 
@@ -34,7 +36,7 @@ function getAdminClient() {
   });
 
   _client = createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false }
+    auth: { autoRefreshToken: false, persistSession: false },
   });
   return _client;
 }
@@ -65,10 +67,14 @@ async function getUserFromToken(jwt) {
       return null;
     }
     if (!data?.user) {
-      pushEvent('warn', 'auth', `getUserFromToken: no user in response`, { token_preview: tokenPreview });
+      pushEvent('warn', 'auth', `getUserFromToken: no user in response`, {
+        token_preview: tokenPreview,
+      });
       return null;
     }
-    pushEvent('success', 'auth', `getUserFromToken: verified — ${data.user.email}`, { email: data.user.email });
+    pushEvent('success', 'auth', `getUserFromToken: verified — ${data.user.email}`, {
+      email: data.user.email,
+    });
     return data.user;
   } catch (err) {
     pushEvent('error', 'auth', `getUserFromToken: threw exception — ${err.message}`, {

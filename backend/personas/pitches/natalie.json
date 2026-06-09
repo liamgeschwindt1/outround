@@ -5,12 +5,7 @@
       "quality": "high",
       "provider": "scribe_realtime",
       "user_input_audio_format": "pcm_16000",
-      "keywords": [
-        "Baobab",
-        "Natalie",
-        "seed",
-        "AI"
-      ]
+      "keywords": ["Baobab", "Natalie", "seed", "AI"]
     },
     "turn": {
       "turn_timeout": 65,
@@ -130,11 +125,7 @@
     "flag": "🇬🇧",
     "traits": ["precise", "skeptical", "direct", "pattern-matching"],
     "canonical_name": "Natalie",
-    "phonetic_variants": [
-      "Nat",
-      "Nataly",
-      "Nathalie"
-    ],
+    "phonetic_variants": ["Nat", "Nataly", "Nathalie"],
     "language": "en",
     "resistance_level": 3,
     "mode": "investor_pitch",

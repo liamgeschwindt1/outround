@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import PropTypes from 'prop-types';
 import SlackCard from '../components/SlackCard';
 
 const SECTIONS = [
@@ -38,15 +39,17 @@ const SECTIONS = [
 function useTypewriter(text, active, speed = 28) {
   const [displayed, setDisplayed] = useState('');
   useEffect(() => {
-    if (!active) { setDisplayed(''); return; }
+    if (!active) return;
     let i = 0;
-    setDisplayed('');
     const id = setInterval(() => {
       i++;
       setDisplayed(text.slice(0, i));
       if (i >= text.length) clearInterval(id);
     }, speed);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      setDisplayed('');
+    };
   }, [text, active, speed]);
   return displayed;
 }
@@ -54,7 +57,15 @@ function useTypewriter(text, active, speed = 28) {
 function TypedLine({ text, active }) {
   const displayed = useTypewriter(text, active);
   return (
-    <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6, minHeight: '1.6em' }}>
+    <div
+      style={{
+        fontFamily: 'var(--font-body)',
+        fontSize: 13,
+        color: 'var(--text-primary)',
+        lineHeight: 1.6,
+        minHeight: '1.6em',
+      }}
+    >
       {displayed}
       {active && displayed.length < text.length && (
         <span style={{ borderRight: '1px solid var(--coral)', marginLeft: 1 }}>&nbsp;</span>
@@ -63,15 +74,18 @@ function TypedLine({ text, active }) {
   );
 }
 
-export default function Scene2_PreMeetingBrief({ isActive, sound }) {
+function Scene2_PreMeetingBrief({ isActive, sound }) {
   const [revealedSections, setRevealedSections] = useState(0);
   const [revealedLines, setRevealedLines] = useState({});
 
   useEffect(() => {
     if (!isActive) return;
+
+    let cancelled = false;
     let sectionIdx = 0;
 
     function revealNextSection() {
+      if (cancelled) return;
       if (sectionIdx >= SECTIONS.length) {
         sound.stopTyping();
         return;
@@ -81,13 +95,14 @@ export default function Scene2_PreMeetingBrief({ isActive, sound }) {
       let lineIdx = 0;
 
       function revealNextLine() {
+        if (cancelled) return;
         if (lineIdx >= section.lines.length) {
           sectionIdx++;
           setTimeout(revealNextSection, 80);
           return;
         }
         const lineKey = `${sectionIdx}-${lineIdx}`;
-        setRevealedLines(prev => ({ ...prev, [lineKey]: true }));
+        setRevealedLines((prev) => ({ ...prev, [lineKey]: true }));
         sound.play('typing');
         const charTime = section.lines[lineIdx].length * 28 + 100;
         lineIdx++;
@@ -97,20 +112,41 @@ export default function Scene2_PreMeetingBrief({ isActive, sound }) {
     }
 
     const t = setTimeout(revealNextSection, 200);
-    return () => clearTimeout(t);
-  }, [isActive]);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+      setRevealedSections(0);
+      setRevealedLines({});
+    };
+  }, [isActive, sound]);
 
   return (
     <div
-      style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: '100%', height: '100%', padding: '24px', overflowY: 'auto' }}
-      onClick={e => e.stopPropagation()}
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        padding: '24px',
+        overflowY: 'auto',
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       <SlackCard timestamp="2 minutes ago" style={{ maxWidth: 460 }}>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 14,
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            marginBottom: 16,
+          }}
+        >
           You&rsquo;re meeting Jana Novak in 12 minutes.
         </div>
 
-        {SECTIONS.map((sec, si) => (
+        {SECTIONS.map((sec, si) =>
           si < revealedSections ? (
             <motion.div
               key={si}
@@ -143,8 +179,20 @@ export default function Scene2_PreMeetingBrief({ isActive, sound }) {
               })}
             </motion.div>
           ) : null
-        ))}
+        )}
       </SlackCard>
     </div>
   );
 }
+
+TypedLine.propTypes = {
+  text: PropTypes.string.isRequired,
+  active: PropTypes.bool.isRequired,
+};
+
+Scene2_PreMeetingBrief.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  sound: PropTypes.object.isRequired,
+};
+
+export default Scene2_PreMeetingBrief;

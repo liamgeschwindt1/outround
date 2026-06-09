@@ -83,10 +83,9 @@ async function pollUntilDone(transcriptionId, opts = {}) {
   const deadline = Date.now() + timeout;
 
   while (Date.now() < deadline) {
-    const resp = await fetch(
-      `${GLADIA_BASE}/v2/transcription/${transcriptionId}`,
-      { headers: { 'x-gladia-key': apiKey } }
-    );
+    const resp = await fetch(`${GLADIA_BASE}/v2/transcription/${transcriptionId}`, {
+      headers: { 'x-gladia-key': apiKey },
+    });
 
     if (!resp.ok) {
       const txt = await resp.text();
@@ -124,7 +123,7 @@ async function transcribe(audioUrl, opts = {}) {
  * @returns {{ utterances: Array<{speaker: string, text: string, start: number, end: number}>, raw: object }}
  */
 function normalise(gladiaResult) {
-  const utterances = (gladiaResult?.result?.transcription?.utterances || []).map(u => ({
+  const utterances = (gladiaResult?.result?.transcription?.utterances || []).map((u) => ({
     speaker: u.speaker != null ? `Speaker ${u.speaker}` : 'unknown',
     text: u.transcript || '',
     start: u.start ?? 0,
@@ -133,13 +132,13 @@ function normalise(gladiaResult) {
 
   return {
     utterances,
-    fullText: utterances.map(u => `[${u.speaker}] ${u.text}`).join('\n'),
+    fullText: utterances.map((u) => `[${u.speaker}] ${u.text}`).join('\n'),
     raw: gladiaResult,
   };
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 module.exports = { isConfigured, submitTranscription, pollUntilDone, transcribe };

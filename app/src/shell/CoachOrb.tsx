@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { T, R, scoreColor } from '../design/tokens';
+import { T, R } from '../design/tokens';
 import { useApi } from '../api/hooks';
 import type { SessionStats, MeetingsResponse } from '../api/types';
 
@@ -15,7 +15,15 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   return (
     <div style={{ padding: '14px 16px', borderBottom: `1px solid ${T.border}` }}>
       {label && (
-        <div style={{ fontSize: 10, fontFamily: T.mono, letterSpacing: 0.6, color: T.t3, marginBottom: 8 }}>
+        <div
+          style={{
+            fontSize: 10,
+            fontFamily: T.mono,
+            letterSpacing: 0.6,
+            color: T.t3,
+            marginBottom: 8,
+          }}
+        >
           {label}
         </div>
       )}
@@ -60,11 +68,20 @@ function GradientCTA({ label, onClick }: { label: string; onClick: () => void })
 
 function StatRow({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        marginBottom: 6,
+      }}
+    >
       <span style={{ fontSize: 12, color: T.t3 }}>{label}</span>
       <span style={{ fontSize: 14, fontWeight: 600, color: T.t1, fontFamily: T.numeric }}>
         {value}
-        {sub && <span style={{ fontSize: 11, color: T.t2, fontWeight: 400, marginLeft: 4 }}>{sub}</span>}
+        {sub && (
+          <span style={{ fontSize: 11, color: T.t2, fontWeight: 400, marginLeft: 4 }}>{sub}</span>
+        )}
       </span>
     </div>
   );
@@ -73,18 +90,17 @@ function StatRow({ label, value, sub }: { label: string; value: string | number;
 function nextMeetingLabel(meetings: MeetingsResponse['meetings']): string | null {
   const now = Date.now();
   const upcoming = meetings
-    .filter(m => new Date(m.starts_at).getTime() > now)
+    .filter((m) => new Date(m.starts_at).getTime() > now)
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   if (!upcoming.length) return null;
   const m = upcoming[0];
   const diffMs = new Date(m.starts_at).getTime() - now;
   const diffMin = Math.round(diffMs / 60000);
-  const name = m.prospect?.name && m.prospect.name !== 'Unknown'
-    ? m.prospect.name.split(' ')[0]
-    : m.title;
-  if (diffMin < 60) return `${name} · in ${diffMin} min`;
+  const name =
+    m.prospect.name && m.prospect.name !== 'Unknown' ? m.prospect.name.split(' ')[0] : m.title;
+  if (diffMin < 60) return `${name} · in ${String(diffMin)} min`;
   const diffH = Math.round(diffMin / 60);
-  if (diffH < 24) return `${name} · in ${diffH}h`;
+  if (diffH < 24) return `${name} · in ${String(diffH)}h`;
   const day = new Date(m.starts_at).toLocaleDateString([], { weekday: 'short' });
   return `${name} · ${day}`;
 }
@@ -114,14 +130,18 @@ export function CoachOrb() {
     const style = document.createElement('style');
     style.textContent = pulse;
     document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
 
   return (
     <>
       {/* Orb button */}
       <button
-        onClick={() => { setOpen(o => !o); }}
+        onClick={() => {
+          setOpen((o) => !o);
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -152,7 +172,12 @@ export function CoachOrb() {
       {/* Slide-in panel */}
       {open && (
         <>
-          <div onClick={() => { setOpen(false); }} style={{ position: 'fixed', inset: 0, zIndex: 299 }} />
+          <div
+            onClick={() => {
+              setOpen(false);
+            }}
+            style={{ position: 'fixed', inset: 0, zIndex: 299 }}
+          />
           <div
             style={{
               position: 'fixed',
@@ -169,40 +194,70 @@ export function CoachOrb() {
             }}
           >
             {/* Header */}
-            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div
+              style={{
+                padding: '14px 16px',
+                borderBottom: `1px solid ${T.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: T.coral, animation: 'orb-pulse 2.4s ease-in-out infinite' }} />
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: T.coral,
+                    animation: 'orb-pulse 2.4s ease-in-out infinite',
+                  }}
+                />
                 <span style={{ fontSize: 14, fontWeight: 600 }}>Coach</span>
               </div>
-              <button onClick={() => { setOpen(false); }} style={{ background: 'none', border: 'none', color: T.t3, cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>✕</button>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: T.t3,
+                  cursor: 'pointer',
+                  fontSize: 18,
+                  lineHeight: 1,
+                  padding: 4,
+                }}
+              >
+                ✕
+              </button>
             </div>
 
             {/* Insight */}
             <Section label="">
-              <p style={{ fontSize: 13, color: T.t2, lineHeight: 1.65, margin: 0, fontStyle: 'italic' }}>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: T.t2,
+                  lineHeight: 1.65,
+                  margin: 0,
+                  fontStyle: 'italic',
+                }}
+              >
                 {rounds === 0
                   ? '"Run your first round. I\'ll meet you on the other side with something useful."'
                   : avgScore && avgScore >= 75
-                  ? `"You're performing at ${avgScore}. Stay sharp — every round without a challenge is a round going soft."`
-                  : `"${weakspot.split('—')[0].trim()} is where you leave points. That's what we fix next."`
-                }
+                    ? `&quot;You&apos;re performing at ${String(avgScore)}. Stay sharp — every round without a challenge is a round going soft.&quot;`
+                    : `"${weakspot.split('—')[0].trim()} is where you leave points. That's what we fix next."`}
               </p>
             </Section>
 
             {/* Your week */}
             <Section label="YOUR WEEK">
               <StatRow label="Rounds" value={rounds} />
-              {streak > 0 && <StatRow label="Streak" value={`🔥 ${streak}`} />}
-              {avgScore !== null && (
-                <StatRow
-                  label="Avg score"
-                  value={avgScore}
-                  sub="/ 100"
-                />
-              )}
-              {stats?.best_score && (
-                <StatRow label="Best" value={stats.best_score} sub="/ 100" />
-              )}
+              {streak > 0 && <StatRow label="Streak" value={`🔥 ${String(streak)}`} />}
+              {avgScore !== null && <StatRow label="Avg score" value={avgScore} sub="/ 100" />}
+              {stats?.best_score && <StatRow label="Best" value={stats.best_score} sub="/ 100" />}
               {rounds === 0 && (
                 <div style={{ fontSize: 12, color: T.t3, marginTop: 4 }}>
                   One round and the numbers start.
@@ -212,24 +267,26 @@ export function CoachOrb() {
 
             {/* Weak spot */}
             <Section label="WEAK SPOT">
-              <div style={{ fontSize: 13, color: T.t2, lineHeight: 1.5 }}>
-                {weakspot}
-              </div>
+              <div style={{ fontSize: 13, color: T.t2, lineHeight: 1.5 }}>{weakspot}</div>
               <GradientCTA
                 label="Run a focused round"
-                onClick={() => { nav('/round'); setOpen(false); }}
+                onClick={() => {
+                  nav('/round');
+                  setOpen(false);
+                }}
               />
             </Section>
 
             {/* Next up */}
             {nextUp && (
               <Section label="NEXT UP">
-                <div style={{ fontSize: 13, color: T.t2, lineHeight: 1.5 }}>
-                  Meeting {nextUp}
-                </div>
+                <div style={{ fontSize: 13, color: T.t2, lineHeight: 1.5 }}>Meeting {nextUp}</div>
                 <GradientCTA
                   label="Get ready"
-                  onClick={() => { nav('/'); setOpen(false); }}
+                  onClick={() => {
+                    nav('/');
+                    setOpen(false);
+                  }}
                 />
               </Section>
             )}
@@ -239,6 +296,3 @@ export function CoachOrb() {
     </>
   );
 }
-
-
-

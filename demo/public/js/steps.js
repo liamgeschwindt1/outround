@@ -266,7 +266,14 @@ function renderLoadingStep() {
 
 function renderFinishStep() {
   const data = _s.analysis || {};
-  const verdictMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step', meeting_set: 'Meeting set', deck_requested: 'Deck requested', passed: 'Passed' };
+  const verdictMap = {
+    advance: 'Meeting advanced',
+    soft_advance: 'Soft advance',
+    dead: 'No next step',
+    meeting_set: 'Meeting set',
+    deck_requested: 'Deck requested',
+    passed: 'Passed',
+  };
   const verdict = data.headline || verdictMap[data.call_verdict] || 'Session complete.';
   return `<div class="finish-step">
     <div class="finish-verdict">${escHtml(verdict)}</div>
@@ -285,27 +292,46 @@ function renderFinishStep() {
 
 function buildFinishLbRows(lbEntries, userScore) {
   const userName = _s.user.name || 'You';
-  const userIni = userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'ME';
+  const userIni =
+    userName
+      .split(' ')
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'ME';
   const fallback = [
     { name: 'Sophie R.', score: 91, ini: 'SR' },
     { name: 'Marcus T.', score: 88, ini: 'MT' },
     { name: 'Lena K.', score: 85, ini: 'LK' },
     { name: 'Ana M.', score: 74, ini: 'AM' },
   ];
-  const base = lbEntries && lbEntries.length > 0
-    ? lbEntries.map(e => ({ name: e.name, score: e.score, ini: (e.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) }))
-    : fallback;
+  const base =
+    lbEntries && lbEntries.length > 0
+      ? lbEntries.map((e) => ({
+          name: e.name,
+          score: e.score,
+          ini: (e.name || '?')
+            .split(' ')
+            .map((w) => w[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2),
+        }))
+      : fallback;
 
   const rows = [...base, { name: userName, score: userScore, ini: userIni, isYou: true }];
   rows.sort((a, b) => b.score - a.score);
-  return rows.slice(0, 5).map((e, i) => {
-    const rank = i + 1;
-    const isYou = !!e.isYou;
-    return `<div class="flb-row${isYou ? ' you' : ''}">
+  return rows
+    .slice(0, 5)
+    .map((e, i) => {
+      const rank = i + 1;
+      const isYou = !!e.isYou;
+      return `<div class="flb-row${isYou ? ' you' : ''}">
       <div class="flb-rank${rank <= 3 ? ' top' : ''}">${rank}</div>
       <div class="flb-av"${isYou ? ' style="background:var(--ink);color:white"' : ''}>${escHtml(e.ini)}</div>
       <div class="flb-info"><div class="flb-name">${escHtml(e.name)}${isYou ? ' (you)' : ''}</div></div>
       <div class="flb-sc">${e.score}</div>
     </div>`;
-  }).join('');
+    })
+    .join('');
 }

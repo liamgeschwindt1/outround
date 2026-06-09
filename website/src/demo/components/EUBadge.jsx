@@ -15,8 +15,8 @@ export default function EUBadge() {
         transition: 'color 0.2s',
         padding: '8px 0',
       }}
-      onMouseEnter={e => e.currentTarget.style.color = 'var(--text-sub)'}
-      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+      onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-sub)')}
+      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
     >
       🇪🇺&nbsp;&nbsp;EU hosted · Your data · Never shared&nbsp;&nbsp;🔒
     </motion.div>

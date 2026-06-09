@@ -28,7 +28,11 @@ router.post('/bots/webhook', async (req, res) => {
   }
 
   let event;
-  try { event = JSON.parse(raw); } catch { return res.status(400).end(); }
+  try {
+    event = JSON.parse(raw);
+  } catch {
+    return res.status(400).end();
+  }
 
   const botId = event?.data?.bot_id || event?.bot_id || event?.data?.bot?.id;
   if (!botId) return res.status(200).end();
@@ -49,7 +53,9 @@ router.post('/bots/webhook', async (req, res) => {
       );
     } else if (type === 'bot.done' || type === 'transcript.done') {
       let transcript = null;
-      try { transcript = await recall.getTranscript(botId); } catch {}
+      try {
+        transcript = await recall.getTranscript(botId);
+      } catch {}
       const bot = await recall.getBot(botId).catch(() => null);
 
       await pool.query(
@@ -76,20 +82,22 @@ router.post('/bots/webhook', async (req, res) => {
           let meetingMeta = {};
           let orgId = null;
           if (pool) {
-            const { rows } = await pool.query(
-              `SELECT b.org_id, m.title, m.prospect_email, m.prospect_name, m.starts_at
+            const { rows } = await pool
+              .query(
+                `SELECT b.org_id, m.title, m.prospect_email, m.prospect_name, m.starts_at
                  FROM meeting_bots b
                  LEFT JOIN meetings m ON m.id = b.meeting_id
                 WHERE b.recall_bot_id = $1
                 LIMIT 1`,
-              [botId]
-            ).catch(() => ({ rows: [] }));
+                [botId]
+              )
+              .catch(() => ({ rows: [] }));
             if (rows[0]) {
               orgId = rows[0].org_id || null;
               meetingMeta = {
-                meetingTitle:  rows[0].title,
+                meetingTitle: rows[0].title,
                 prospectEmail: rows[0].prospect_email,
-                prospectName:  rows[0].prospect_name,
+                prospectName: rows[0].prospect_name,
                 date: rows[0].starts_at?.toISOString?.()?.slice(0, 10),
               };
             }
@@ -97,9 +105,10 @@ router.post('/bots/webhook', async (req, res) => {
 
           // Fetch per-org credentials from Supabase (falls back to empty {} so
           // each service uses its own env-var fallback if Supabase is not set up)
-          const creds = (orgId && tokenManager.isConfigured())
-            ? await tokenManager.getOrgCredentials(orgId).catch(() => ({}))
-            : {};
+          const creds =
+            orgId && tokenManager.isConfigured()
+              ? await tokenManager.getOrgCredentials(orgId).catch(() => ({}))
+              : {};
 
           // If Recall gave us a transcript use it; otherwise fall back to audio URL
           let transcriptSource = transcript;
@@ -139,14 +148,14 @@ router.post('/bots/webhook', async (req, res) => {
 
 function mapStatus(code) {
   const m = {
-    'ready':                 'scheduled',
-    'joining_call':          'joining',
-    'in_waiting_room':       'joining',
-    'in_call_not_recording': 'in_call',
-    'in_call_recording':     'in_call',
-    'call_ended':            'done',
-    'done':                  'done',
-    'fatal':                 'failed',
+    ready: 'scheduled',
+    joining_call: 'joining',
+    in_waiting_room: 'joining',
+    in_call_not_recording: 'in_call',
+    in_call_recording: 'in_call',
+    call_ended: 'done',
+    done: 'done',
+    fatal: 'failed',
   };
   return m[code] || 'scheduled';
 }

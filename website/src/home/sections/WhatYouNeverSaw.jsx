@@ -46,33 +46,73 @@ export default function WhatYouNeverSaw() {
       }}
     >
       <div style={{ width: '100%', maxWidth: 620 }}>
-
-        <div style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11,
-          color: 'var(--text-muted)',
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          marginBottom: 52,
-        }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            marginBottom: 52,
+          }}
+        >
           Why Outround?
         </div>
 
         {visible >= 1 && (
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={EASE} style={{ marginBottom: 52 }}>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(15px, 1.9vw, 18px)', color: 'var(--text-primary)', lineHeight: 1.75, margin: 0 }}>
-              Your best rep closes differently to everyone else on your team. You have never been able to explain exactly why. The answer is in the calls. Every objection handled, every prospect signal, every moment a deal turned.{' '}
-              <span style={{ color: 'var(--text-sub)' }}>Unstructured. Unsearchable. Gone by Monday.</span>
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={EASE}
+            style={{ marginBottom: 52 }}
+          >
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'clamp(15px, 1.9vw, 18px)',
+                color: 'var(--text-primary)',
+                lineHeight: 1.75,
+                margin: 0,
+              }}
+            >
+              Your best rep closes differently to everyone else on your team. You have never been
+              able to explain exactly why. The answer is in the calls. Every objection handled,
+              every prospect signal, every moment a deal turned.{' '}
+              <span style={{ color: 'var(--text-sub)' }}>
+                Unstructured. Unsearchable. Gone by Monday.
+              </span>
             </p>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(16px, 2vw, 19px)', fontWeight: 700, color: 'var(--coral)', margin: '20px 0 0' }}>
+            <p
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 'clamp(16px, 2vw, 19px)',
+                fontWeight: 700,
+                color: 'var(--coral)',
+                margin: '20px 0 0',
+              }}
+            >
               Outround changes that.
             </p>
           </motion.div>
         )}
 
         {visible >= 2 && (
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={EASE} style={{ marginBottom: 52 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 20 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={EASE}
+            style={{ marginBottom: 52 }}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                color: 'var(--text-muted)',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                marginBottom: 20,
+              }}
+            >
               For your team
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
@@ -82,20 +122,57 @@ export default function WhatYouNeverSaw() {
                 'No more starting from scratch before the next conversation.',
               ].map((line, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <span style={{ color: 'var(--coral)', fontSize: 13, marginTop: 3, flexShrink: 0 }}>—</span>
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(14px, 1.8vw, 16px)', color: 'var(--text-primary)', lineHeight: 1.6 }}>{line}</span>
+                  <span
+                    style={{ color: 'var(--coral)', fontSize: 13, marginTop: 3, flexShrink: 0 }}
+                  >
+                    —
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'clamp(14px, 1.8vw, 16px)',
+                      color: 'var(--text-primary)',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {line}
+                  </span>
                 </div>
               ))}
             </div>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(13px, 1.6vw, 15px)', color: 'var(--text-sub)', lineHeight: 1.75, margin: 0 }}>
-              Outround updates the CRM automatically, builds a profile of every prospect from every interaction, and gives each rep a clear picture of where they win and where they lose deals. Less admin. Better preparation. A personal record that improves with every call.
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'clamp(13px, 1.6vw, 15px)',
+                color: 'var(--text-sub)',
+                lineHeight: 1.75,
+                margin: 0,
+              }}
+            >
+              Outround updates the CRM automatically, builds a profile of every prospect from every
+              interaction, and gives each rep a clear picture of where they win and where they lose
+              deals. Less admin. Better preparation. A personal record that improves with every
+              call.
             </p>
           </motion.div>
         )}
 
         {visible >= 3 && (
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={EASE}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 20 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={EASE}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                color: 'var(--text-muted)',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                marginBottom: 20,
+              }}
+            >
               For you
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
@@ -105,16 +182,46 @@ export default function WhatYouNeverSaw() {
                 'Spot the pattern between your fastest-closing deals before your next forecast.',
               ].map((line, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <span style={{ color: 'var(--sky)', fontSize: 13, marginTop: 3, flexShrink: 0 }}>—</span>
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(14px, 1.8vw, 16px)', color: 'var(--text-primary)', lineHeight: 1.6 }}>{line}</span>
+                  <span style={{ color: 'var(--sky)', fontSize: 13, marginTop: 3, flexShrink: 0 }}>
+                    —
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'clamp(14px, 1.8vw, 16px)',
+                      color: 'var(--text-primary)',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {line}
+                  </span>
                 </div>
               ))}
             </div>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(13px, 1.6vw, 15px)', color: 'var(--text-sub)', lineHeight: 1.75, margin: '0 0 8px' }}>
-              Not a dashboard of vanity metrics. A queryable intelligence layer built from every conversation your team has ever had.
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'clamp(13px, 1.6vw, 15px)',
+                color: 'var(--text-sub)',
+                lineHeight: 1.75,
+                margin: '0 0 8px',
+              }}
+            >
+              Not a dashboard of vanity metrics. A queryable intelligence layer built from every
+              conversation your team has ever had.
             </p>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(14px, 1.8vw, 17px)', fontWeight: 600, color: 'var(--text-primary)', margin: '18px 0 0', lineHeight: 1.5 }}>
-              The insight was always there.<br />
+            <p
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 'clamp(14px, 1.8vw, 17px)',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                margin: '18px 0 0',
+                lineHeight: 1.5,
+              }}
+            >
+              The insight was always there.
+              <br />
               <span style={{ color: 'var(--text-sub)' }}>Now it is findable.</span>
             </p>
             <motion.button
@@ -143,7 +250,6 @@ export default function WhatYouNeverSaw() {
             </motion.button>
           </motion.div>
         )}
-
       </div>
     </section>
   );

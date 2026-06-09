@@ -77,10 +77,10 @@ router.post('/select', requireAuth, async (req, res) => {
     return res.json({ ok: true, coach_id });
   }
 
-  await pool.query(
-    'UPDATE users SET coach_id = $1, updated_at = NOW() WHERE id = $2',
-    [coach_id, userId]
-  );
+  await pool.query('UPDATE users SET coach_id = $1, updated_at = NOW() WHERE id = $2', [
+    coach_id,
+    userId,
+  ]);
 
   // Upsert preferences row too
   await pool.query(

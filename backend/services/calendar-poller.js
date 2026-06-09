@@ -21,15 +21,15 @@
  *   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, COMPANY_DOMAIN
  */
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
-const gcal   = require('./gcal');
+const gcal = require('./gcal');
 const recall = require('./recall');
 
-const POLL_INTERVAL_MS   = 5 * 60 * 1000;
+const POLL_INTERVAL_MS = 5 * 60 * 1000;
 const LOOK_AHEAD_MINUTES = 30;
-const STATE_FILE         = path.join(__dirname, '../data/processed-events.json');
-const GOOGLE_TOKEN_URL   = 'https://oauth2.googleapis.com/token';
+const STATE_FILE = path.join(__dirname, '../data/processed-events.json');
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 let _timer = null;
 
@@ -68,9 +68,9 @@ function markProcessed(eventId) {
 // -- Calendar helpers -----------------------------------------------------------
 
 function hasExternalAttendee(event, companyDomain) {
-  const domain    = (companyDomain || '').toLowerCase();
+  const domain = (companyDomain || '').toLowerCase();
   const attendees = event.attendees || [];
-  return attendees.some(a => {
+  return attendees.some((a) => {
     if (!a.email || a.resource || a.self) return false;
     if (!domain) return true;
     return !a.email.toLowerCase().endsWith('@' + domain);
@@ -78,11 +78,15 @@ function hasExternalAttendee(event, companyDomain) {
 }
 
 function getConferenceUrl(event) {
-  const entry = event && event.conferenceData &&
-    (event.conferenceData.entryPoints || []).find(e => e.entryPointType === 'video');
+  const entry =
+    event &&
+    event.conferenceData &&
+    (event.conferenceData.entryPoints || []).find((e) => e.entryPointType === 'video');
   if (entry && entry.uri) return entry.uri;
-  const text  = ((event && event.location) || '') + ' ' + ((event && event.description) || '');
-  const match = text.match(/https?:\/\/[^\s<>"]+(?:zoom\.us|meet\.google\.com|teams\.microsoft\.com)[^\s<>"]*/i);
+  const text = ((event && event.location) || '') + ' ' + ((event && event.description) || '');
+  const match = text.match(
+    /https?:\/\/[^\s<>"]+(?:zoom\.us|meet\.google\.com|teams\.microsoft\.com)[^\s<>"]*/i
+  );
   return (match && match[0]) || null;
 }
 
@@ -94,20 +98,22 @@ let _legacyTokenExpiry = 0;
 async function _getLegacyAccessToken() {
   if (_legacyAccessToken && Date.now() < _legacyTokenExpiry - 60000) return _legacyAccessToken;
 
-  const clientId     = process.env.GOOGLE_CLIENT_ID;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
   if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error('GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN must all be set for legacy mode');
+    throw new Error(
+      'GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN must all be set for legacy mode'
+    );
   }
 
   const resp = await fetch(GOOGLE_TOKEN_URL, {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    new URLSearchParams({
-      grant_type:    'refresh_token',
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      client_id:     clientId,
+      client_id: clientId,
       client_secret: clientSecret,
     }),
   });
@@ -127,13 +133,13 @@ async function _getLegacyAccessToken() {
 
 async function _pollOrg(org, recallApiKey) {
   const tokenManager = require('./token-manager');
-  const googleCreds  = await tokenManager.getIntegration(org.id, 'google').catch(() => null);
+  const googleCreds = await tokenManager.getIntegration(org.id, 'google').catch(() => null);
   if (!googleCreds || !googleCreds.accessToken) return; // no Google integration -- skip silently
 
   let events;
   try {
     events = await gcal.listUpcomingEventsWithToken(googleCreds.accessToken, {
-      days:       Math.max(1, Math.ceil(LOOK_AHEAD_MINUTES / (24 * 60))),
+      days: Math.max(1, Math.ceil(LOOK_AHEAD_MINUTES / (24 * 60))),
       maxResults: 20,
     });
   } catch (err) {
@@ -145,31 +151,52 @@ async function _pollOrg(org, recallApiKey) {
 
   for (const ev of events) {
     if (ev.status === 'cancelled') continue;
-    if (isProcessed(ev.id))       continue;
+    if (isProcessed(ev.id)) continue;
     if (!hasExternalAttendee(ev, companyDomain)) continue;
 
     const meetingUrl = getConferenceUrl(ev);
-    if (!meetingUrl) { markProcessed(ev.id); continue; }
+    if (!meetingUrl) {
+      markProcessed(ev.id);
+      continue;
+    }
 
     try {
-      const bot = await recall.createBot({ meetingUrl, botName: 'Outround Notetaker' }, recallApiKey);
+      const bot = await recall.createBot(
+        { meetingUrl, botName: 'Outround Notetaker' },
+        recallApiKey
+      );
       if (bot) {
         // Persist org_id on meeting_bots so the webhook can look it up later
         const { getPool } = require('../db/client');
         const pool = getPool();
         if (pool) {
-          await pool.query(
-            'INSERT INTO meeting_bots (recall_bot_id, org_id, conference_url, status)' +
-            ' VALUES ($1, $2, $3, \'scheduled\')' +
-            ' ON CONFLICT (recall_bot_id) DO UPDATE SET org_id = EXCLUDED.org_id',
-            [bot.id, org.id, meetingUrl]
-          ).catch(err => console.warn('[calendar-poller] meeting_bots upsert failed:', err.message));
+          await pool
+            .query(
+              'INSERT INTO meeting_bots (recall_bot_id, org_id, conference_url, status)' +
+                " VALUES ($1, $2, $3, 'scheduled')" +
+                ' ON CONFLICT (recall_bot_id) DO UPDATE SET org_id = EXCLUDED.org_id',
+              [bot.id, org.id, meetingUrl]
+            )
+            .catch((err) =>
+              console.warn('[calendar-poller] meeting_bots upsert failed:', err.message)
+            );
         }
         markProcessed(ev.id);
-        console.log('[calendar-poller] dispatched bot ' + bot.id + ' for org ' + org.id + ' -- "' + ev.summary + '"');
+        console.log(
+          '[calendar-poller] dispatched bot ' +
+            bot.id +
+            ' for org ' +
+            org.id +
+            ' -- "' +
+            ev.summary +
+            '"'
+        );
       }
     } catch (err) {
-      console.error('[calendar-poller] dispatch failed for org ' + org.id + ' -- "' + ev.summary + '":', err.message);
+      console.error(
+        '[calendar-poller] dispatch failed for org ' + org.id + ' -- "' + ev.summary + '":',
+        err.message
+      );
     }
   }
 }
@@ -196,7 +223,7 @@ async function poll() {
     }
 
     for (const org of orgs) {
-      await _pollOrg(org, recallApiKey).catch(err =>
+      await _pollOrg(org, recallApiKey).catch((err) =>
         console.error('[calendar-poller] org ' + org.id + ' poll error:', err.message)
       );
     }
@@ -204,8 +231,8 @@ async function poll() {
     // Legacy single-account fallback
     if (!process.env.GOOGLE_REFRESH_TOKEN) return;
     try {
-      const accessToken   = await _getLegacyAccessToken();
-      const events        = await gcal.listUpcomingEventsWithToken(accessToken, {
+      const accessToken = await _getLegacyAccessToken();
+      const events = await gcal.listUpcomingEventsWithToken(accessToken, {
         days: Math.max(1, Math.ceil(LOOK_AHEAD_MINUTES / (24 * 60))),
         maxResults: 20,
       });
@@ -213,20 +240,31 @@ async function poll() {
 
       for (const ev of events) {
         if (ev.status === 'cancelled') continue;
-        if (isProcessed(ev.id))       continue;
+        if (isProcessed(ev.id)) continue;
         if (!hasExternalAttendee(ev, companyDomain)) continue;
 
         const meetingUrl = getConferenceUrl(ev);
-        if (!meetingUrl) { markProcessed(ev.id); continue; }
+        if (!meetingUrl) {
+          markProcessed(ev.id);
+          continue;
+        }
 
         try {
-          const bot = await recall.createBot({ meetingUrl, botName: 'Outround Notetaker' }, recallApiKey);
+          const bot = await recall.createBot(
+            { meetingUrl, botName: 'Outround Notetaker' },
+            recallApiKey
+          );
           if (bot) {
             markProcessed(ev.id);
-            console.log('[calendar-poller] (legacy) dispatched bot ' + bot.id + ' for "' + ev.summary + '"');
+            console.log(
+              '[calendar-poller] (legacy) dispatched bot ' + bot.id + ' for "' + ev.summary + '"'
+            );
           }
         } catch (err) {
-          console.error('[calendar-poller] (legacy) dispatch failed for "' + ev.summary + '":', err.message);
+          console.error(
+            '[calendar-poller] (legacy) dispatch failed for "' + ev.summary + '":',
+            err.message
+          );
         }
       }
     } catch (err) {

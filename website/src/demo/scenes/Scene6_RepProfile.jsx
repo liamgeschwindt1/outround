@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import PropTypes from 'prop-types';
 import RepRadar from '../components/RepRadar';
 
 const PATTERNS = [
@@ -8,13 +9,16 @@ const PATTERNS = [
   { icon: '→', color: 'var(--coral)', text: 'Talks 67% of call — above team average' },
 ];
 
-export default function Scene6_RepProfile({ isActive, sound }) {
+function Scene6_RepProfile({ isActive, sound }) {
   const [showPatterns, setShowPatterns] = useState(0);
 
   useEffect(() => {
-    if (!isActive) { setShowPatterns(0); return; }
+    if (!isActive) return;
+
+    let cancelled = false;
     let i = 0;
     function next() {
+      if (cancelled) return;
       if (i >= PATTERNS.length) return;
       setShowPatterns(i + 1);
       sound.play('click');
@@ -22,13 +26,24 @@ export default function Scene6_RepProfile({ isActive, sound }) {
       setTimeout(next, 150);
     }
     const t = setTimeout(next, 900);
-    return () => clearTimeout(t);
-  }, [isActive]);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+      setShowPatterns(0);
+    };
+  }, [isActive, sound]);
 
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: 24 }}
-      onClick={e => e.stopPropagation()}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        padding: 24,
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       <div
         style={{
@@ -73,7 +88,14 @@ export default function Scene6_RepProfile({ isActive, sound }) {
             </div>
           </div>
           <div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 20,
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+              }}
+            >
               Daan
             </div>
             <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-sub)' }}>
@@ -89,7 +111,7 @@ export default function Scene6_RepProfile({ isActive, sound }) {
 
         {/* Patterns */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {PATTERNS.map((p, i) => (
+          {PATTERNS.map((p, i) =>
             i < showPatterns ? (
               <motion.div
                 key={i}
@@ -107,14 +129,23 @@ export default function Scene6_RepProfile({ isActive, sound }) {
                 }}
               >
                 <span style={{ color: p.color, fontSize: 14, flexShrink: 0 }}>{p.icon}</span>
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-sub)' }}>
+                <span
+                  style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-sub)' }}
+                >
                   {p.text}
                 </span>
               </motion.div>
             ) : null
-          ))}
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+Scene6_RepProfile.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  sound: PropTypes.object.isRequired,
+};
+
+export default Scene6_RepProfile;

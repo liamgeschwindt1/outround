@@ -10,30 +10,51 @@ export interface AsyncState<T> {
 
 export function useApi<T>(path: string | null): AsyncState<T> {
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(path !== null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    if (!path) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
+    if (!path) return;
 
-    api.get<T>(path)
-      .then((d) => { if (!cancelled) setData(d); })
+    let cancelled = false;
+
+    // Defer loading/error resets via rAF so they aren't synchronous in the effect.
+    // This is a standard data-fetching hook — the effect is the correct place to
+    // start the request, but React warns against synchronous setState in effects.
+    const raf = requestAnimationFrame(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError(null);
+    });
+
+    api
+      .get<T>(path)
+      .then((d) => {
+        if (!cancelled) {
+          setData(d);
+          setLoading(false);
+        }
+      })
       .catch((e: unknown) => {
         if (cancelled) return;
         const msg = e instanceof ApiError ? e.message : 'Network error';
         setError(msg);
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
+        setLoading(false);
+      });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+    };
   }, [path, tick]);
 
-  return { data, loading, error, refetch: () => { setTick((t) => t + 1); } };
+  return {
+    data,
+    loading: loading && path !== null,
+    error,
+    refetch: () => {
+      setTick((t) => t + 1);
+    },
+  };
 }

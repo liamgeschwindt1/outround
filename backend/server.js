@@ -2,7 +2,11 @@
 
 // Load .env in development (Railway injects env vars directly in production)
 if (process.env.NODE_ENV !== 'production') {
-  try { require('dotenv').config(); } catch { /* dotenv optional */ }
+  try {
+    require('dotenv').config();
+  } catch {
+    /* dotenv optional */
+  }
 }
 
 const express = require('express');
@@ -35,7 +39,10 @@ app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
 // CORS — allow demo, app and internal services to call this API
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   // Never allow wildcard CORS with credentials — browsers reject it anyway,
@@ -65,7 +72,9 @@ let pushEvent = () => {};
 try {
   const debug = require('./routes/debug');
   pushEvent = debug.pushEvent;
-} catch { /* debug route failed to load — ignore */ }
+} catch {
+  /* debug route failed to load — ignore */
+}
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -75,7 +84,10 @@ app.use((req, res, next) => {
     const status = res.statusCode;
     const level = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
     pushEvent(level, 'http', `${method} ${reqPath} → ${status} (${ms}ms)`, {
-      method, path: reqPath, status, ms,
+      method,
+      path: reqPath,
+      status,
+      ms,
       ip: req.headers['x-forwarded-for'] || ip || '?',
       user: req.user?.email || req.supabaseUser?.email || null,
     });

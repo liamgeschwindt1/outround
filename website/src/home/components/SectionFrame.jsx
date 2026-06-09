@@ -33,15 +33,17 @@ export default function SectionFrame({
       }}
     >
       {(code || label) && (
-        <div style={{
-          width: '100%',
-          maxWidth,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 'clamp(32px, 5vw, 56px)',
-          gap: 24,
-        }}>
+        <div
+          style={{
+            width: '100%',
+            maxWidth,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 'clamp(32px, 5vw, 56px)',
+            gap: 24,
+          }}
+        >
           {code ? (
             <motion.div
               initial={{ opacity: 0 }}
@@ -59,17 +61,21 @@ export default function SectionFrame({
                 textTransform: 'uppercase',
               }}
             >
-              <span style={{
-                display: 'inline-block',
-                width: 4,
-                height: 4,
-                borderRadius: '50%',
-                background: 'var(--coral)',
-                opacity: 0.8,
-              }} />
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 4,
+                  height: 4,
+                  borderRadius: '50%',
+                  background: 'var(--coral)',
+                  opacity: 0.8,
+                }}
+              />
               {code}
             </motion.div>
-          ) : <span />}
+          ) : (
+            <span />
+          )}
           {label && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -91,14 +97,16 @@ export default function SectionFrame({
         </div>
       )}
 
-      <div style={{
-        width: '100%',
-        maxWidth,
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: align,
-      }}>
+      <div
+        style={{
+          width: '100%',
+          maxWidth,
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: align,
+        }}
+      >
         {children}
       </div>
     </section>

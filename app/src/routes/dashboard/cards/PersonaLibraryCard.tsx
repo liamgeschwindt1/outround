@@ -12,7 +12,13 @@ interface PersonaTile {
 }
 
 const personas: PersonaTile[] = [
-  { id: 'hendrik', name: 'Hendrik', role: 'CFO · Logistics', avatar: '/hendrik.jpg', locked: false },
+  {
+    id: 'hendrik',
+    name: 'Hendrik',
+    role: 'CFO · Logistics',
+    avatar: '/hendrik.jpg',
+    locked: false,
+  },
   { id: 'natalie', name: 'Natalie', role: 'Partner · VC', avatar: '/natalie.jpg', locked: true },
 ];
 
@@ -32,7 +38,9 @@ export function PersonaLibraryCard() {
           <button
             key={p.id}
             disabled={p.locked}
-            onClick={() => !p.locked && nav(`/practice?persona=${p.id}`)}
+            onClick={() => {
+              if (!p.locked) nav(`/practice?persona=${p.id}`);
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',

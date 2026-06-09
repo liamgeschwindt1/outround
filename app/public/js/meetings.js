@@ -19,7 +19,12 @@ const DUMMY_MEETINGS = [
     },
     time: 'Today · 2:00 PM',
     urgency: 'today',
-    deal: { name: 'Vandermeer — Q3 Budget Review', stage: 'Discovery', value: '€48,000', days_in_stage: 8 },
+    deal: {
+      name: 'Vandermeer — Q3 Budget Review',
+      stage: 'Discovery',
+      value: '€48,000',
+      days_in_stage: 8,
+    },
     outround_done: false,
     locked: false,
     persona_id: 'hendrik',
@@ -59,7 +64,12 @@ const DUMMY_MEETINGS = [
     },
     time: 'Thu · 3:00 PM',
     urgency: '',
-    deal: { name: 'Söderström — SMB Pro', stage: 'Negotiation', value: '€34,000', days_in_stage: 12 },
+    deal: {
+      name: 'Söderström — SMB Pro',
+      stage: 'Negotiation',
+      value: '€34,000',
+      days_in_stage: 12,
+    },
     outround_done: false,
     locked: true,
     persona_id: 'hendrik',
@@ -88,9 +98,21 @@ const DUMMY_NOTES = [
 
 // AI-generated coaching bullets (dummy)
 const DUMMY_COACHING = [
-  { icon: '⚡', label: 'Watch your talk ratio', body: 'You spoke 68% of your last call with Hendrik. He asked a direct question and you answered with three paragraphs. Let him fill the silence.' },
-  { icon: '🎯', label: 'Lead with the depot angle', body: 'He lit up when you mentioned depot-level visibility. Open with that — don\'t save it for midway through the call.' },
-  { icon: '🛡', label: 'He will object on timing', body: '"Q3 budget is set" is his expected move. Have a response ready: you\'re not asking him to move budget, you\'re asking him to decide before the next cycle.' },
+  {
+    icon: '⚡',
+    label: 'Watch your talk ratio',
+    body: 'You spoke 68% of your last call with Hendrik. He asked a direct question and you answered with three paragraphs. Let him fill the silence.',
+  },
+  {
+    icon: '🎯',
+    label: 'Lead with the depot angle',
+    body: "He lit up when you mentioned depot-level visibility. Open with that — don't save it for midway through the call.",
+  },
+  {
+    icon: '🛡',
+    label: 'He will object on timing',
+    body: '"Q3 budget is set" is his expected move. Have a response ready: you\'re not asking him to move budget, you\'re asking him to decide before the next cycle.',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -116,7 +138,9 @@ async function renderMeetingsPanel() {
         meetings = data.meetings.map(adaptApiMeeting);
       }
     }
-  } catch { /* fallback to dummy */ }
+  } catch {
+    /* fallback to dummy */
+  }
 
   if (window._s) _s._meetings = meetings;
 
@@ -136,12 +160,18 @@ async function renderMeetingsPanel() {
 // Map a backend meeting view-model to the dashboard row shape.
 function adaptApiMeeting(m) {
   const name = m.prospect?.name || 'Unknown';
-  const initials = name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase();
+  const initials = name
+    .split(' ')
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
   const tld = (m.prospect?.email || '').split('@')[1]?.split('.').pop() || '';
-  const flag = { nl:'🇳🇱', de:'🇩🇪', se:'🇸🇪', fr:'🇫🇷', uk:'🇬🇧', es:'🇪🇸', dk:'🇩🇰' }[tld] || '👤';
+  const flag =
+    { nl: '🇳🇱', de: '🇩🇪', se: '🇸🇪', fr: '🇫🇷', uk: '🇬🇧', es: '🇪🇸', dk: '🇩🇰' }[tld] || '👤';
   const when = m.starts_at ? new Date(m.starts_at) : null;
   const time = when
-    ? when.toLocaleString([], { weekday:'short', hour:'2-digit', minute:'2-digit' })
+    ? when.toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })
     : '';
   return {
     id: m.id,
@@ -172,7 +202,9 @@ function meetingRowHtml(m, i, botConfigured) {
   const stageBg = stageColour(m.deal.stage);
   const doneHtml = m.outround_done
     ? `<div class="mtg-ready-badge">✓ Ready</div>`
-    : (m.locked ? '' : `<button class="mtg-cta" onclick="openMeetingPrep('${m.id}')">Get ready →</button>`);
+    : m.locked
+      ? ''
+      : `<button class="mtg-cta" onclick="openMeetingPrep('${m.id}')">Get ready →</button>`;
   const lockHtml = m.locked
     ? `<div class="mtg-lock"><svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="10" height="7" rx="2"/><path d="M4 6V4a3 3 0 1 1 6 0v2"/></svg></div>`
     : '';
@@ -237,11 +269,13 @@ async function toggleBot(meetingId, ev) {
 
 function stageColour(stage) {
   const map = {
-    'Discovery':   'background:rgba(96,165,250,0.08);color:#60a5fa;border-color:rgba(96,165,250,0.25)',
-    'Demo':        'background:rgba(52,211,153,0.08);color:#34d399;border-color:rgba(52,211,153,0.25)',
-    'Proposal':    'background:rgba(251,146,60,0.08);color:#fb923c;border-color:rgba(251,146,60,0.25)',
-    'Negotiation': 'background:rgba(244,114,182,0.08);color:#f472b6;border-color:rgba(244,114,182,0.25)',
-    'Closed Won':  'background:rgba(74,222,128,0.08);color:#4ade80;border-color:rgba(74,222,128,0.25)',
+    Discovery: 'background:rgba(96,165,250,0.08);color:#60a5fa;border-color:rgba(96,165,250,0.25)',
+    Demo: 'background:rgba(52,211,153,0.08);color:#34d399;border-color:rgba(52,211,153,0.25)',
+    Proposal: 'background:rgba(251,146,60,0.08);color:#fb923c;border-color:rgba(251,146,60,0.25)',
+    Negotiation:
+      'background:rgba(244,114,182,0.08);color:#f472b6;border-color:rgba(244,114,182,0.25)',
+    'Closed Won':
+      'background:rgba(74,222,128,0.08);color:#4ade80;border-color:rgba(74,222,128,0.25)',
   };
   return map[stage] || 'background:var(--surface-2);color:var(--ink-2);border-color:var(--border)';
 }
@@ -251,7 +285,8 @@ function stageColour(stage) {
 // ---------------------------------------------------------------------------
 function openMeetingPrep(meetingId) {
   const pool = (window._s && _s._meetings) || DUMMY_MEETINGS;
-  const meeting = pool.find(m => m.id === meetingId) || DUMMY_MEETINGS.find(m => m.id === meetingId);
+  const meeting =
+    pool.find((m) => m.id === meetingId) || DUMMY_MEETINGS.find((m) => m.id === meetingId);
   if (!meeting) return;
   _s._activeMeeting = meeting;
   renderMeetingPrepPage(meeting);
@@ -274,20 +309,24 @@ function renderMeetingPrepPage(m) {
   const p = m.prospect;
   const stageBg = stageColour(m.deal.stage);
 
-  const notesHtml = DUMMY_NOTES.map(n => `
+  const notesHtml = DUMMY_NOTES.map(
+    (n) => `
     <div class="prep-note">
       <div class="prep-note-meta">${n.date} · ${n.author}</div>
       <div class="prep-note-body">${escHtml(n.body)}</div>
-    </div>`).join('');
+    </div>`
+  ).join('');
 
-  const coachHtml = DUMMY_COACHING.map(c => `
+  const coachHtml = DUMMY_COACHING.map(
+    (c) => `
     <div class="prep-coach-item">
       <div class="prep-coach-icon">${c.icon}</div>
       <div>
         <div class="prep-coach-label">${escHtml(c.label)}</div>
         <div class="prep-coach-body">${escHtml(c.body)}</div>
       </div>
-    </div>`).join('');
+    </div>`
+  ).join('');
 
   document.getElementById('prepContent').innerHTML = `
     <!-- Prospect header -->

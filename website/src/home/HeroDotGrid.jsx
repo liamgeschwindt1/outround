@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 
 const SPACING = 28;
 const DOT_RADIUS = 1;
-const BASE_OPACITY = 0.07;
 const PULSE_MIN = 0.05;
 const PULSE_MAX = 0.12;
 const PULSE_PERIOD = 3000;

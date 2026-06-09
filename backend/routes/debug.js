@@ -67,15 +67,15 @@ function redactEmail(email) {
 
 // Patch console.error + console.warn to feed into ring
 const _origError = console.error.bind(console);
-const _origWarn  = console.warn.bind(console);
+const _origWarn = console.warn.bind(console);
 console.error = (...args) => {
   _origError(...args);
-  const str = args.map(a => (a instanceof Error ? a.stack : String(a))).join(' ');
+  const str = args.map((a) => (a instanceof Error ? a.stack : String(a))).join(' ');
   pushEvent('error', 'backend', str.slice(0, 500));
 };
 console.warn = (...args) => {
   _origWarn(...args);
-  const str = args.map(a => String(a)).join(' ');
+  const str = args.map((a) => String(a)).join(' ');
   pushEvent('warn', 'backend', str.slice(0, 500));
 };
 
@@ -85,9 +85,9 @@ console.warn = (...args) => {
 // Sensitive values (service key) are NEVER exposed — only boolean presence.
 // ---------------------------------------------------------------------------
 router.get('/auth-test', (req, res) => {
-  const authEvents = ring.filter(e => e.tag === 'auth').slice(-20);
+  const authEvents = ring.filter((e) => e.tag === 'auth').slice(-20);
   // Redact any key material from auth events before returning
-  const safeEvents = authEvents.map(e => ({
+  const safeEvents = authEvents.map((e) => ({
     ...e,
     meta: sanitizeMeta(e.meta),
   }));
@@ -125,11 +125,13 @@ router.get('/logs', requireAuth, async (req, res) => {
         entries.push({
           id: `sess-${r.id}`,
           ts: r.ended_at || r.ts,
-          level: r.score == null ? 'info' : r.score >= 70 ? 'success' : r.score >= 50 ? 'warn' : 'error',
+          level:
+            r.score == null ? 'info' : r.score >= 70 ? 'success' : r.score >= 50 ? 'warn' : 'error',
           tag: 'session',
-          message: r.ended_at && r.score != null
-            ? `Round scored ${r.score}/100 — ${r.persona_id || '?'} — ${r.user_name || r.user_email || 'anon'}`
-            : `Round started — ${r.persona_id || '?'} — ${r.user_name || r.user_email || 'anon'}`,
+          message:
+            r.ended_at && r.score != null
+              ? `Round scored ${r.score}/100 — ${r.persona_id || '?'} — ${r.user_name || r.user_email || 'anon'}`
+              : `Round started — ${r.persona_id || '?'} — ${r.user_name || r.user_email || 'anon'}`,
           meta: {
             session_id: r.id,
             user: r.user_name || r.user_email || 'anon',
@@ -181,11 +183,17 @@ router.get('/logs', requireAuth, async (req, res) => {
             level: 'info',
             tag: 'meeting',
             message: `Meeting — ${m.title || 'Untitled'} — ${new Date(m.starts_at).toLocaleDateString()}`,
-            meta: { id: m.id, source: m.source, outround_done: m.outround_done, starts_at: m.starts_at },
+            meta: {
+              id: m.id,
+              source: m.source,
+              outround_done: m.outround_done,
+              starts_at: m.starts_at,
+            },
           });
         }
-      } catch { /* meetings table may not exist */ }
-
+      } catch {
+        /* meetings table may not exist */
+      }
     }
   } catch (err) {
     entries.push({

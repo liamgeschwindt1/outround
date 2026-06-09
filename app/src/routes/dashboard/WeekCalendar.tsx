@@ -8,10 +8,10 @@ import type { MeetingsResponse, UpcomingMeeting } from '../../api/types';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const START_HOUR = 8;
-const END_HOUR   = 20;
-const HOUR_PX    = 64;
-const TOTAL_H    = (END_HOUR - START_HOUR) * HOUR_PX;
-const GUTTER_W   = 48;
+const END_HOUR = 20;
+const HOUR_PX = 64;
+const TOTAL_H = (END_HOUR - START_HOUR) * HOUR_PX;
+const GUTTER_W = 48;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,10 +26,10 @@ function startOfWeek(d: Date, offset = 0): Date {
 
 function fmtDuration(starts: string, ends: string): string {
   const mins = Math.round((new Date(ends).getTime() - new Date(starts).getTime()) / 60000);
-  if (mins < 60) return `${mins}m`;
+  if (mins < 60) return `${String(mins)}m`;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return m ? `${h}h ${m}m` : `${h}h`;
+  return m ? `${String(h)}h ${String(m)}m` : `${String(h)}h`;
 }
 
 function topForTime(iso: string): number {
@@ -91,13 +91,13 @@ function MeetingBlock({
   selected: boolean;
   onClick: () => void;
 }) {
-  const top    = topForTime(m.starts_at);
+  const top = topForTime(m.starts_at);
   const height = heightForMeeting(m.starts_at, m.ends_at);
   const accent = isPast ? T.coral : T.sky;
-  const bg     = selected
+  const bg = selected
     ? `rgba(${isPast ? '240,90,50' : '61,159,212'},0.18)`
     : `rgba(${isPast ? '240,90,50' : '61,159,212'},0.08)`;
-  const label  = displayName(m).split(' ')[0];
+  const label = displayName(m).split(' ')[0];
 
   return (
     <div
@@ -143,9 +143,7 @@ function MeetingBlock({
           }}
         >
           {fmtTime(m.starts_at)}
-          {isPast && m.outround_done && (
-            <span style={{ color: T.coral, marginLeft: 4 }}>✓</span>
-          )}
+          {isPast && m.outround_done && <span style={{ color: T.coral, marginLeft: 4 }}>✓</span>}
         </div>
       )}
     </div>
@@ -155,9 +153,9 @@ function MeetingBlock({
 // ─── Side panel ───────────────────────────────────────────────────────────────
 
 function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) {
-  const nav    = useNavigate();
+  const nav = useNavigate();
   const isPast = new Date(m.starts_at) < new Date();
-  const label  = displayName(m);
+  const label = displayName(m);
 
   return (
     <div
@@ -250,11 +248,19 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => m.outround_session_id && nav(`/analysis/${m.outround_session_id}`)}
+              onClick={() => {
+                if (m.outround_session_id) nav(`/analysis/${m.outround_session_id}`);
+              }}
             >
               View report
             </Button>
-            <Button variant="primary" size="sm" onClick={() => { nav('/round'); }}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                nav('/round');
+              }}
+            >
               Go again
             </Button>
           </div>
@@ -267,7 +273,13 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
           <div style={{ fontSize: 12, color: T.t3, lineHeight: 1.5 }}>
             No round before this meeting.
           </div>
-          <Button variant="primary" size="sm" onClick={() => { nav('/round'); }}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              nav('/round');
+            }}
+          >
             Run a round now
           </Button>
         </div>
@@ -277,16 +289,17 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
       {!isPast && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 12, color: T.t3, lineHeight: 1.5 }}>
-            {m.prospect.company
-              ? `Prospect at ${m.prospect.company}.`
-              : 'Upcoming meeting.'}
-            {' '}Get a round in before it starts.
+            {m.prospect.company ? `Prospect at ${m.prospect.company}.` : 'Upcoming meeting.'} Get a
+            round in before it starts.
           </div>
           <Button
             variant="primary"
             size="md"
             style={{ width: '100%' }}
-            onClick={() => { m.id ? nav(`/meeting/${m.id}`) : nav('/round'); }}
+            onClick={() => {
+              const dest = m.id ? `/meeting/${m.id}` : '/round';
+              nav(dest);
+            }}
           >
             Get ready →
           </Button>
@@ -300,12 +313,12 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
 
 export function WeekCalendar({ data, loading }: Props) {
   const [weekOffset, setWeekOffset] = useState(0);
-  const [selected, setSelected]     = useState<UpcomingMeeting | null>(null);
+  const [selected, setSelected] = useState<UpcomingMeeting | null>(null);
 
-  const today     = new Date();
+  const today = new Date();
   const weekStart = startOfWeek(today, weekOffset);
-  const days      = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const hours     = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 
   const monthLabel = weekStart.toLocaleDateString([], { month: 'long', year: 'numeric' });
 
@@ -313,18 +326,16 @@ export function WeekCalendar({ data, loading }: Props) {
   days.forEach((_, i) => byDay.set(i, []));
   (data?.meetings ?? []).forEach((m) => {
     const idx = days.findIndex((d) => isSameDay(d, new Date(m.starts_at)));
-    if (idx >= 0) byDay.get(idx)!.push(m);
+    if (idx >= 0) byDay.get(idx)?.push(m);
   });
 
-  const nowTop   = topForTime(today.toISOString());
+  const nowTop = topForTime(today.toISOString());
   const todayIdx = days.findIndex((d) => isSameDay(d, today));
 
   return (
     <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-
       {/* ── Calendar ──────────────────────────────────────────────────────── */}
       <div style={{ flex: 1, minWidth: 0 }}>
-
         {/* Nav header */}
         <div
           style={{
@@ -338,11 +349,35 @@ export function WeekCalendar({ data, loading }: Props) {
             {monthLabel}
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <Button variant="ghost" size="sm" onClick={() => { setWeekOffset((o) => o - 1); }}>‹</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setWeekOffset((o) => o - 1);
+              }}
+            >
+              ‹
+            </Button>
             {weekOffset !== 0 && (
-              <Button variant="ghost" size="sm" onClick={() => { setWeekOffset(0); }}>Today</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setWeekOffset(0);
+                }}
+              >
+                Today
+              </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => { setWeekOffset((o) => o + 1); }}>›</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setWeekOffset((o) => o + 1);
+              }}
+            >
+              ›
+            </Button>
           </div>
         </div>
 
@@ -355,7 +390,9 @@ export function WeekCalendar({ data, loading }: Props) {
               <Button
                 variant="outline-gradient"
                 size="md"
-                onClick={() => { window.location.href = '/auth/gcal'; }}
+                onClick={() => {
+                  window.location.href = '/auth/gcal';
+                }}
               >
                 Connect Google Calendar
               </Button>
@@ -366,7 +403,6 @@ export function WeekCalendar({ data, loading }: Props) {
         {/* Time grid */}
         {(!data || data.connected) && (
           <div style={{ display: 'flex' }}>
-
             {/* Time gutter */}
             <div style={{ width: GUTTER_W, flexShrink: 0, paddingTop: 40 }}>
               {hours.map((h) => (
@@ -406,8 +442,8 @@ export function WeekCalendar({ data, loading }: Props) {
               }}
             >
               {days.map((date, i) => {
-                const dayLabel    = DAY_LABELS[date.getDay() === 0 ? 6 : date.getDay() - 1];
-                const isToday     = isSameDay(date, today);
+                const dayLabel = DAY_LABELS[date.getDay() === 0 ? 6 : date.getDay() - 1];
+                const isToday = isSameDay(date, today);
                 const dayMeetings = byDay.get(i) ?? [];
 
                 return (
@@ -483,7 +519,7 @@ export function WeekCalendar({ data, loading }: Props) {
                       {/* Half-hour lines */}
                       {hours.map((h) => (
                         <div
-                          key={`${h}h`}
+                          key={`${String(h)}h`}
                           style={{
                             position: 'absolute',
                             left: 0,
@@ -529,7 +565,9 @@ export function WeekCalendar({ data, loading }: Props) {
                           m={m}
                           isPast={new Date(m.starts_at) < today}
                           selected={selected?.id === m.id}
-                          onClick={() => { setSelected((s) => (s?.id === m.id ? null : m)); }}
+                          onClick={() => {
+                            setSelected((s) => (s?.id === m.id ? null : m));
+                          }}
                         />
                       ))}
                     </div>
@@ -542,7 +580,14 @@ export function WeekCalendar({ data, loading }: Props) {
       </div>
 
       {/* ── Side panel ────────────────────────────────────────────────────── */}
-      {selected && <SidePanel m={selected} onClose={() => { setSelected(null); }} />}
+      {selected && (
+        <SidePanel
+          m={selected}
+          onClose={() => {
+            setSelected(null);
+          }}
+        />
+      )}
     </div>
   );
 }

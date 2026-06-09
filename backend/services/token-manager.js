@@ -83,12 +83,10 @@ async function saveIntegration(orgId, provider, tokens, metadata = {}) {
     updated_at: new Date().toISOString(),
   };
   if (tokens.refreshToken) row.refresh_token = tokens.refreshToken;
-  if (tokens.expiresAt)    row.expires_at    = tokens.expiresAt;
+  if (tokens.expiresAt) row.expires_at = tokens.expiresAt;
   if (Object.keys(metadata).length) row.metadata = metadata;
 
-  const { error } = await sb
-    .from('integrations')
-    .upsert(row, { onConflict: 'org_id,provider' });
+  const { error } = await sb.from('integrations').upsert(row, { onConflict: 'org_id,provider' });
 
   if (error) throw new Error(`saveIntegration failed: ${error.message}`);
 }
@@ -96,7 +94,7 @@ async function saveIntegration(orgId, provider, tokens, metadata = {}) {
 // ── Google token refresh ────────────────────────────────────────────────────
 
 async function _refreshGoogleToken(orgId, row) {
-  const clientId     = process.env.GOOGLE_CLIENT_ID;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     throw new Error('GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET required for token refresh');
@@ -109,9 +107,9 @@ async function _refreshGoogleToken(orgId, row) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      grant_type:    'refresh_token',
+      grant_type: 'refresh_token',
       refresh_token: row.refresh_token,
-      client_id:     clientId,
+      client_id: clientId,
       client_secret: clientSecret,
     }),
   });
@@ -126,25 +124,26 @@ async function _refreshGoogleToken(orgId, row) {
 
   // Google does not re-issue the refresh token — preserve the existing one
   await saveIntegration(
-    orgId, 'google',
+    orgId,
+    'google',
     { accessToken: data.access_token, refreshToken: row.refresh_token, expiresAt },
     row.metadata || {}
   );
 
   return {
-    accessToken:  data.access_token,
+    accessToken: data.access_token,
     refreshToken: row.refresh_token,
     expiresAt,
-    metadata:     row.metadata || {},
+    metadata: row.metadata || {},
   };
 }
 
 function _normalise(row) {
   return {
-    accessToken:  row.access_token,
+    accessToken: row.access_token,
     refreshToken: row.refresh_token || null,
-    expiresAt:    row.expires_at    || null,
-    metadata:     row.metadata      || {},
+    expiresAt: row.expires_at || null,
+    metadata: row.metadata || {},
   };
 }
 
@@ -169,11 +168,7 @@ async function ensureOrgForUser(userId, userEmail) {
   const sb = getClient();
 
   // Check if user already belongs to an org
-  const { data: user } = await sb
-    .from('users')
-    .select('org_id')
-    .eq('id', userId)
-    .maybeSingle();
+  const { data: user } = await sb.from('users').select('org_id').eq('id', userId).maybeSingle();
 
   if (user?.org_id) return user.org_id;
 
@@ -216,15 +211,15 @@ async function getOrgCredentials(orgId) {
   ]);
 
   return {
-    googleAccessToken:  google?.accessToken                      || null,
-    pipedriveApiKey:    pipedrive?.accessToken                   || null,
-    pipedriveDomain:    pipedrive?.metadata?.domain              || null,
-    slackBotToken:      slack?.accessToken                       || null,
-    slackUserId:        slack?.metadata?.slack_user_id           || null,
+    googleAccessToken: google?.accessToken || null,
+    pipedriveApiKey: pipedrive?.accessToken || null,
+    pipedriveDomain: pipedrive?.metadata?.domain || null,
+    slackBotToken: slack?.accessToken || null,
+    slackUserId: slack?.metadata?.slack_user_id || null,
     // Shared service credentials — remain in Railway env vars
-    gladiaApiKey:       process.env.GLADIA_API_KEY               || null,
-    anthropicApiKey:    process.env.ANTHROPIC_API_KEY            || null,
-    recallApiKey:       process.env.RECALL_API_KEY               || null,
+    gladiaApiKey: process.env.GLADIA_API_KEY || null,
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY || null,
+    recallApiKey: process.env.RECALL_API_KEY || null,
   };
 }
 

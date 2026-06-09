@@ -9,14 +9,15 @@ async function renderAnalysisPageLoading(sessionId) {
   const middleEl = document.getElementById('anMiddle');
   const rightEl = document.getElementById('anRight');
   if (!leftEl || !middleEl || !rightEl) return;
-  
+
   // Show transcript loading state
-  leftEl.innerHTML = '<div class="an-section-label">Annotated transcript</div><p style="font-size:0.76rem;color:var(--ink-2);padding-top:20px">Loading transcript...</p>';
+  leftEl.innerHTML =
+    '<div class="an-section-label">Annotated transcript</div><p style="font-size:0.76rem;color:var(--ink-2);padding-top:20px">Loading transcript...</p>';
   renderMiddleLoading();
-  
+
   // Show right panel with metrics and lens cycling
   renderRightPanelLoading({});
-  
+
   // Start polling for transcript data (it arrives from ElevenLabs)
   pollForTranscript(sessionId);
 }
@@ -24,28 +25,38 @@ async function renderAnalysisPageLoading(sessionId) {
 async function pollForTranscript(sessionId) {
   let attempts = 0;
   const maxAttempts = 30; // Try for ~30 seconds
-  
+
   const check = async () => {
     attempts++;
     try {
       // Poll for status to get transcript
       const res = await fetch('/api/session/' + sessionId + '/status');
       const data = await res.json();
-      
-      if ((data.status === 'processing' || data.status === 'complete') && data.transcript && data.transcript.length > 0) {
+
+      if (
+        (data.status === 'processing' || data.status === 'complete') &&
+        data.transcript &&
+        data.transcript.length > 0
+      ) {
         // Transcript is available — render it
         _s._transcript = data.transcript;
         _s._sentiment = data.sentiment_timeline || [];
         _s._audioMetrics = data.audio_metrics || {};
         if (data.mode) _s.mode = data.mode;
-        uiLog('Transcript ready, audio_metrics keys: ' + Object.keys(_s._audioMetrics).join(','), 'ok');
+        uiLog(
+          'Transcript ready, audio_metrics keys: ' + Object.keys(_s._audioMetrics).join(','),
+          'ok'
+        );
         renderTranscriptOnly(_s._transcript, _s._sentiment, data.mode || _s.mode);
         updateMetricsPanel(_s._audioMetrics);
         return;
       } else if (data.status === 'processing' && attempts < maxAttempts) {
         setTimeout(check, 1000);
       }
-    } catch (e) { uiLog('Transcript poll error: ' + e.message, 'err'); if (attempts < maxAttempts) setTimeout(check, 1000); }
+    } catch (e) {
+      uiLog('Transcript poll error: ' + e.message, 'err');
+      if (attempts < maxAttempts) setTimeout(check, 1000);
+    }
   };
   check();
 }
@@ -53,24 +64,26 @@ async function pollForTranscript(sessionId) {
 function renderTranscriptOnly(transcript, timeline, mode) {
   const el = document.getElementById('anLeft');
   if (!el || !transcript || transcript.length === 0) {
-    el.innerHTML = '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
+    el.innerHTML =
+      '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
     return;
   }
-  
-  const totalMs = (transcript[transcript.length - 1]?.start_ms) || 1;
-  let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
-    + '<div class="an-section-label" style="margin:0">Annotated transcript</div>'
-    + '<div class="tl-legend">'
-    + '<div class="leg"><div class="leg-dot" style="background:#22c55e"></div>Positive</div>'
-    + '<div class="leg"><div class="leg-dot" style="background:#f59e0b"></div>Neutral</div>'
-    + '<div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Disengaged</div>'
-    + '</div></div>';
+
+  const totalMs = transcript[transcript.length - 1]?.start_ms || 1;
+  let html =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+    '<div class="an-section-label" style="margin:0">Annotated transcript</div>' +
+    '<div class="tl-legend">' +
+    '<div class="leg"><div class="leg-dot" style="background:#22c55e"></div>Positive</div>' +
+    '<div class="leg"><div class="leg-dot" style="background:#f59e0b"></div>Neutral</div>' +
+    '<div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Disengaged</div>' +
+    '</div></div>';
 
   transcript.forEach((t, idx) => {
     const isRep = t.speaker === 'rep';
     const pct = Math.round(((t.start_ms || 0) / totalMs) * 100);
     const sc = isRep ? 's-n' : sentimentClass(timeline, pct);
-    const prospectName = ((mode || _s.mode) === 'investor_pitch') ? 'Natalie' : 'Hendrik';
+    const prospectName = (mode || _s.mode) === 'investor_pitch' ? 'Natalie' : 'Hendrik';
     html += `<div class="t-line" data-line-idx="${idx}">
       <div class="sent-bar ${sc}"></div>
       <div class="t-spk${isRep ? ' rep' : ''}">${isRep ? 'You' : prospectName}</div>
@@ -83,17 +96,22 @@ function renderTranscriptOnly(transcript, timeline, mode) {
 
   if (timeline && timeline.length > 0) {
     const sentMap = { positive: '#22c55e', neutral: '#f59e0b', negative: '#ef4444' };
-    const segs = timeline.map(s => `<div class="tl-seg" style="left:${s.start_pct}%;width:${s.end_pct - s.start_pct}%;background:${sentMap[s.sentiment] || '#ccc'}"></div>`).join('');
+    const segs = timeline
+      .map(
+        (s) =>
+          `<div class="tl-seg" style="left:${s.start_pct}%;width:${s.end_pct - s.start_pct}%;background:${sentMap[s.sentiment] || '#ccc'}"></div>`
+      )
+      .join('');
     html += `<div class="tl-section"><div class="an-section-label">Prospect sentiment</div><div class="tl-track">${segs}</div><div class="tl-ts"><span>0:00</span><span>${fmtSecs(_s.callDuration)}</span></div></div>`;
   }
-  
+
   el.innerHTML = html;
 }
 
 function renderRightPanelLoading(audioMetrics, mode) {
   const el = document.getElementById('anRight');
   if (!el) return;
-  
+
   // Section 1: Score (with lens cycling)
   const scoreSection = document.createElement('div');
   scoreSection.className = 'an-right-section';
@@ -104,20 +122,23 @@ function renderRightPanelLoading(audioMetrics, mode) {
       <div class="verdict-row" id="verdictRow"></div>
     </div>
   `;
-  
+
   // Section 2: Deterministic Metrics (appear immediately)
   const metricsSection = document.createElement('div');
   metricsSection.className = 'an-right-section';
   const wpm = audioMetrics.wpm || '—';
   const fill = audioMetrics.filler_words !== undefined ? audioMetrics.filler_words : '—';
   const rep = audioMetrics.talk_ratio?.rep ?? '—';
-  const mono = audioMetrics.longest_monologue_seconds ? fmtSecs(audioMetrics.longest_monologue_seconds) : '—';
-  
+  const mono = audioMetrics.longest_monologue_seconds
+    ? fmtSecs(audioMetrics.longest_monologue_seconds)
+    : '—';
+
   const wpmOk = typeof wpm === 'number' && wpm >= 140 && wpm <= 190;
   const talkOk = typeof rep === 'number' && rep <= 55;
   const fillOk = typeof fill === 'number' && fill <= 5;
-  const monoOk = !audioMetrics.longest_monologue_seconds || audioMetrics.longest_monologue_seconds <= 20;
-  
+  const monoOk =
+    !audioMetrics.longest_monologue_seconds || audioMetrics.longest_monologue_seconds <= 20;
+
   metricsSection.innerHTML = `
     <div class="an-section-label">Metrics</div>
     <div class="metrics-grid">
@@ -127,7 +148,7 @@ function renderRightPanelLoading(audioMetrics, mode) {
       <div class="m-card"><div class="m-lbl">Monologue</div><div class="m-val">${mono}</div><div class="m-note${monoOk ? '' : ' warn'}">${monoOk ? 'Short & punchy' : 'Break it up'}</div></div>
     </div>
   `;
-  
+
   // Section 3: Sub-scores (loading state)
   const resolvedMode = mode || _s.mode || 'cold_call';
   const isPitch = resolvedMode === 'investor_pitch';
@@ -161,7 +182,7 @@ function renderRightPanelLoading(audioMetrics, mode) {
       </div>
     </div>
   `;
-  
+
   el.innerHTML = '';
   el.appendChild(scoreSection);
   el.appendChild(metricsSection);
@@ -187,17 +208,20 @@ function updateMetricsPanel(audioMetrics) {
   // Update metrics if they weren't available initially
   const metricsSection = document.querySelector('.an-right-section:nth-child(2)');
   if (!metricsSection) return;
-  
+
   const wpm = audioMetrics.wpm || '—';
   const fill = audioMetrics.filler_words !== undefined ? audioMetrics.filler_words : '—';
   const rep = audioMetrics.talk_ratio?.rep ?? '—';
-  const mono = audioMetrics.longest_monologue_seconds ? fmtSecs(audioMetrics.longest_monologue_seconds) : '—';
-  
+  const mono = audioMetrics.longest_monologue_seconds
+    ? fmtSecs(audioMetrics.longest_monologue_seconds)
+    : '—';
+
   const wpmOk = typeof wpm === 'number' && wpm >= 140 && wpm <= 190;
   const talkOk = typeof rep === 'number' && rep <= 55;
   const fillOk = typeof fill === 'number' && fill <= 5;
-  const monoOk = !audioMetrics.longest_monologue_seconds || audioMetrics.longest_monologue_seconds <= 20;
-  
+  const monoOk =
+    !audioMetrics.longest_monologue_seconds || audioMetrics.longest_monologue_seconds <= 20;
+
   metricsSection.innerHTML = `
     <div class="an-section-label">Metrics</div>
     <div class="metrics-grid">
@@ -214,39 +238,48 @@ async function startLensCycling() {
     const res = await fetch('/lenses.json');
     const { lenses } = await res.json();
     if (!lenses || lenses.length === 0) return;
-    
+
     let currentIdx = 0;
     const lensEl = document.getElementById('lensText');
     if (!lensEl) return;
-    
+
     // Show lenses with fade in/out
     _lensInterval = setInterval(() => {
       if (!lensEl) return;
-      
+
       // Fade out current
       lensEl.textContent = lenses[currentIdx];
       lensEl.style.opacity = '1';
-      
+
       setTimeout(() => {
         currentIdx = (currentIdx + 1) % lenses.length;
         lensEl.style.opacity = '0';
       }, 3000);
     }, 3500);
-    
+
     // Show first lens immediately
     lensEl.textContent = lenses[0];
     lensEl.style.opacity = '1';
-  } catch (e) { uiLog('Lens load error: ' + e.message, 'err'); }
+  } catch (e) {
+    uiLog('Lens load error: ' + e.message, 'err');
+  }
 }
 
 function populateAnalysisResults(data) {
   if (_lensInterval) clearInterval(_lensInterval);
-  
+
   const score = data.score || 0;
   const bd = data.score_breakdown || {};
-  const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step', meeting_set: 'Meeting set', deck_requested: 'Deck requested', passed: 'Passed' };
+  const vMap = {
+    advance: 'Meeting advanced',
+    soft_advance: 'Soft advance',
+    dead: 'No next step',
+    meeting_set: 'Meeting set',
+    deck_requested: 'Deck requested',
+    passed: 'Passed',
+  };
   const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
-  
+
   // Update score — use CSS transition (more reliable than animation-fill-mode:forwards)
   const bigNum = document.getElementById('anScoreValue');
   if (bigNum) {
@@ -264,7 +297,7 @@ function populateAnalysisResults(data) {
   if (data.audio_metrics) {
     updateMetricsPanel(data.audio_metrics);
   }
-  
+
   // Show verdict and momentum in the right panel's verdictRow
   const verdictRow = document.getElementById('verdictRow');
   if (verdictRow) {
@@ -294,18 +327,19 @@ function populateAnalysisResults(data) {
       </div>
     `;
   }
-  
+
   // Populate sub-scores
-  const mode = data.mode || (bd.mode) || _s.mode || 'cold_call';
-  const isPitch = mode === 'investor_pitch' || bd.problem_clarity !== undefined || bd.why_now !== undefined;
+  const mode = data.mode || bd.mode || _s.mode || 'cold_call';
+  const isPitch =
+    mode === 'investor_pitch' || bd.problem_clarity !== undefined || bd.why_now !== undefined;
   const subVals = isPitch
-    ? [bd.problem_clarity||0, bd.why_now||0, bd.right_to_win||0, bd.ask_clarity||0]
-    : [bd.opening||0, bd.objections||0, bd.talk_ratio||0, bd.clear_ask||0];
+    ? [bd.problem_clarity || 0, bd.why_now || 0, bd.right_to_win || 0, bd.ask_clarity || 0]
+    : [bd.opening || 0, bd.objections || 0, bd.talk_ratio || 0, bd.clear_ask || 0];
   setTimeout(() => {
     subVals.forEach((v, i) => {
       setTimeout(() => {
-        const vel = document.getElementById('anv' + (i+1));
-        const fel = document.getElementById('anf' + (i+1));
+        const vel = document.getElementById('anv' + (i + 1));
+        const fel = document.getElementById('anf' + (i + 1));
         if (vel) {
           vel.classList.remove('loading');
           vel.textContent = v;
@@ -319,7 +353,8 @@ function populateAnalysisResults(data) {
 function renderAnalysisPage(data) {
   if (!data) return;
   // Resolve mode from all available sources before rendering
-  const resolvedMode = data.mode || (data.score_breakdown && data.score_breakdown.mode) || _s.mode || 'cold_call';
+  const resolvedMode =
+    data.mode || (data.score_breakdown && data.score_breakdown.mode) || _s.mode || 'cold_call';
   if (resolvedMode !== _s.mode) _s.mode = resolvedMode;
   renderTranscriptOnly(data.transcript || [], data.sentiment_timeline || [], resolvedMode);
   renderRightPanelLoading(data.audio_metrics || {}, resolvedMode);
@@ -413,7 +448,9 @@ function openDeepAnalysis() {
   // Trigger deep analysis
   fetch('/api/session/' + _s.sessionId + '/deep-analysis', { method: 'POST' })
     .then(() => _pollDeepAnalysis())
-    .catch((err) => { uiLog('Deep analysis trigger error: ' + err.message, 'err'); });
+    .catch((err) => {
+      uiLog('Deep analysis trigger error: ' + err.message, 'err');
+    });
 }
 
 function _pollDeepAnalysis() {
@@ -430,19 +467,24 @@ function _pollDeepAnalysis() {
         return;
       }
       if (data.status !== 'error') setTimeout(check, 2000);
-    } catch { setTimeout(check, 2000); }
+    } catch {
+      setTimeout(check, 2000);
+    }
   };
   check();
 }
 
 function _onDeepAnalysisReady(deepData) {
   // Stop loading cycle
-  if (_deepCycleInterval) { clearInterval(_deepCycleInterval); _deepCycleInterval = null; }
+  if (_deepCycleInterval) {
+    clearInterval(_deepCycleInterval);
+    _deepCycleInterval = null;
+  }
 
   // Merge deep data with basic result for full view
   const merged = {
     ..._s.analysis,
-    transcript: deepData.annotated_transcript || (_s.analysis?.transcript || []),
+    transcript: deepData.annotated_transcript || _s.analysis?.transcript || [],
     coaching_feedback: deepData.coaching_feedback || [],
     sentiment_timeline: deepData.sentiment_timeline || [],
   };
@@ -540,7 +582,8 @@ function renderDeepTranscript(transcript, timeline) {
   const el = document.getElementById('anLeft');
   if (!el) return;
   if (!transcript || transcript.length === 0) {
-    el.innerHTML = '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
+    el.innerHTML =
+      '<div class="an-section-label">Annotated transcript</div><div style="padding:40px 0;text-align:center;font-size:0.74rem;color:var(--ink-3)">Transcript not available.</div>';
     return;
   }
 
@@ -549,12 +592,21 @@ function renderDeepTranscript(transcript, timeline) {
   transcript.forEach((t) => {
     const isRep = t.speaker === 'rep';
     let tlClass = isRep
-      ? (t.quality === 'good' ? 'tl-good' : t.quality === 'poor' ? 'tl-poor' : t.quality === 'ok' ? 'tl-ok' : 'tl-neutral')
+      ? t.quality === 'good'
+        ? 'tl-good'
+        : t.quality === 'poor'
+          ? 'tl-poor'
+          : t.quality === 'ok'
+            ? 'tl-ok'
+            : 'tl-neutral'
       : 'tl-hendrik';
 
-    const coachText = isRep && t.coaching
-      ? (typeof t.coaching === 'string' ? t.coaching : (t.coaching.body || t.coaching.title || ''))
-      : '';
+    const coachText =
+      isRep && t.coaching
+        ? typeof t.coaching === 'string'
+          ? t.coaching
+          : t.coaching.body || t.coaching.title || ''
+        : '';
 
     html += `<div class="t-line ${tlClass}">
       <div class="t-spk${isRep ? ' rep' : ''}">${isRep ? 'You' : prospectName}</div>
@@ -574,7 +626,8 @@ function renderDeepRightPanel(data) {
   const score = data.score || 0;
   const bd = data.score_breakdown || {};
   const mode = data.mode || bd.mode || _s.mode || 'cold_call';
-  const isPitch = mode === 'investor_pitch' || bd.problem_clarity !== undefined || bd.why_now !== undefined;
+  const isPitch =
+    mode === 'investor_pitch' || bd.problem_clarity !== undefined || bd.why_now !== undefined;
 
   const vMap = isPitch
     ? { meeting_set: 'Meeting set', deck_requested: 'Deck requested', passed: 'Passed' }
@@ -584,20 +637,23 @@ function renderDeepRightPanel(data) {
   const subScores = isPitch
     ? [
         { label: 'Problem clarity', val: bd.problem_clarity || 0 },
-        { label: 'Why now',         val: bd.why_now || 0 },
-        { label: 'Right to win',    val: bd.right_to_win || 0 },
-        { label: 'Ask clarity',     val: bd.ask_clarity || 0 },
+        { label: 'Why now', val: bd.why_now || 0 },
+        { label: 'Right to win', val: bd.right_to_win || 0 },
+        { label: 'Ask clarity', val: bd.ask_clarity || 0 },
       ]
     : [
-        { label: 'Opening',    val: bd.opening || 0 },
+        { label: 'Opening', val: bd.opening || 0 },
         { label: 'Objections', val: bd.objections || 0 },
         { label: 'Talk ratio', val: bd.talk_ratio || 0 },
-        { label: 'Clear ask',  val: bd.clear_ask || 0 },
+        { label: 'Clear ask', val: bd.clear_ask || 0 },
       ];
 
-  const subHtml = subScores.map(s =>
-    `<div class="sc-row"><div class="sc-label">${s.label}</div><div class="sc-bar"><div class="sc-fill" style="width:${s.val}%"></div></div><div class="sc-val">${s.val}</div></div>`
-  ).join('');
+  const subHtml = subScores
+    .map(
+      (s) =>
+        `<div class="sc-row"><div class="sc-label">${s.label}</div><div class="sc-bar"><div class="sc-fill" style="width:${s.val}%"></div></div><div class="sc-val">${s.val}</div></div>`
+    )
+    .join('');
 
   el.innerHTML = `
     <div class="an-right-section" style="text-align:center">
@@ -619,7 +675,10 @@ function renderDeepRightPanel(data) {
 function renderDeepGraphView(data) {
   const el = document.getElementById('anLeft');
   if (!el) return;
-  if (!data) { el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3)">No data.</div>'; return; }
+  if (!data) {
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3)">No data.</div>';
+    return;
+  }
 
   const am = data.audio_metrics || {};
   const bd = data.score_breakdown || {};
@@ -650,21 +709,21 @@ function renderDeepGraphView(data) {
   const renderChart = () => {
     const ctx = document.getElementById('deepScoreChart');
     if (!ctx) return;
-    const labels = rounds.map(r => r.label);
+    const labels = rounds.map((r) => r.label);
     const lastIdx = rounds.length - 1;
     const mode = data.mode || _s.mode || 'cold_call';
     const isPitch = mode === 'investor_pitch';
     const sub = isPitch
       ? [
           { label: 'Problem clarity', color: '#3b82f6', val: bd.problem_clarity },
-          { label: 'Why now',          color: '#f59e0b', val: bd.why_now },
-          { label: 'Right to win',     color: '#22c55e', val: bd.right_to_win },
-          { label: 'Ask clarity',      color: '#a855f7', val: bd.ask_clarity },
+          { label: 'Why now', color: '#f59e0b', val: bd.why_now },
+          { label: 'Right to win', color: '#22c55e', val: bd.right_to_win },
+          { label: 'Ask clarity', color: '#a855f7', val: bd.ask_clarity },
         ]
       : [
-          { label: 'Opening',    color: '#3b82f6', val: bd.opening },
+          { label: 'Opening', color: '#3b82f6', val: bd.opening },
           { label: 'Objections', color: '#f59e0b', val: bd.objections },
-          { label: 'Clear ask',  color: '#22c55e', val: bd.clear_ask },
+          { label: 'Clear ask', color: '#22c55e', val: bd.clear_ask },
           { label: 'Talk ratio', color: '#a855f7', val: bd.talk_ratio },
         ];
     new Chart(ctx, {
@@ -672,17 +731,51 @@ function renderDeepGraphView(data) {
       data: {
         labels,
         datasets: [
-          { label: 'Overall', data: rounds.map(r => r.score), borderColor: '#111', backgroundColor: 'rgba(17,17,17,0.05)', tension: 0.35, pointRadius: 4, pointBackgroundColor: '#111' },
-          ...sub.map(s => ({ label: s.label, data: rounds.map((_, i) => i === lastIdx ? (s.val||null) : null), borderColor: s.color, backgroundColor: 'transparent', tension: 0.35, pointRadius: 4, spanGaps: false })),
+          {
+            label: 'Overall',
+            data: rounds.map((r) => r.score),
+            borderColor: '#111',
+            backgroundColor: 'rgba(17,17,17,0.05)',
+            tension: 0.35,
+            pointRadius: 4,
+            pointBackgroundColor: '#111',
+          },
+          ...sub.map((s) => ({
+            label: s.label,
+            data: rounds.map((_, i) => (i === lastIdx ? s.val || null : null)),
+            borderColor: s.color,
+            backgroundColor: 'transparent',
+            tension: 0.35,
+            pointRadius: 4,
+            spanGaps: false,
+          })),
         ],
       },
       options: {
-        responsive: true, maintainAspectRatio: false,
+        responsive: true,
+        maintainAspectRatio: false,
         scales: {
-          y: { min: 0, max: 100, grid: { color: 'rgba(17,17,17,0.06)' }, ticks: { font: { family: 'Bricolage Grotesque', size: 10 } } },
-          x: { grid: { display: false }, ticks: { font: { family: 'Bricolage Grotesque', size: 10 } } },
+          y: {
+            min: 0,
+            max: 100,
+            grid: { color: 'rgba(17,17,17,0.06)' },
+            ticks: { font: { family: 'Bricolage Grotesque', size: 10 } },
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Bricolage Grotesque', size: 10 } },
+          },
         },
-        plugins: { legend: { position: 'top', labels: { font: { family: 'Bricolage Grotesque', size: 10 }, boxWidth: 10, padding: 12 } } },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              font: { family: 'Bricolage Grotesque', size: 10 },
+              boxWidth: 10,
+              padding: 12,
+            },
+          },
+        },
       },
     });
   };

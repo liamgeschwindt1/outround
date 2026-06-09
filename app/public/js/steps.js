@@ -47,46 +47,54 @@ function renderOnboarding3Step() {
   const integrations = _s.authUser?.integrations || {};
 
   const stepLabels = ['Connect CRM', 'Connect Calendar', 'Choose coach'];
-  const dotsHtml = stepLabels.map((label, i) => {
-    const n = i + 1;
-    const cls = n < step ? 'ob3-dot done' : n === step ? 'ob3-dot active' : 'ob3-dot';
-    return `<div class="${cls}"><div class="ob3-dot-num">${n < step ? '✓' : n}</div><div class="ob3-dot-label">${label}</div></div>`;
-  }).join('<div class="ob3-connector"></div>');
+  const dotsHtml = stepLabels
+    .map((label, i) => {
+      const n = i + 1;
+      const cls = n < step ? 'ob3-dot done' : n === step ? 'ob3-dot active' : 'ob3-dot';
+      return `<div class="${cls}"><div class="ob3-dot-num">${n < step ? '✓' : n}</div><div class="ob3-dot-label">${label}</div></div>`;
+    })
+    .join('<div class="ob3-connector"></div>');
 
   let body = '';
 
   if (step === 1) {
     const connected = integrations.pipedrive;
     body = `
-      <div class="ob3-icon">${connected
-        ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></svg>'
-        : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>'
+      <div class="ob3-icon">${
+        connected
+          ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></svg>'
+          : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>'
       }</div>
       <div class="ob3-title">${connected ? 'Pipedrive connected' : 'Connect Pipedrive'}</div>
-      <div class="ob3-desc">${connected
-        ? 'Your CRM is connected. Outround will pull deal and contact data to build your prospect personas.'
-        : 'Connect Pipedrive so Outround can pull prospect data and build a dynamic persona from your actual pipeline.'
+      <div class="ob3-desc">${
+        connected
+          ? 'Your CRM is connected. Outround will pull deal and contact data to build your prospect personas.'
+          : 'Connect Pipedrive so Outround can pull prospect data and build a dynamic persona from your actual pipeline.'
       }</div>
-      ${connected
-        ? `<button class="ob-btn" onclick="advanceOnboarding()">Continue</button>`
-        : `<button class="ob-btn" onclick="window.location.href='/auth/pipedrive'">Connect Pipedrive</button>
+      ${
+        connected
+          ? `<button class="ob-btn" onclick="advanceOnboarding()">Continue</button>`
+          : `<button class="ob-btn" onclick="window.location.href='/auth/pipedrive'">Connect Pipedrive</button>
            <div class="ob-skip" onclick="advanceOnboarding()">Skip for now</div>`
       }`;
   } else if (step === 2) {
     const connected = integrations.gcal;
     body = `
-      <div class="ob3-icon">${connected
-        ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></svg>'
-        : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+      <div class="ob3-icon">${
+        connected
+          ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></svg>'
+          : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
       }</div>
       <div class="ob3-title">${connected ? 'Google Calendar connected' : 'Connect Google Calendar'}</div>
-      <div class="ob3-desc">${connected
-        ? 'Your calendar is connected. Outround will show your upcoming meetings and let you go a round before each one.'
-        : 'Connect Google Calendar to see your upcoming meetings and prepare for each one before it counts.'
+      <div class="ob3-desc">${
+        connected
+          ? 'Your calendar is connected. Outround will show your upcoming meetings and let you go a round before each one.'
+          : 'Connect Google Calendar to see your upcoming meetings and prepare for each one before it counts.'
       }</div>
-      ${connected
-        ? `<button class="ob-btn" onclick="advanceOnboarding()">Continue</button>`
-        : `<button class="ob-btn" onclick="window.location.href='/auth/gcal'">Connect Google Calendar</button>
+      ${
+        connected
+          ? `<button class="ob-btn" onclick="advanceOnboarding()">Continue</button>`
+          : `<button class="ob-btn" onclick="window.location.href='/auth/gcal'">Connect Google Calendar</button>
            <div class="ob-skip" onclick="advanceOnboarding()">Skip for now</div>`
       }`;
   } else if (step === 3) {
@@ -352,7 +360,14 @@ function renderLoadingStep() {
 
 function renderFinishStep() {
   const data = _s.analysis || {};
-  const verdictMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step', meeting_set: 'Meeting set', deck_requested: 'Deck requested', passed: 'Passed' };
+  const verdictMap = {
+    advance: 'Meeting advanced',
+    soft_advance: 'Soft advance',
+    dead: 'No next step',
+    meeting_set: 'Meeting set',
+    deck_requested: 'Deck requested',
+    passed: 'Passed',
+  };
   const verdict = data.headline || verdictMap[data.call_verdict] || 'Session complete.';
   return `<div class="finish-step">
     <div class="finish-verdict">${escHtml(verdict)}</div>
@@ -371,27 +386,46 @@ function renderFinishStep() {
 
 function buildFinishLbRows(lbEntries, userScore) {
   const userName = _s.user.name || 'You';
-  const userIni = userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'ME';
+  const userIni =
+    userName
+      .split(' ')
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'ME';
   const fallback = [
     { name: 'Sophie R.', score: 91, ini: 'SR' },
     { name: 'Marcus T.', score: 88, ini: 'MT' },
     { name: 'Lena K.', score: 85, ini: 'LK' },
     { name: 'Ana M.', score: 74, ini: 'AM' },
   ];
-  const base = lbEntries && lbEntries.length > 0
-    ? lbEntries.map(e => ({ name: e.name, score: e.score, ini: (e.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) }))
-    : fallback;
+  const base =
+    lbEntries && lbEntries.length > 0
+      ? lbEntries.map((e) => ({
+          name: e.name,
+          score: e.score,
+          ini: (e.name || '?')
+            .split(' ')
+            .map((w) => w[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2),
+        }))
+      : fallback;
 
   const rows = [...base, { name: userName, score: userScore, ini: userIni, isYou: true }];
   rows.sort((a, b) => b.score - a.score);
-  return rows.slice(0, 5).map((e, i) => {
-    const rank = i + 1;
-    const isYou = !!e.isYou;
-    return `<div class="flb-row${isYou ? ' you' : ''}">
+  return rows
+    .slice(0, 5)
+    .map((e, i) => {
+      const rank = i + 1;
+      const isYou = !!e.isYou;
+      return `<div class="flb-row${isYou ? ' you' : ''}">
       <div class="flb-rank${rank <= 3 ? ' top' : ''}">${rank}</div>
       <div class="flb-av"${isYou ? ' style="background:var(--ink);color:white"' : ''}>${escHtml(e.ini)}</div>
       <div class="flb-info"><div class="flb-name">${escHtml(e.name)}${isYou ? ' (you)' : ''}</div></div>
       <div class="flb-sc">${e.score}</div>
     </div>`;
-  }).join('');
+    })
+    .join('');
 }

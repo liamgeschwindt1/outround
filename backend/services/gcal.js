@@ -194,7 +194,7 @@ async function listUpcomingEvents(userId, days = 7) {
 
   const resp = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-    { headers: { 'Authorization': `Bearer ${token}` } }
+    { headers: { Authorization: `Bearer ${token}` } }
   );
 
   if (resp.status === 401) {
@@ -230,22 +230,22 @@ async function isConnected(userId) {
  * @returns {Promise<Array>}           — raw Google Calendar event items
  */
 async function listUpcomingEventsWithToken(accessToken, opts = {}) {
-  const days       = opts.days       || 7;
+  const days = opts.days || 7;
   const maxResults = opts.maxResults || 50;
-  const timeMin    = new Date().toISOString();
-  const timeMax    = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  const timeMin = new Date().toISOString();
+  const timeMax = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
   const params = new URLSearchParams({
     timeMin,
     timeMax,
     singleEvents: 'true',
-    orderBy:      'startTime',
-    maxResults:   String(maxResults),
+    orderBy: 'startTime',
+    maxResults: String(maxResults),
   });
 
   const resp = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-    { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` } }
   );
 
   if (!resp.ok) {
@@ -257,4 +257,11 @@ async function listUpcomingEventsWithToken(accessToken, opts = {}) {
   return data.items || [];
 }
 
-module.exports = { getAuthUrl, exchangeCode, refreshToken, listUpcomingEvents, listUpcomingEventsWithToken, isConnected };
+module.exports = {
+  getAuthUrl,
+  exchangeCode,
+  refreshToken,
+  listUpcomingEvents,
+  listUpcomingEventsWithToken,
+  isConnected,
+};

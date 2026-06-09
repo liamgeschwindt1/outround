@@ -13,7 +13,9 @@ const { getUserFromToken, getOrCreateLocalUser } = require('../services/auth');
 const { getPool } = require('../db/client');
 
 let pushEvent = () => {};
-try { pushEvent = require('../routes/debug').pushEvent; } catch {}
+try {
+  pushEvent = require('../routes/debug').pushEvent;
+} catch {}
 
 const DEV_USER_ID = '00000000-0000-0000-0000-000000000001';
 const DEV_TOKEN_PREFIX = 'dev:';
@@ -37,7 +39,9 @@ async function requireAuth(req, res, next) {
     // Reject any token that tries to use a custom ID — only the exact dev: token
     // (without a custom ID) or the explicit DEV_USER_ID is accepted
     if (providedId && providedId !== DEV_USER_ID) {
-      pushEvent('warn', 'auth', `Rejected dev token with custom ID: ${providedId.slice(0, 8)}...`, { path: req.path });
+      pushEvent('warn', 'auth', `Rejected dev token with custom ID: ${providedId.slice(0, 8)}...`, {
+        path: req.path,
+      });
       return res.status(401).json({ error: 'Unauthorised — invalid dev token' });
     }
     const devId = DEV_USER_ID;
@@ -56,7 +60,9 @@ async function requireAuth(req, res, next) {
         console.error('[auth] dev-login user load failed:', err.message);
       }
     }
-    pushEvent('info', 'auth', `Shell auth — ${req.method} ${req.path}`, { user: 'dev@outround.local' });
+    pushEvent('info', 'auth', `Shell auth — ${req.method} ${req.path}`, {
+      user: 'dev@outround.local',
+    });
     return next();
   }
 
@@ -66,7 +72,9 @@ async function requireAuth(req, res, next) {
   }
 
   if (!token) {
-    pushEvent('warn', 'auth', `Unauthorised — no token — ${req.method} ${req.path}`, { path: req.path });
+    pushEvent('warn', 'auth', `Unauthorised — no token — ${req.method} ${req.path}`, {
+      path: req.path,
+    });
     return res.status(401).json({ error: 'Unauthorised — no token provided' });
   }
 
@@ -74,17 +82,25 @@ async function requireAuth(req, res, next) {
   try {
     supabaseUser = await getUserFromToken(token);
   } catch (err) {
-    pushEvent('error', 'auth', `getUserFromToken threw: ${err.message}`, { path: req.path, error: err.message });
+    pushEvent('error', 'auth', `getUserFromToken threw: ${err.message}`, {
+      path: req.path,
+      error: err.message,
+    });
     console.error('[auth] getUserFromToken threw:', err.message);
     return res.status(503).json({ error: 'Auth service unavailable' });
   }
   if (!supabaseUser) {
-    pushEvent('warn', 'auth', `Invalid/expired token — ${req.method} ${req.path}`, { path: req.path });
+    pushEvent('warn', 'auth', `Invalid/expired token — ${req.method} ${req.path}`, {
+      path: req.path,
+    });
     return res.status(401).json({ error: 'Unauthorised — invalid or expired token' });
   }
 
   req.supabaseUser = supabaseUser;
-  pushEvent('info', 'auth', `Token valid — ${supabaseUser.email}`, { email: supabaseUser.email, path: req.path });
+  pushEvent('info', 'auth', `Token valid — ${supabaseUser.email}`, {
+    email: supabaseUser.email,
+    path: req.path,
+  });
 
   // Attach local DB user if DB is available
   const pool = getPool();

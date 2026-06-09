@@ -8,14 +8,39 @@ import globals from 'globals';
 
 export default tseslint.config(
   // === Global ignores ===
-  { ignores: ['**/node_modules/**', '**/dist/**', '**/build/**'] },
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      'eslint.config.mjs',
+    ],
+  },
+
+  // === Public JS (loaded via <script> tags — ESLint can't trace HTML usage) ===
+  {
+    files: ['app/public/js/**/*.js', 'demo/public/js/**/*.js'],
+    ...js.configs.recommended,
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        ...globals.browser,
+        ...globals.es2022,
+      },
+    },
+    rules: {
+      'no-unused-vars': 'off', // functions called from HTML onclick / inline scripts
+    },
+  },
 
   // === Base: plain JS (CJS servers in backend, demo, internal, and root-level scripts) ===
   {
     files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
     ignores: [
-      'app/src/**',        // app frontend is TS/TSX, handled below
-      'website/src/**',    // website frontend is JSX, handled below
+      'app/src/**', // app frontend is TS/TSX, handled below
+      'website/src/**', // website frontend is JSX, handled below
+      'app/public/js/**', // handled above
+      'demo/public/js/**', // handled above
     ],
     ...js.configs.recommended,
     languageOptions: {
@@ -26,7 +51,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
     },
   },
 
@@ -62,7 +87,10 @@ export default tseslint.config(
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true, allowExportNames: ['useAuth', 'useToast'] },
+      ],
     },
     settings: {
       react: { version: 'detect' },
@@ -105,7 +133,8 @@ export default tseslint.config(
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+      'react/prop-types': 'off', // website JSX is not TypeScript; adding PropTypes to 50+ props is low-value here
     },
     settings: {
       react: { version: 'detect' },
@@ -122,5 +151,5 @@ export default tseslint.config(
   },
 
   // === Prettier: disable conflicting rules (must be last) ===
-  prettierConfig,
+  prettierConfig
 );

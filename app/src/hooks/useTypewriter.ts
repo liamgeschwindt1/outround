@@ -18,19 +18,35 @@ export function useTypewriter({
   const [out, setOut] = useState('');
   const [done, setDone] = useState(false);
   const onDoneRef = useRef(onDone);
-  onDoneRef.current = onDone;
 
   useEffect(() => {
-    if (!enabled) { setOut(text); setDone(true); onDoneRef.current?.(); return; }
+    onDoneRef.current = onDone;
+  });
 
-    const reduced = typeof window !== 'undefined' &&
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) { setOut(text); setDone(true); onDoneRef.current?.(); return; }
+  useEffect(() => {
+    if (!enabled) {
+       
+      setOut(text);
+       
+      setDone(true);
+      onDoneRef.current?.();
+      return;
+    }
+
+    const reduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      setOut(text);
+      setDone(true);
+      onDoneRef.current?.();
+      return;
+    }
 
     setOut('');
     setDone(false);
     let i = 0;
-    let timer: number | undefined;
+    const timer: number | undefined;
     let interval: number | undefined;
 
     timer = window.setTimeout(() => {

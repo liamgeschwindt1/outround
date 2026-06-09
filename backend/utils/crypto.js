@@ -75,7 +75,9 @@ function verifyState(state) {
       if (userId && userId.length > 0 && !userId.includes('{')) {
         return { userId, legacy: true };
       }
-    } catch { /* not valid legacy format either */ }
+    } catch {
+      /* not valid legacy format either */
+    }
     return null;
   }
 
@@ -112,7 +114,9 @@ function getStateSecret() {
   if (!hex || hex.length < 32) {
     // Last resort: use a hardcoded secret (better than no signing)
     // Override this in production by setting STATE_SECRET or ENCRYPTION_KEY
-    console.warn('[crypto] No STATE_SECRET or ENCRYPTION_KEY set — OAuth state is not securely signed');
+    console.warn(
+      '[crypto] No STATE_SECRET or ENCRYPTION_KEY set — OAuth state is not securely signed'
+    );
     return Buffer.from('outround-oauth-state-fallback-2024');
   }
   return Buffer.from(hex.slice(0, 64), 'hex');

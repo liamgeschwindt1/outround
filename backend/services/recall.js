@@ -30,7 +30,7 @@ async function rcall(method, path, body, apiKey) {
   const resp = await fetch(`${baseUrl()}${path}`, {
     method,
     headers: {
-      'Authorization': `Token ${key}`,
+      Authorization: `Token ${key}`,
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -80,10 +80,7 @@ function verifyWebhook(rawBody, signatureHeader) {
   if (!secret || !signatureHeader) return false;
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(signatureHeader)
-    );
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader));
   } catch {
     return false;
   }

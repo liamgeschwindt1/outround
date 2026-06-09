@@ -14,8 +14,12 @@ const { requireAuth } = require('../middleware/auth');
 const memStore = new Map();
 
 // Ensure deep analysis columns exist on the sessions table (safe to run repeatedly)
-db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS deep_analysis JSONB`).catch(() => {});
-db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS deep_analysis_status TEXT`).catch(() => {});
+db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS deep_analysis JSONB`).catch(
+  () => {}
+);
+db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS deep_analysis_status TEXT`).catch(
+  () => {}
+);
 db.query(`ALTER TABLE IF EXISTS sessions ADD COLUMN IF NOT EXISTS mode TEXT`).catch(() => {});
 
 // ---------------------------------------------------------------------------
@@ -124,7 +128,9 @@ router.get('/stats', requireAuth, async (req, res) => {
         const recentHalf = recent.slice(0, half);
         const priorHalf = recent.slice(half, half * 2);
         const avg = (arr, key) => {
-          const vals = arr.map((r) => key ? Number(r.score_breakdown?.[key]) : Number(r.score)).filter((v) => !isNaN(v));
+          const vals = arr
+            .map((r) => (key ? Number(r.score_breakdown?.[key]) : Number(r.score)))
+            .filter((v) => !isNaN(v));
           return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
         };
         const trend = (a, b) => {
@@ -135,11 +141,11 @@ router.get('/stats', requireAuth, async (req, res) => {
           return 'flat';
         };
         trends = {
-          score:      trend(avg(recentHalf), avg(priorHalf)),
-          opening:    trend(avg(recentHalf, 'opening'),    avg(priorHalf, 'opening')),
+          score: trend(avg(recentHalf), avg(priorHalf)),
+          opening: trend(avg(recentHalf, 'opening'), avg(priorHalf, 'opening')),
           objections: trend(avg(recentHalf, 'objections'), avg(priorHalf, 'objections')),
           talk_ratio: trend(avg(recentHalf, 'talk_ratio'), avg(priorHalf, 'talk_ratio')),
-          clear_ask:  trend(avg(recentHalf, 'clear_ask'),  avg(priorHalf, 'clear_ask')),
+          clear_ask: trend(avg(recentHalf, 'clear_ask'), avg(priorHalf, 'clear_ask')),
         };
       }
     }
@@ -147,12 +153,13 @@ router.get('/stats', requireAuth, async (req, res) => {
     // Coach info — pulled from users.coach_id, joined with built-in coach list on the client
     let coach = null;
     try {
-      const { rows: ur } = await db.query(
-        `SELECT coach_id FROM users WHERE id = $1`,
-        [req.user.id]
-      );
+      const { rows: ur } = await db.query(`SELECT coach_id FROM users WHERE id = $1`, [
+        req.user.id,
+      ]);
       if (ur.length && ur[0].coach_id) coach = { id: ur[0].coach_id };
-    } catch { /* users table may not exist in dev */ }
+    } catch {
+      /* users table may not exist in dev */
+    }
 
     res.json({ stats: { ...stats, streak, trends, coach } });
   } catch {
@@ -209,7 +216,9 @@ router.post('/start', requireAuth, async (req, res) => {
     mode,
     persona: {
       name: persona.name,
-      title: persona.title ? `${persona.title} — ${persona.company} — ${persona.location.split(',')[0]}` : persona.name,
+      title: persona.title
+        ? `${persona.title} — ${persona.company} — ${persona.location.split(',')[0]}`
+        : persona.name,
       flag: persona.flag,
       scenario: persona.scenario,
       traits: (persona.traits || []).map((t) => t.charAt(0).toUpperCase() + t.slice(1)),
@@ -229,9 +238,7 @@ router.get('/:id/voice-token', requireAuth, async (req, res) => {
   let personaId = memStore.get(id)?.persona_id;
   if (!personaId) {
     try {
-      const result = await db.query(
-        'SELECT persona_id, user_id FROM sessions WHERE id = $1', [id]
-      );
+      const result = await db.query('SELECT persona_id, user_id FROM sessions WHERE id = $1', [id]);
       if (result.rows.length > 0) {
         // Enforce ownership: only the session owner can get a voice token
         if (result.rows[0].user_id && userId && result.rows[0].user_id !== userId) {
@@ -265,11 +272,11 @@ router.post('/:id/end', requireAuth, async (req, res) => {
   // Verify session ownership before accepting the end call
   let ownerId = null;
   try {
-    const { rows } = await db.query(
-      'SELECT user_id FROM sessions WHERE id = $1', [id]
-    );
+    const { rows } = await db.query('SELECT user_id FROM sessions WHERE id = $1', [id]);
     if (rows.length > 0) ownerId = rows[0].user_id;
-  } catch { /* fall through — allow if DB unavailable */ }
+  } catch {
+    /* fall through — allow if DB unavailable */
+  }
 
   if (ownerId && userId && ownerId !== userId) {
     return res.status(403).json({ error: 'Forbidden' });
@@ -315,11 +322,11 @@ router.post('/:id/end-test', requireAuth, async (req, res) => {
   // Verify session ownership
   let ownerId = null;
   try {
-    const { rows } = await db.query(
-      'SELECT user_id FROM sessions WHERE id = $1', [id]
-    );
+    const { rows } = await db.query('SELECT user_id FROM sessions WHERE id = $1', [id]);
     if (rows.length > 0) ownerId = rows[0].user_id;
-  } catch { /* fall through */ }
+  } catch {
+    /* fall through */
+  }
 
   if (ownerId && userId && ownerId !== userId) {
     return res.status(403).json({ error: 'Forbidden' });
@@ -330,10 +337,10 @@ router.post('/:id/end-test', requireAuth, async (req, res) => {
   }
 
   try {
-    await db.query(
-      `UPDATE sessions SET ended_at = NOW(), duration_seconds = $1 WHERE id = $2`,
-      [duration_seconds || 90, id]
-    );
+    await db.query(`UPDATE sessions SET ended_at = NOW(), duration_seconds = $1 WHERE id = $2`, [
+      duration_seconds || 90,
+      id,
+    ]);
   } catch (err) {
     console.error('DB error ending test session:', err.message);
   }
@@ -341,7 +348,10 @@ router.post('/:id/end-test', requireAuth, async (req, res) => {
   const existing = memStore.get(id) || { id, persona_id: 'hendrik', mode: 'cold_call' };
   memStore.set(id, { ...existing, status: 'processing' });
 
-  res.json({ status: 'processing', message: 'Test analysis running. Poll /api/session/:id/status' });
+  res.json({
+    status: 'processing',
+    message: 'Test analysis running. Poll /api/session/:id/status',
+  });
 
   _processTestSession(id, transcript, duration_seconds || 90).catch((err) =>
     console.error('Test session error for', id, err.message)
@@ -355,7 +365,9 @@ async function _processTestSession(sessionId, injectedTranscript, durationSecs) 
   let useMemOnly = false;
 
   try {
-    const check = await db.query('SELECT id, persona_id, mode FROM sessions WHERE id = $1', [sessionId]);
+    const check = await db.query('SELECT id, persona_id, mode FROM sessions WHERE id = $1', [
+      sessionId,
+    ]);
     useMemOnly = check.rows.length === 0;
     if (check.rows.length > 0) {
       if (!personaId) personaId = check.rows[0].persona_id || 'hendrik';
@@ -373,11 +385,14 @@ async function _processTestSession(sessionId, injectedTranscript, durationSecs) 
 
   if (!useMemOnly) {
     try {
-      await db.query(
-        `UPDATE sessions SET transcript = $1, audio_metrics = $2 WHERE id = $3`,
-        [JSON.stringify(injectedTranscript), JSON.stringify(audioMetrics), sessionId]
-      );
-    } catch (err) { console.error('DB error saving test transcript:', err.message); }
+      await db.query(`UPDATE sessions SET transcript = $1, audio_metrics = $2 WHERE id = $3`, [
+        JSON.stringify(injectedTranscript),
+        JSON.stringify(audioMetrics),
+        sessionId,
+      ]);
+    } catch (err) {
+      console.error('DB error saving test transcript:', err.message);
+    }
   }
 
   memStore.set(sessionId, {
@@ -391,14 +406,30 @@ async function _processTestSession(sessionId, injectedTranscript, durationSecs) 
   try {
     const personaRaw = loadPersonaFile(personaId);
     const persona = normalisePersona(personaRaw);
-    grading = sessionMode === 'investor_pitch'
-      ? await claude.gradePitchFast(injectedTranscript, audioMetrics, persona)
-      : await claude.gradeSessionFast(injectedTranscript, audioMetrics, persona);
+    grading =
+      sessionMode === 'investor_pitch'
+        ? await claude.gradePitchFast(injectedTranscript, audioMetrics, persona)
+        : await claude.gradeSessionFast(injectedTranscript, audioMetrics, persona);
   } catch (err) {
     console.error('Test grading error:', err.message);
-    grading = sessionMode === 'investor_pitch'
-      ? { overall_score: 0, score_breakdown: { problem_clarity: 0, why_now: 0, right_to_win: 0, ask_clarity: 0 }, headline: 'Analysis failed', call_verdict: null, call_momentum: null, next_session_focus: null }
-      : { overall_score: 0, score_breakdown: { opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 }, headline: 'Analysis failed', call_verdict: null, call_momentum: null, next_session_focus: null };
+    grading =
+      sessionMode === 'investor_pitch'
+        ? {
+            overall_score: 0,
+            score_breakdown: { problem_clarity: 0, why_now: 0, right_to_win: 0, ask_clarity: 0 },
+            headline: 'Analysis failed',
+            call_verdict: null,
+            call_momentum: null,
+            next_session_focus: null,
+          }
+        : {
+            overall_score: 0,
+            score_breakdown: { opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 },
+            headline: 'Analysis failed',
+            call_verdict: null,
+            call_momentum: null,
+            next_session_focus: null,
+          };
   }
 
   await storeResults(sessionId, useMemOnly, grading, injectedTranscript, audioMetrics, sessionMode);
@@ -454,8 +485,14 @@ router.get('/:id/status', requireAuth, async (req, res) => {
   // Fall back to in-memory store
   const mem = memStore.get(id);
   if (!mem) return res.status(404).json({ error: 'Session not found' });
-  if (mem.status === 'complete' && mem.result) return res.json({ status: 'complete', ...mem.result, mode: mem.mode || mem.result?.mode || 'cold_call' });
-  if (mem.status === 'error') return res.status(500).json({ error: mem.errorMessage || 'Analysis failed' });
+  if (mem.status === 'complete' && mem.result)
+    return res.json({
+      status: 'complete',
+      ...mem.result,
+      mode: mem.mode || mem.result?.mode || 'cold_call',
+    });
+  if (mem.status === 'error')
+    return res.status(500).json({ error: mem.errorMessage || 'Analysis failed' });
   return res.json({ status: 'processing', mode: mem.mode || 'cold_call' });
 });
 
@@ -474,7 +511,9 @@ async function processSession(sessionId, { elevenlabs_conversation_id, duration_
   // Check session exists in DB or memStore — proceed as long as one has it
   let useMemOnly = false;
   try {
-    const check = await db.query('SELECT id, persona_id, mode FROM sessions WHERE id = $1', [sessionId]);
+    const check = await db.query('SELECT id, persona_id, mode FROM sessions WHERE id = $1', [
+      sessionId,
+    ]);
     if (check.rows.length === 0 && !memSession) {
       console.error('processSession: session not found anywhere, skipping —', sessionId);
       return;
@@ -513,10 +552,11 @@ async function processSession(sessionId, { elevenlabs_conversation_id, duration_
   // Surface transcript and deterministic metrics before grading completes so the UI can render early.
   if (!useMemOnly) {
     try {
-      await db.query(
-        `UPDATE sessions SET transcript = $1, audio_metrics = $2 WHERE id = $3`,
-        [JSON.stringify(transcript), JSON.stringify(audioMetrics), sessionId]
-      );
+      await db.query(`UPDATE sessions SET transcript = $1, audio_metrics = $2 WHERE id = $3`, [
+        JSON.stringify(transcript),
+        JSON.stringify(audioMetrics),
+        sessionId,
+      ]);
     } catch (err) {
       console.error('DB error saving partial analysis:', err.message);
     }
@@ -544,9 +584,24 @@ async function processSession(sessionId, { elevenlabs_conversation_id, duration_
     }
   } catch (err) {
     console.error('Claude fast grading error:', err.message);
-    grading = sessionMode === 'investor_pitch'
-      ? { overall_score: 0, score_breakdown: { problem_clarity: 0, why_now: 0, right_to_win: 0, ask_clarity: 0 }, headline: 'Analysis failed — check server logs', call_verdict: null, call_momentum: null, next_session_focus: null }
-      : { overall_score: 0, score_breakdown: { opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 }, headline: 'Analysis failed — check server logs', call_verdict: null, call_momentum: null, next_session_focus: null };
+    grading =
+      sessionMode === 'investor_pitch'
+        ? {
+            overall_score: 0,
+            score_breakdown: { problem_clarity: 0, why_now: 0, right_to_win: 0, ask_clarity: 0 },
+            headline: 'Analysis failed — check server logs',
+            call_verdict: null,
+            call_momentum: null,
+            next_session_focus: null,
+          }
+        : {
+            overall_score: 0,
+            score_breakdown: { opening: 0, objections: 0, talk_ratio: 0, clear_ask: 0 },
+            headline: 'Analysis failed — check server logs',
+            call_verdict: null,
+            call_momentum: null,
+            next_session_focus: null,
+          };
   }
 
   // 4. Persist results
@@ -560,7 +615,7 @@ async function storeResults(sessionId, useMemOnly, grading, transcript, audioMet
     call_verdict: grading.call_verdict || null,
     call_momentum: grading.call_momentum || null,
     next_session_focus: grading.next_session_focus || null,
-    mode: sessionMode || 'cold_call',  // persist mode in JSON so status API can read it even if column is NULL
+    mode: sessionMode || 'cold_call', // persist mode in JSON so status API can read it even if column is NULL
   };
 
   let savedToDb = false;
@@ -601,7 +656,9 @@ async function storeResults(sessionId, useMemOnly, grading, transcript, audioMet
     },
   });
 
-  console.log(`Session ${sessionId} (${sessionMode}) — score: ${grading.overall_score}, verdict: ${grading.call_verdict || 'n/a'} (${savedToDb ? 'DB+mem' : 'mem only'})`);
+  console.log(
+    `Session ${sessionId} (${sessionMode}) — score: ${grading.overall_score}, verdict: ${grading.call_verdict || 'n/a'} (${savedToDb ? 'DB+mem' : 'mem only'})`
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -614,11 +671,11 @@ router.post('/:id/deep-analysis', requireAuth, async (req, res) => {
   // Verify session ownership
   let ownerId = null;
   try {
-    const { rows } = await db.query(
-      'SELECT user_id FROM sessions WHERE id = $1', [id]
-    );
+    const { rows } = await db.query('SELECT user_id FROM sessions WHERE id = $1', [id]);
     if (rows.length > 0) ownerId = rows[0].user_id;
-  } catch { /* fall through */ }
+  } catch {
+    /* fall through */
+  }
 
   if (ownerId && userId && ownerId !== userId) {
     return res.status(403).json({ error: 'Forbidden' });
@@ -679,7 +736,8 @@ router.get('/:id/deep-status', requireAuth, async (req, res) => {
 
   const mem = memStore.get(id);
   if (!mem) return res.status(404).json({ error: 'Session not found' });
-  if (mem.deep_status === 'complete' && mem.deep_result) return res.json({ status: 'complete', ...mem.deep_result });
+  if (mem.deep_status === 'complete' && mem.deep_result)
+    return res.json({ status: 'complete', ...mem.deep_result });
   if (mem.deep_status === 'processing') return res.json({ status: 'processing' });
   return res.json({ status: 'pending' });
 });
@@ -708,13 +766,19 @@ async function processDeepSession(sessionId) {
     }
   } catch (err) {
     console.error('Deep grading error:', err.message);
-    memStore.set(sessionId, { ...memStore.get(sessionId), deep_status: 'error', deep_error: err.message });
+    memStore.set(sessionId, {
+      ...memStore.get(sessionId),
+      deep_status: 'error',
+      deep_error: err.message,
+    });
     // Also update DB
     try {
-      await db.query(
-        `UPDATE sessions SET deep_analysis_status = 'error' WHERE id = $1`, [sessionId]
-      );
-    } catch { /* ignore DB errors */ }
+      await db.query(`UPDATE sessions SET deep_analysis_status = 'error' WHERE id = $1`, [
+        sessionId,
+      ]);
+    } catch {
+      /* ignore DB errors */
+    }
     return;
   }
 
@@ -735,7 +799,9 @@ async function processDeepSession(sessionId) {
     console.error('DB error saving deep analysis:', err.message);
   }
 
-  console.log(`Deep analysis complete for session ${sessionId} — ${(deepResult.annotated_transcript || []).length} turns annotated`);
+  console.log(
+    `Deep analysis complete for session ${sessionId} — ${(deepResult.annotated_transcript || []).length} turns annotated`
+  );
 }
 
 module.exports = router;

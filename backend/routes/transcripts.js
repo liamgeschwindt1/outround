@@ -51,7 +51,7 @@ router.get('/transcripts', requireAuth, async (req, res) => {
     );
 
     res.json({
-      transcripts: rows.map(r => ({
+      transcripts: rows.map((r) => ({
         id: r.id,
         recall_bot_id: r.recall_bot_id,
         meeting_title: r.meeting_title || 'Untitled meeting',

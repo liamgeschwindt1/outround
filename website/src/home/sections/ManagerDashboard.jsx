@@ -34,7 +34,6 @@ function RepRadarCanvas({ scores, strokeColor, size = 200, animated = true }) {
     const maxR = size * 0.35;
     const labelR = size * 0.46;
 
-    let progress = animated ? 0 : 1;
     const startTime = performance.now();
     const duration = 900;
 
@@ -77,23 +76,24 @@ function RepRadarCanvas({ scores, strokeColor, size = 200, animated = true }) {
 
       // Fill (semi-transparent)
       ctx.beginPath();
-      pts.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+      pts.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
       ctx.closePath();
-      ctx.fillStyle = strokeColor.replace(')', ', 0.15)').replace('rgb(', 'rgba(') || 'rgba(242,107,69,0.15)';
+      ctx.fillStyle =
+        strokeColor.replace(')', ', 0.15)').replace('rgb(', 'rgba(') || 'rgba(242,107,69,0.15)';
       // Simpler: use a fixed alpha overlay based on the first stop colour
       ctx.fillStyle = 'rgba(242,107,69,0.14)';
       ctx.fill();
 
       // Stroke
       ctx.beginPath();
-      pts.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+      pts.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
       ctx.closePath();
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       // Dots
-      pts.forEach(pt => {
+      pts.forEach((pt) => {
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, 2.5, 0, Math.PI * 2);
         ctx.fillStyle = strokeColor;
@@ -129,7 +129,9 @@ function RepRadarCanvas({ scores, strokeColor, size = 200, animated = true }) {
     }
     animRef.current = requestAnimationFrame(frame);
 
-    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+    return () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+    };
   }, [size, animated, scores, strokeColor]);
 
   return <canvas ref={canvasRef} style={{ display: 'block' }} />;
@@ -191,47 +193,76 @@ function RepCard({ rep, delay, isInView }) {
       {/* Radar */}
       <div style={{ marginBottom: 12 }}>
         {isInView && (
-          <RepRadarCanvas
-            scores={rep.scores}
-            strokeColor={rep.strokeColor}
-            size={200}
-            animated
-          />
+          <RepRadarCanvas scores={rep.scores} strokeColor={rep.strokeColor} size={200} animated />
         )}
       </div>
 
       {/* Name + role */}
       <div style={{ textAlign: 'center', marginBottom: 8, width: '100%' }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 16,
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+          }}
+        >
           {rep.name}
         </div>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 12,
+            color: 'var(--text-muted)',
+            marginTop: 2,
+          }}
+        >
           {rep.role}
         </div>
       </div>
 
       {/* Calls */}
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
+      <div
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          color: 'var(--text-muted)',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          marginBottom: 10,
+        }}
+      >
         {rep.calls} calls captured
       </div>
 
       {/* Insight */}
-      <div style={{
-        width: '100%',
-        background: 'var(--bg)',
-        border: '0.5px solid var(--border)',
-        borderRadius: 6,
-        padding: '8px 10px',
-        fontFamily: 'var(--font-body)',
-        fontSize: 12,
-        color: rep.insightColor,
-        lineHeight: 1.5,
-        textAlign: 'center',
-        marginBottom: 6,
-      }}>
+      <div
+        style={{
+          width: '100%',
+          background: 'var(--bg)',
+          border: '0.5px solid var(--border)',
+          borderRadius: 6,
+          padding: '8px 10px',
+          fontFamily: 'var(--font-body)',
+          fontSize: 12,
+          color: rep.insightColor,
+          lineHeight: 1.5,
+          textAlign: 'center',
+          marginBottom: 6,
+        }}
+      >
         {rep.insight}
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.06em', textAlign: 'center', opacity: 0.7 }}>
+      <div
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 9,
+          color: 'var(--text-muted)',
+          letterSpacing: '0.06em',
+          textAlign: 'center',
+          opacity: 0.7,
+        }}
+      >
         sample · connect Outround for real data
       </div>
     </motion.div>
@@ -248,7 +279,9 @@ export default function ManagerDashboard() {
   // Close modal on Escape
   useEffect(() => {
     if (!modalOpen) return;
-    const onKey = (e) => { if (e.key === 'Escape') setModalOpen(false); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setModalOpen(false);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [modalOpen]);
@@ -268,10 +301,27 @@ export default function ManagerDashboard() {
       }}
     >
       <div style={{ width: '100%', maxWidth: 860 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 12 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            marginBottom: 12,
+          }}
+        >
           Your team, visible for the first time
         </div>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontStyle: 'italic', color: 'var(--text-muted)', marginBottom: 48 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 14,
+            fontStyle: 'italic',
+            color: 'var(--text-muted)',
+            marginBottom: 48,
+          }}
+        >
           Every rep. Every pattern. Every call.
         </div>
 
@@ -291,8 +341,25 @@ export default function ManagerDashboard() {
             marginBottom: 28,
           }}
         >
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--coral)', opacity: 0.7, flexShrink: 0, display: 'inline-block' }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
+          <span
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              background: 'var(--coral)',
+              opacity: 0.7,
+              flexShrink: 0,
+              display: 'inline-block',
+            }}
+          />
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              color: 'var(--text-muted)',
+              letterSpacing: '0.1em',
+            }}
+          >
             Sample data - integrate Outround to see your real team
           </span>
         </motion.div>
@@ -322,8 +389,14 @@ export default function ManagerDashboard() {
               minHeight: 44,
               transition: 'border-color 0.15s, background 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(242,107,69,0.6)'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-md)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(242,107,69,0.6)';
+              e.currentTarget.style.background = 'var(--bg-hover)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-md)';
+              e.currentTarget.style.background = 'var(--bg-card)';
+            }}
           >
             See rep profiles →
           </button>
@@ -336,28 +409,53 @@ export default function ManagerDashboard() {
           transition={{ duration: 0.4, delay: 0.48 }}
           style={{ marginBottom: 40 }}
         >
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(15px, 2vw, 18px)', fontWeight: 500, color: 'var(--text-sub)', marginBottom: 6 }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(15px, 2vw, 18px)',
+              fontWeight: 500,
+              color: 'var(--text-sub)',
+              marginBottom: 6,
+            }}
+          >
             Team close rate this week
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 8 }}>
-            <span style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(52px, 8vw, 80px)',
-              fontWeight: 800,
-              lineHeight: 1,
-              background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              letterSpacing: '-0.03em',
-            }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 'clamp(52px, 8vw, 80px)',
+                fontWeight: 800,
+                lineHeight: 1,
+                background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                letterSpacing: '-0.03em',
+              }}
+            >
               +12%
             </span>
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(14px, 1.8vw, 17px)', color: 'var(--text-sub)', fontWeight: 400 }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'clamp(14px, 1.8vw, 17px)',
+                color: 'var(--text-sub)',
+                fontWeight: 400,
+              }}
+            >
               vs last week
             </span>
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', fontStyle: 'italic' }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              color: 'var(--text-muted)',
+              letterSpacing: '0.08em',
+              fontStyle: 'italic',
+            }}
+          >
             Illustrative. Your numbers update automatically once connected.
           </div>
         </motion.div>
@@ -414,7 +512,7 @@ export default function ManagerDashboard() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
               transition={{ duration: 0.25, ease: [0.0, 0.0, 0.2, 1] }}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
               style={{
                 background: 'var(--bg-card)',
                 border: '0.5px solid var(--border-md)',
@@ -427,12 +525,35 @@ export default function ManagerDashboard() {
               }}
             >
               {/* Modal header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 28,
+                }}
+              >
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 11,
+                      color: 'var(--text-muted)',
+                      letterSpacing: '0.14em',
+                      textTransform: 'uppercase',
+                      marginBottom: 6,
+                    }}
+                  >
                     Rep profiles
                   </div>
-                  <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 13,
+                      color: 'var(--text-muted)',
+                      fontStyle: 'italic',
+                    }}
+                  >
                     Sample data — connect Outround to see your real team
                   </div>
                 </div>
@@ -467,4 +588,3 @@ export default function ManagerDashboard() {
     </section>
   );
 }
-

@@ -7,7 +7,15 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 6, fontFamily: T.mono, fontSize: 10, letterSpacing: 0.8, color: T.t3 }}>
+      <div
+        style={{
+          marginBottom: 6,
+          fontFamily: T.mono,
+          fontSize: 10,
+          letterSpacing: 0.8,
+          color: T.t3,
+        }}
+      >
         MEETINGS
       </div>
       <WeekCalendar {...meetings} />

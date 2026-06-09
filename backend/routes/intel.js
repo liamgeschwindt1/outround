@@ -24,10 +24,9 @@
 
 const express = require('express');
 const router = express.Router();
-const meetingIntel    = require('../services/meeting-intel');
-const gladia          = require('../services/gladia');
-const calendarPoller  = require('../services/calendar-poller');
-const tokenManager    = require('../services/token-manager');
+const meetingIntel = require('../services/meeting-intel');
+const gladia = require('../services/gladia');
+const calendarPoller = require('../services/calendar-poller');
 const { requireAuth } = require('../middleware/auth');
 
 // ── Internal auth guard ─────────────────────────────────────────────────────
@@ -61,16 +60,44 @@ function guard(req, res, next) {
 // ── Fake transcript used for Step 1 testing ────────────────────────────────
 
 const FAKE_TRANSCRIPT = [
-  { speaker: 'Rep', text: "Hi, is this Henrik? Great — this is James from Outround. I'll keep it short. We help B2B sales teams cut cold-call prep time by 60%. Given your team size at Vandermeer, that's probably 2 hours per rep per week. Worth 15 minutes?", start: 0 },
-  { speaker: 'Prospect', text: "I have five minutes. What exactly are you offering?", start: 18 },
-  { speaker: 'Rep', text: "We give reps a realistic AI persona to practise against before the real call — they go in scored and briefed, not guessing. Teams using it see 30% more meetings booked in the first month.", start: 28 },
-  { speaker: 'Prospect', text: "We already use a training platform. I don't see why we need another tool.", start: 52 },
-  { speaker: 'Rep', text: "Understood. The difference is we're not training — we're readiness. Your reps aren't slow because they haven't been trained, they're slow because they haven't warmed up for this specific call. Different problem.", start: 62 },
+  {
+    speaker: 'Rep',
+    text: "Hi, is this Henrik? Great — this is James from Outround. I'll keep it short. We help B2B sales teams cut cold-call prep time by 60%. Given your team size at Vandermeer, that's probably 2 hours per rep per week. Worth 15 minutes?",
+    start: 0,
+  },
+  { speaker: 'Prospect', text: 'I have five minutes. What exactly are you offering?', start: 18 },
+  {
+    speaker: 'Rep',
+    text: 'We give reps a realistic AI persona to practise against before the real call — they go in scored and briefed, not guessing. Teams using it see 30% more meetings booked in the first month.',
+    start: 28,
+  },
+  {
+    speaker: 'Prospect',
+    text: "We already use a training platform. I don't see why we need another tool.",
+    start: 52,
+  },
+  {
+    speaker: 'Rep',
+    text: "Understood. The difference is we're not training — we're readiness. Your reps aren't slow because they haven't been trained, they're slow because they haven't warmed up for this specific call. Different problem.",
+    start: 62,
+  },
   { speaker: 'Prospect', text: "That's an interesting distinction. What does it cost?", start: 88 },
-  { speaker: 'Rep', text: "For a team your size, €99 per seat per month. Most teams get ROI in the first week if they close one extra deal.", start: 98 },
-  { speaker: 'Prospect', text: "I'd need to see data on that. Can you send me a case study and we'll talk next week?", start: 112 },
-  { speaker: 'Rep', text: "Absolutely. I'll send it today. Does Thursday at 10am CET work for a 15-minute follow-up?", start: 128 },
-  { speaker: 'Prospect', text: "Yes, Thursday works.", start: 140 },
+  {
+    speaker: 'Rep',
+    text: 'For a team your size, €99 per seat per month. Most teams get ROI in the first week if they close one extra deal.',
+    start: 98,
+  },
+  {
+    speaker: 'Prospect',
+    text: "I'd need to see data on that. Can you send me a case study and we'll talk next week?",
+    start: 112,
+  },
+  {
+    speaker: 'Rep',
+    text: "Absolutely. I'll send it today. Does Thursday at 10am CET work for a 15-minute follow-up?",
+    start: 128,
+  },
+  { speaker: 'Prospect', text: 'Yes, Thursday works.', start: 140 },
 ];
 
 // ── Routes ─────────────────────────────────────────────────────────────────
@@ -92,13 +119,17 @@ router.post('/test-pipeline', guard, async (req, res) => {
 
   try {
     const creds = await resolveCreds(req);
-    const result = await meetingIntel.runPipeline(transcript, {
-      prospectEmail,
-      prospectName,
-      meetingTitle,
-      attendees,
-      date,
-    }, creds);
+    const result = await meetingIntel.runPipeline(
+      transcript,
+      {
+        prospectEmail,
+        prospectName,
+        meetingTitle,
+        attendees,
+        date,
+      },
+      creds
+    );
     res.json({ ok: true, result });
   } catch (err) {
     console.error('[intel/test-pipeline]', err);
@@ -132,8 +163,8 @@ router.post('/transcribe', guard, async (req, res) => {
   const { audioUrl, language, numSpeakers } = req.body;
   if (!audioUrl) return res.status(400).json({ error: '`audioUrl` is required' });
 
-  const creds   = await resolveCreds(req);
-  const apiKey  = creds.gladiaApiKey || process.env.GLADIA_API_KEY;
+  const creds = await resolveCreds(req);
+  const apiKey = creds.gladiaApiKey || process.env.GLADIA_API_KEY;
   if (!apiKey) return res.status(503).json({ error: 'GLADIA_API_KEY not set' });
 
   try {

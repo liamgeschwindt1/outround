@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 
 const SCENES = [
   'Incoming brief',
@@ -11,7 +12,7 @@ const SCENES = [
   'Intelligence orb',
 ];
 
-export default function ProgressDots({ current }) {
+function ProgressDots({ current }) {
   return (
     <div
       style={{
@@ -65,3 +66,9 @@ export default function ProgressDots({ current }) {
     </div>
   );
 }
+
+ProgressDots.propTypes = {
+  current: PropTypes.number.isRequired,
+};
+
+export default ProgressDots;

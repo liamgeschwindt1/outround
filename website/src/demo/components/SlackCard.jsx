@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 function OutroundLogo() {
   return (
@@ -37,9 +38,14 @@ function OutroundLogo() {
   );
 }
 
-export default function SlackCard({ title, timestamp, children, onMount, style = {} }) {
+function SlackCard({ timestamp, children, onMount, style = {} }) {
+  const onMountRef = useRef(onMount);
   useEffect(() => {
-    onMount?.();
+    onMountRef.current = onMount;
+  });
+
+  useEffect(() => {
+    onMountRef.current?.();
   }, []);
 
   return (
@@ -96,3 +102,12 @@ export default function SlackCard({ title, timestamp, children, onMount, style =
     </motion.div>
   );
 }
+
+SlackCard.propTypes = {
+  timestamp: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+  onMount: PropTypes.func,
+  style: PropTypes.object,
+};
+
+export default SlackCard;

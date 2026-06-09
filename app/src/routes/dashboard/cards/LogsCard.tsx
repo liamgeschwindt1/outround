@@ -19,16 +19,16 @@ interface LogsResponse {
 }
 
 const LEVEL_COLOR: Record<string, string> = {
-  info:    T.t3,
-  warn:    T.amber,
-  error:   T.red,
+  info: T.t3,
+  warn: T.amber,
+  error: T.red,
   success: T.green,
 };
 
 const LEVEL_BADGE: Record<string, string> = {
-  info:    'INFO',
-  warn:    'WARN',
-  error:   'ERR ',
+  info: 'INFO',
+  warn: 'WARN',
+  error: 'ERR ',
   success: 'OK  ',
 };
 
@@ -36,13 +36,18 @@ const TAG_COLOR: Record<string, string> = {
   session: T.sky,
   meeting: '#a78bfa',
   backend: T.coral,
-  server:  T.t2,
-  db:      T.amber,
+  server: T.t2,
+  db: T.amber,
 };
 
 function fmtTs(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  return d.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
 }
 
 export function LogsCard() {
@@ -55,15 +60,18 @@ export function LogsCard() {
   useEffect(() => {
     if (!autoRefresh) return;
     const id = setInterval(refetch, 5000);
-    return () => { clearInterval(id); };
+    return () => {
+      clearInterval(id);
+    };
   }, [autoRefresh, refetch]);
 
   const logs = data?.logs ?? [];
   const filtered = filter
-    ? logs.filter(l =>
-        l.message.toLowerCase().includes(filter.toLowerCase()) ||
-        l.tag.toLowerCase().includes(filter.toLowerCase()) ||
-        l.level.toLowerCase().includes(filter.toLowerCase())
+    ? logs.filter(
+        (l) =>
+          l.message.toLowerCase().includes(filter.toLowerCase()) ||
+          l.tag.toLowerCase().includes(filter.toLowerCase()) ||
+          l.level.toLowerCase().includes(filter.toLowerCase())
       )
     : logs;
 
@@ -78,7 +86,9 @@ export function LogsCard() {
               type="text"
               placeholder="filter…"
               value={filter}
-              onChange={e => { setFilter(e.target.value); }}
+              onChange={(e) => {
+                setFilter(e.target.value);
+              }}
               style={{
                 height: 28,
                 padding: '0 10px',
@@ -95,7 +105,9 @@ export function LogsCard() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => { setAutoRefresh(v => !v); }}
+              onClick={() => {
+                setAutoRefresh((v) => !v);
+              }}
               style={{ color: autoRefresh ? T.green : T.t2 }}
             >
               {autoRefresh ? '● live' : '○ live'}
@@ -123,11 +135,7 @@ export function LogsCard() {
         }}
       >
         {loading && !data && <SkeletonLines count={8} />}
-        {!loading && error && (
-          <div style={{ color: T.red }}>
-            ERR  [api] {error}
-          </div>
-        )}
+        {!loading && error && <div style={{ color: T.red }}>ERR [api] {error}</div>}
         {!loading && !error && filtered.length === 0 && (
           <div style={{ color: T.t3 }}>— no entries —</div>
         )}
@@ -175,11 +183,11 @@ export function LogsCard() {
             {/* message */}
             <span style={{ color: T.t1, flex: 1, wordBreak: 'break-word' }}>
               {entry.message}
-              {entry.meta && Object.keys(entry.meta).length > 0 && (
+              {Object.keys(entry.meta).length > 0 && (
                 <span style={{ color: T.t3, marginLeft: 8 }}>
                   {Object.entries(entry.meta)
                     .filter(([, v]) => v != null)
-                    .map(([k, v]) => `${k}=${v}`)
+                    .map(([k, v]) => `${k}=${String(v)}`)
                     .join(' ')}
                 </span>
               )}

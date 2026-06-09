@@ -14,13 +14,11 @@ async function gradeSession(transcript, audioMetrics, persona) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_KEY });
 
-  const transcriptText = transcript
-    .map((t) => `[${t.speaker.toUpperCase()}] ${t.text}`)
-    .join('\n');
+  const transcriptText = transcript.map((t) => `[${t.speaker.toUpperCase()}] ${t.text}`).join('\n');
 
   // Build a name-normalisation note if the persona declares a canonical name
   const nameNote = persona.canonical_name
-    ? `PROSPECT NAME NOTE: The prospect's canonical first name is "${persona.canonical_name}". STT transcription may produce variants such as ${(persona.phonetic_variants || [persona.canonical_name]).map(v => `"${v}"`).join(', ')}. Treat all phonetic variants as the same name. Never penalise the rep for a transcription spelling error on a proper noun — evaluate name usage on intent and consistency, not spelling.\n\n`
+    ? `PROSPECT NAME NOTE: The prospect's canonical first name is "${persona.canonical_name}". STT transcription may produce variants such as ${(persona.phonetic_variants || [persona.canonical_name]).map((v) => `"${v}"`).join(', ')}. Treat all phonetic variants as the same name. Never penalise the rep for a transcription spelling error on a proper noun — evaluate name usage on intent and consistency, not spelling.\n\n`
     : '';
 
   const prompt = `You are the grading engine for Outround, a cold-call practice platform. You are a brutal, commercially-minded coach who has reviewed thousands of cold calls. You have no patience for vague feedback or participation trophies.
@@ -107,14 +105,22 @@ sentiment_timeline label must be one of: engaged | checking_out | resistant | wa
   const raw = response.content[0].text.trim();
 
   // Strip any accidental markdown fences
-  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const cleaned = raw
+    .replace(/^```json?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
 
   try {
     return JSON.parse(cleaned);
   } catch (parseErr) {
-    console.error('Claude JSON parse failed. stop_reason:', response.stop_reason,
-      '| tokens used:', response.usage?.output_tokens,
-      '| raw (first 500):', raw.slice(0, 500));
+    console.error(
+      'Claude JSON parse failed. stop_reason:',
+      response.stop_reason,
+      '| tokens used:',
+      response.usage?.output_tokens,
+      '| raw (first 500):',
+      raw.slice(0, 500)
+    );
     throw new Error('Claude returned unparseable response: ' + parseErr.message);
   }
 }
@@ -130,12 +136,10 @@ async function gradeSessionFast(transcript, audioMetrics, persona) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_KEY });
 
-  const transcriptText = transcript
-    .map((t) => `[${t.speaker.toUpperCase()}] ${t.text}`)
-    .join('\n');
+  const transcriptText = transcript.map((t) => `[${t.speaker.toUpperCase()}] ${t.text}`).join('\n');
 
   const nameNote = persona.canonical_name
-    ? `PROSPECT NAME NOTE: The prospect's canonical first name is "${persona.canonical_name}". STT may produce variants like ${(persona.phonetic_variants || [persona.canonical_name]).map(v => `"${v}"`).join(', ')}. Never penalise the rep for a transcription spelling error.\n\n`
+    ? `PROSPECT NAME NOTE: The prospect's canonical first name is "${persona.canonical_name}". STT may produce variants like ${(persona.phonetic_variants || [persona.canonical_name]).map((v) => `"${v}"`).join(', ')}. Never penalise the rep for a transcription spelling error.\n\n`
     : '';
 
   const prompt = `You are a brutal cold-call grading engine. Grade this call quickly and return ONLY valid JSON — no preamble, no markdown fences.
@@ -180,7 +184,10 @@ Return JSON:
   });
 
   const raw = response.content[0].text.trim();
-  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const cleaned = raw
+    .replace(/^```json?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
 
   try {
     return JSON.parse(cleaned);
@@ -268,13 +275,16 @@ Return ONLY valid JSON, no markdown fences:
   });
 
   const raw = response.content[0].text.trim();
-  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const cleaned = raw
+    .replace(/^```json?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
 
   try {
     const result = JSON.parse(cleaned);
     // Merge annotations back into transcript turns
     const annotated = transcript.map((turn, i) => {
-      const ann = (result.annotated_transcript || []).find(a => a.index === i);
+      const ann = (result.annotated_transcript || []).find((a) => a.index === i);
       return {
         ...turn,
         quality: ann?.quality || (turn.speaker === 'rep' ? 'neutral' : 'neutral'),
@@ -306,9 +316,7 @@ async function gradePitchFast(transcript, audioMetrics, persona) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_KEY });
 
-  const transcriptText = transcript
-    .map((t) => `[${t.speaker.toUpperCase()}] ${t.text}`)
-    .join('\n');
+  const transcriptText = transcript.map((t) => `[${t.speaker.toUpperCase()}] ${t.text}`).join('\n');
 
   const nameNote = persona.canonical_name
     ? `INVESTOR NAME NOTE: The investor's canonical first name is "${persona.canonical_name}". Never penalise STT spelling errors.\n\n`
@@ -362,7 +370,10 @@ Return JSON:
   });
 
   const raw = response.content[0].text.trim();
-  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const cleaned = raw
+    .replace(/^```json?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
 
   try {
     return JSON.parse(cleaned);
@@ -450,12 +461,15 @@ Return ONLY valid JSON, no markdown fences:
   });
 
   const raw = response.content[0].text.trim();
-  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const cleaned = raw
+    .replace(/^```json?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
 
   try {
     const result = JSON.parse(cleaned);
     const annotated = transcript.map((turn, i) => {
-      const ann = (result.annotated_transcript || []).find(a => a.index === i);
+      const ann = (result.annotated_transcript || []).find((a) => a.index === i);
       return {
         ...turn,
         quality: ann?.quality || 'neutral',
@@ -482,15 +496,25 @@ const PREP_MODEL = process.env.ANTHROPIC_PREP_MODEL || 'claude-sonnet-4-6';
 function buildCrmContext({ person, deal, notes, activities }) {
   const lines = [];
   if (person) {
-    lines.push(`PROSPECT: ${person.name || 'unknown'}${person.title ? ` — ${person.title}` : ''}${person.org ? ` at ${person.org}` : ''}`);
+    lines.push(
+      `PROSPECT: ${person.name || 'unknown'}${person.title ? ` — ${person.title}` : ''}${person.org ? ` at ${person.org}` : ''}`
+    );
     if (person.email) lines.push(`Email: ${person.email}`);
-    if (person.open_deals_count != null) lines.push(`Open deals: ${person.open_deals_count} | Closed: ${person.closed_deals_count ?? 0}`);
+    if (person.open_deals_count != null)
+      lines.push(
+        `Open deals: ${person.open_deals_count} | Closed: ${person.closed_deals_count ?? 0}`
+      );
     if (person.last_activity_date) lines.push(`Last activity: ${person.last_activity_date}`);
   }
   if (deal) {
     lines.push('');
-    lines.push(`DEAL: ${deal.title}${deal.value ? ` — ${deal.value}${deal.currency ? ' ' + deal.currency : ''}` : ''}`);
-    if (deal.stage_name) lines.push(`Stage: ${deal.stage_name}${deal.days_in_stage != null ? ` (${deal.days_in_stage} days)` : ''}`);
+    lines.push(
+      `DEAL: ${deal.title}${deal.value ? ` — ${deal.value}${deal.currency ? ' ' + deal.currency : ''}` : ''}`
+    );
+    if (deal.stage_name)
+      lines.push(
+        `Stage: ${deal.stage_name}${deal.days_in_stage != null ? ` (${deal.days_in_stage} days)` : ''}`
+      );
     if (deal.probability != null) lines.push(`Probability: ${deal.probability}%`);
     if (deal.expected_close_date) lines.push(`Expected close: ${deal.expected_close_date}`);
   }
@@ -498,7 +522,7 @@ function buildCrmContext({ person, deal, notes, activities }) {
   if (recentNotes.length) {
     lines.push('');
     lines.push('CRM NOTES (most recent first):');
-    recentNotes.forEach(n => {
+    recentNotes.forEach((n) => {
       const when = n.add_time ? n.add_time.split('T')[0] : '';
       const body = (n.content || '').slice(0, 600);
       if (body) lines.push(`- [${when}] ${body}`);
@@ -508,11 +532,13 @@ function buildCrmContext({ person, deal, notes, activities }) {
   if (recentActivities.length) {
     lines.push('');
     lines.push('ACTIVITIES (most recent first):');
-    recentActivities.forEach(a => {
+    recentActivities.forEach((a) => {
       const when = a.marked_as_done_time || a.due_date || a.add_time || '';
       const status = a.done ? 'done' : 'open';
       const note = a.note ? ` — ${a.note.slice(0, 200)}` : '';
-      lines.push(`- [${when}] ${a.type || 'activity'} (${status}): ${a.subject || '(no subject)'}${note}`);
+      lines.push(
+        `- [${when}] ${a.type || 'activity'} (${status}): ${a.subject || '(no subject)'}${note}`
+      );
     });
   }
   return lines.join('\n').trim() || 'No CRM data available for this prospect.';
@@ -537,7 +563,15 @@ function buildCrmContext({ person, deal, notes, activities }) {
  *     }
  *   }
  */
-async function generateMeetingPrepIntel({ meeting, person, deal, notes, activities, user, userStats }) {
+async function generateMeetingPrepIntel({
+  meeting,
+  person,
+  deal,
+  notes,
+  activities,
+  user,
+  userStats,
+}) {
   if (!process.env.ANTHROPIC_KEY) throw new Error('ANTHROPIC_KEY not configured');
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_KEY });
 
@@ -546,7 +580,9 @@ async function generateMeetingPrepIntel({ meeting, person, deal, notes, activiti
   const repWeakSpots = (() => {
     if (!userStats || !userStats.score_breakdown) return 'No prior round data yet.';
     const sb = userStats.score_breakdown;
-    const entries = Object.entries(sb).sort((a, b) => a[1] - b[1]).slice(0, 2);
+    const entries = Object.entries(sb)
+      .sort((a, b) => a[1] - b[1])
+      .slice(0, 2);
     return entries.map(([k, v]) => `${k}: ${v}/100`).join(', ');
   })();
 
@@ -598,7 +634,10 @@ Return ONLY valid JSON, no preamble, no markdown fences:
   });
 
   const raw = response.content[0].text.trim();
-  const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const cleaned = raw
+    .replace(/^```json?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
   try {
     return JSON.parse(cleaned);
   } catch (parseErr) {

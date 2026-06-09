@@ -5,28 +5,80 @@
 // ---------------------------------------------------------------------------
 const TEST_TRANSCRIPTS = {
   cold_call: [
-    { speaker: 'rep',      text: "Hendrik, quick call — two minutes. I saw Vandermeer grew 40% last year, adding three new depots. That kind of expansion typically creates one specific finance problem: spend variance that doesn't surface until after quarter close because the reconciliation process hasn't scaled with the business. Is that showing up for you?", start_ms: 0 },
-    { speaker: 'prospect', text: "Who gave you this number? Make it quick — I have a meeting in five minutes.", start_ms: 8000 },
-    { speaker: 'rep',      text: "Understood. I'm Alex from Spendly. We work with logistics CFOs in the Netherlands who are scaling fast and hitting the same reconciliation wall. I found you on LinkedIn — your growth numbers stood out. The specific problem I'm solving is close cycle time. CFOs at your growth stage typically close a quarter 10 to 14 days late because cost centre data sits across too many systems. What does your current close cycle look like?", start_ms: 12000 },
-    { speaker: 'prospect', text: "We manage it. We have systems in place.", start_ms: 28000 },
-    { speaker: 'rep',      text: "I'd expect that. The CFOs I speak to who say that usually have the right systems — they just have too many of them. The problem isn't capability, it's consolidation time. I'm not asking you to change anything. I want 20 minutes to show you one number your current stack probably can't surface in under an hour. If it's not useful, tell me and I won't call again.", start_ms: 33000 },
-    { speaker: 'prospect', text: "What number exactly?", start_ms: 53000 },
-    { speaker: 'rep',      text: "Real-time committed spend versus approved budget, broken down by depot, updated within the hour. Most logistics CFOs I speak to can only get that view at month end. I want to show you what that looks like live. Thursday at 2pm — does that work? I'll send a calendar invite you can decline if it no longer makes sense.", start_ms: 56000 },
-    { speaker: 'prospect', text: "Fine. Send me a calendar invite for Thursday.", start_ms: 73000 },
-    { speaker: 'rep',      text: "Done. Thursday 2pm — I'll send the invite with a one-line agenda. Thank you, Hendrik.", start_ms: 77000 },
+    {
+      speaker: 'rep',
+      text: "Hendrik, quick call — two minutes. I saw Vandermeer grew 40% last year, adding three new depots. That kind of expansion typically creates one specific finance problem: spend variance that doesn't surface until after quarter close because the reconciliation process hasn't scaled with the business. Is that showing up for you?",
+      start_ms: 0,
+    },
+    {
+      speaker: 'prospect',
+      text: 'Who gave you this number? Make it quick — I have a meeting in five minutes.',
+      start_ms: 8000,
+    },
+    {
+      speaker: 'rep',
+      text: "Understood. I'm Alex from Spendly. We work with logistics CFOs in the Netherlands who are scaling fast and hitting the same reconciliation wall. I found you on LinkedIn — your growth numbers stood out. The specific problem I'm solving is close cycle time. CFOs at your growth stage typically close a quarter 10 to 14 days late because cost centre data sits across too many systems. What does your current close cycle look like?",
+      start_ms: 12000,
+    },
+    { speaker: 'prospect', text: 'We manage it. We have systems in place.', start_ms: 28000 },
+    {
+      speaker: 'rep',
+      text: "I'd expect that. The CFOs I speak to who say that usually have the right systems — they just have too many of them. The problem isn't capability, it's consolidation time. I'm not asking you to change anything. I want 20 minutes to show you one number your current stack probably can't surface in under an hour. If it's not useful, tell me and I won't call again.",
+      start_ms: 33000,
+    },
+    { speaker: 'prospect', text: 'What number exactly?', start_ms: 53000 },
+    {
+      speaker: 'rep',
+      text: "Real-time committed spend versus approved budget, broken down by depot, updated within the hour. Most logistics CFOs I speak to can only get that view at month end. I want to show you what that looks like live. Thursday at 2pm — does that work? I'll send a calendar invite you can decline if it no longer makes sense.",
+      start_ms: 56000,
+    },
+    { speaker: 'prospect', text: 'Fine. Send me a calendar invite for Thursday.', start_ms: 73000 },
+    {
+      speaker: 'rep',
+      text: "Done. Thursday 2pm — I'll send the invite with a one-line agenda. Thank you, Hendrik.",
+      start_ms: 77000,
+    },
   ],
   investor_pitch: [
-    { speaker: 'rep',      text: "Natalie — the problem: 73% of European B2B sales reps go into high-stakes calls cold. Sales training tools analyse transcripts. None of them analyse your voice. Outround is a pre-performance readiness platform — not training, readiness. You pick your scenario, you face an AI persona that behaves exactly like the real prospect, you get a score on what you said and how you said it. We use Hume AI for vocal affect analysis — no competitor has this. Target is European SMB sales teams, 10 to 100 reps, pricing from 49 euros per seat per month. We have 12 paying teams in beta, 94% seat-level retention at day 60, median user runs 3.4 sessions per week. The landing page is a live demo — every visitor calls Hendrik, gets scored, and the shame of a bad score drives the share. We're raising 400,000 euros to reach 50 paying teams and prove the viral loop. That's the ask.", start_ms: 0 },
-    { speaker: 'prospect', text: "94% retention across 12 teams — how many total users is that?", start_ms: 62000 },
-    { speaker: 'rep',      text: "87 active users. 12 teams averaging 7 seats. The 94% is seat-level — 82 of the original 87 still active at day 60. We define active as at least two full practice sessions in the trailing two weeks. We set that bar deliberately high.", start_ms: 68000 },
-    { speaker: 'prospect', text: "What does the Hume AI integration actually surface that a transcript doesn't?", start_ms: 82000 },
-    { speaker: 'rep',      text: "Three things a transcript misses. First, pace under pressure — reps slow down or speed up when nervous and the voice signals it before they're aware. Second, the confidence of the close — whether an ask lands committed or tentative. Third, emotional congruence — when your words say confident but your voice says uncertain, Hendrik picks up on it. The model flags those exact moments in the feedback. That's the differentiation no transcript-only tool can replicate.", start_ms: 88000 },
+    {
+      speaker: 'rep',
+      text: "Natalie — the problem: 73% of European B2B sales reps go into high-stakes calls cold. Sales training tools analyse transcripts. None of them analyse your voice. Outround is a pre-performance readiness platform — not training, readiness. You pick your scenario, you face an AI persona that behaves exactly like the real prospect, you get a score on what you said and how you said it. We use Hume AI for vocal affect analysis — no competitor has this. Target is European SMB sales teams, 10 to 100 reps, pricing from 49 euros per seat per month. We have 12 paying teams in beta, 94% seat-level retention at day 60, median user runs 3.4 sessions per week. The landing page is a live demo — every visitor calls Hendrik, gets scored, and the shame of a bad score drives the share. We're raising 400,000 euros to reach 50 paying teams and prove the viral loop. That's the ask.",
+      start_ms: 0,
+    },
+    {
+      speaker: 'prospect',
+      text: '94% retention across 12 teams — how many total users is that?',
+      start_ms: 62000,
+    },
+    {
+      speaker: 'rep',
+      text: '87 active users. 12 teams averaging 7 seats. The 94% is seat-level — 82 of the original 87 still active at day 60. We define active as at least two full practice sessions in the trailing two weeks. We set that bar deliberately high.',
+      start_ms: 68000,
+    },
+    {
+      speaker: 'prospect',
+      text: "What does the Hume AI integration actually surface that a transcript doesn't?",
+      start_ms: 82000,
+    },
+    {
+      speaker: 'rep',
+      text: "Three things a transcript misses. First, pace under pressure — reps slow down or speed up when nervous and the voice signals it before they're aware. Second, the confidence of the close — whether an ask lands committed or tentative. Third, emotional congruence — when your words say confident but your voice says uncertain, Hendrik picks up on it. The model flags those exact moments in the feedback. That's the differentiation no transcript-only tool can replicate.",
+      start_ms: 88000,
+    },
     { speaker: 'prospect', text: "What's your biggest risk right now?", start_ms: 110000 },
-    { speaker: 'rep',      text: "Honest answer: distribution. The viral mechanic works in early data — our demo page has a 34% email capture rate from strangers, unprompted. The risk is it doesn't scale without a brand presence. The 400k gets us to 50 paying teams and a LinkedIn launch moment with real retention data behind it. That de-risks distribution before Series A.", start_ms: 115000 },
-    { speaker: 'prospect', text: "I want 30 minutes. Are you free Thursday?", start_ms: 133000 },
-    { speaker: 'rep',      text: "Thursday works. Morning or afternoon?", start_ms: 137000 },
-    { speaker: 'prospect', text: "10am. My EA will send a hold.", start_ms: 140000 },
-    { speaker: 'rep',      text: "Perfect. I'll have the retention data and the live demo ready. Thank you, Natalie.", start_ms: 143000 },
+    {
+      speaker: 'rep',
+      text: "Honest answer: distribution. The viral mechanic works in early data — our demo page has a 34% email capture rate from strangers, unprompted. The risk is it doesn't scale without a brand presence. The 400k gets us to 50 paying teams and a LinkedIn launch moment with real retention data behind it. That de-risks distribution before Series A.",
+      start_ms: 115000,
+    },
+    { speaker: 'prospect', text: 'I want 30 minutes. Are you free Thursday?', start_ms: 133000 },
+    { speaker: 'rep', text: 'Thursday works. Morning or afternoon?', start_ms: 137000 },
+    { speaker: 'prospect', text: '10am. My EA will send a hold.', start_ms: 140000 },
+    {
+      speaker: 'rep',
+      text: "Perfect. I'll have the retention data and the live demo ready. Thank you, Natalie.",
+      start_ms: 143000,
+    },
   ],
 };
 
@@ -59,10 +111,18 @@ function skipOnboarding() {
 }
 
 function updateUserUI() {
-  const ini = (_s.user.name || 'LG').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-  const el = document.getElementById('userAva'); if (el) el.textContent = ini;
-  const av = document.getElementById('ulbav'); if (av) av.textContent = ini;
-  const nm = document.getElementById('ulbn'); if (nm) nm.textContent = (_s.user.name || '').split(' ')[0] + ' (you)';
+  const ini = (_s.user.name || 'LG')
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+  const el = document.getElementById('userAva');
+  if (el) el.textContent = ini;
+  const av = document.getElementById('ulbav');
+  if (av) av.textContent = ini;
+  const nm = document.getElementById('ulbn');
+  if (nm) nm.textContent = (_s.user.name || '').split(' ')[0] + ' (you)';
 }
 
 // ---------------------------------------------------------------------------
@@ -75,11 +135,24 @@ async function beginSession() {
     const res = await fetch('/api/session/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_name: _s.user.name || null, user_email: _s.user.email || null, user_role: _s.user.role || null, persona_id, mode: _s.mode || 'cold_call' }),
+      body: JSON.stringify({
+        user_name: _s.user.name || null,
+        user_email: _s.user.email || null,
+        user_role: _s.user.role || null,
+        persona_id,
+        mode: _s.mode || 'cold_call',
+      }),
     });
-    if (res.ok) { const data = await res.json(); _s.sessionId = data.session_id; uiLog('Session created: ' + data.session_id, 'ok'); }
-    else { uiLog('Session start failed: HTTP ' + res.status, 'err'); }
-  } catch (err) { uiLog('Session start error: ' + err.message, 'err'); }
+    if (res.ok) {
+      const data = await res.json();
+      _s.sessionId = data.session_id;
+      uiLog('Session created: ' + data.session_id, 'ok');
+    } else {
+      uiLog('Session start failed: HTTP ' + res.status, 'err');
+    }
+  } catch (err) {
+    uiLog('Session start error: ' + err.message, 'err');
+  }
   if (_s.mode === 'investor_pitch') {
     initiateCall();
   } else {
@@ -111,7 +184,10 @@ async function beginPitchSession() {
 }
 
 function skipPitchPrep() {
-  if (_s._pitchPrepInterval) { clearInterval(_s._pitchPrepInterval); _s._pitchPrepInterval = null; }
+  if (_s._pitchPrepInterval) {
+    clearInterval(_s._pitchPrepInterval);
+    _s._pitchPrepInterval = null;
+  }
   beginSession();
 }
 
@@ -121,18 +197,31 @@ function skipPitchPrep() {
 var _testSessionPending = false;
 
 async function runTestSession() {
-  if (_testSessionPending) { showToast('Still connecting — please wait…'); return; }
+  if (_testSessionPending) {
+    showToast('Still connecting — please wait…');
+    return;
+  }
   _testSessionPending = true;
 
   // Clear any active countdowns — also mark a flag so the 280ms brief setTimeout doesn't re-arm
   _briefTestMode = true;
-  if (_briefInterval) { clearInterval(_briefInterval); _briefInterval = null; }
-  if (_s._pitchPrepInterval) { clearInterval(_s._pitchPrepInterval); _s._pitchPrepInterval = null; }
+  if (_briefInterval) {
+    clearInterval(_briefInterval);
+    _briefInterval = null;
+  }
+  if (_s._pitchPrepInterval) {
+    clearInterval(_s._pitchPrepInterval);
+    _s._pitchPrepInterval = null;
+  }
   _voiceTokenPromise = null;
 
   const mode = _s.mode || 'cold_call';
   const transcript = TEST_TRANSCRIPTS[mode];
-  if (!transcript) { uiLog('No test transcript for mode: ' + mode, 'err'); _testSessionPending = false; return; }
+  if (!transcript) {
+    uiLog('No test transcript for mode: ' + mode, 'err');
+    _testSessionPending = false;
+    return;
+  }
 
   // Create session if not yet created (e.g. triggered from pitchprep before countdown ended)
   if (!_s.sessionId) {
@@ -142,17 +231,34 @@ async function runTestSession() {
       const res = await fetch('/api/session/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_name: _s.user?.name || null, user_email: _s.user?.email || null, user_role: _s.user?.role || null, persona_id, mode }),
+        body: JSON.stringify({
+          user_name: _s.user?.name || null,
+          user_email: _s.user?.email || null,
+          user_role: _s.user?.role || null,
+          persona_id,
+          mode,
+        }),
       });
-      if (res.ok) { const data = await res.json(); _s.sessionId = data.session_id; uiLog('Test session: ' + data.session_id, 'ok'); }
-      else {
-        const msg = res.status === 504 ? 'Backend is warming up — try again in a few seconds' : 'Session start failed: HTTP ' + res.status;
+      if (res.ok) {
+        const data = await res.json();
+        _s.sessionId = data.session_id;
+        uiLog('Test session: ' + data.session_id, 'ok');
+      } else {
+        const msg =
+          res.status === 504
+            ? 'Backend is warming up — try again in a few seconds'
+            : 'Session start failed: HTTP ' + res.status;
         uiLog('Test session start failed: HTTP ' + res.status, 'err');
         showToast(msg);
         _testSessionPending = false;
         return;
       }
-    } catch (err) { uiLog('Test session start error: ' + err.message, 'err'); showToast('Connection error — check backend'); _testSessionPending = false; return; }
+    } catch (err) {
+      uiLog('Test session start error: ' + err.message, 'err');
+      showToast('Connection error — check backend');
+      _testSessionPending = false;
+      return;
+    }
   }
 
   _s.callDuration = 90;
@@ -166,9 +272,20 @@ async function runTestSession() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ transcript, duration_seconds: 90 }),
     });
-    if (r.ok) { uiLog('Test transcript submitted — polling for results…', 'ok'); _testSessionPending = false; pollForResults(); }
-    else { uiLog('end-test failed: HTTP ' + r.status, 'err'); _testSessionPending = false; _showLoadingError(); }
-  } catch (err) { uiLog('end-test error: ' + err.message, 'err'); _testSessionPending = false; _showLoadingError(); }
+    if (r.ok) {
+      uiLog('Test transcript submitted — polling for results…', 'ok');
+      _testSessionPending = false;
+      pollForResults();
+    } else {
+      uiLog('end-test failed: HTTP ' + r.status, 'err');
+      _testSessionPending = false;
+      _showLoadingError();
+    }
+  } catch (err) {
+    uiLog('end-test error: ' + err.message, 'err');
+    _testSessionPending = false;
+    _showLoadingError();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -200,17 +317,22 @@ function startBrief() {
         el.textContent = '0:' + String(_briefTimer).padStart(2, '0');
         if (_briefTimer <= 10) el.classList.add('urgent');
       }
-      if (_briefTimer <= 0) { clearInterval(_briefInterval); initiateCall(); }
+      if (_briefTimer <= 0) {
+        clearInterval(_briefInterval);
+        initiateCall();
+      }
     }, 1000);
   }, 280);
 }
-
 
 // ---------------------------------------------------------------------------
 // Call — ElevenLabs websocket
 // ---------------------------------------------------------------------------
 async function initiateCall() {
-  if (!_s.sessionId) { uiLog('No session ID — cannot start call', 'err'); return; }
+  if (!_s.sessionId) {
+    uiLog('No session ID — cannot start call', 'err');
+    return;
+  }
   await goToStep('call');
   if (_s.mode !== 'investor_pitch') await playSoundAndWait('/start_call.mp3');
   await startCall();
@@ -229,15 +351,24 @@ function prefetchVoiceToken() {
       uiLog('Voice token ready (prefetched)', 'ok');
       return data; // { signed_url, overrides }
     })
-    .catch((err) => { _voiceTokenPromise = null; throw err; });
+    .catch((err) => {
+      _voiceTokenPromise = null;
+      throw err;
+    });
   return _voiceTokenPromise;
 }
 
 function warmConversationSdk() {
   if (_conversationSdkPromise) return _conversationSdkPromise;
   _conversationSdkPromise = import('https://cdn.jsdelivr.net/npm/@11labs/client/+esm')
-    .then((m) => { uiLog('ElevenLabs SDK warmed', 'ok'); return m; })
-    .catch((err) => { _conversationSdkPromise = null; throw err; });
+    .then((m) => {
+      uiLog('ElevenLabs SDK warmed', 'ok');
+      return m;
+    })
+    .catch((err) => {
+      _conversationSdkPromise = null;
+      throw err;
+    });
   return _conversationSdkPromise;
 }
 
@@ -256,11 +387,15 @@ async function startCall() {
       ...sessionOpts,
       onConnect: () => {
         uiLog('ElevenLabs connected', 'ok');
-        const cst = document.getElementById('cst'); if (cst) cst.textContent = 'Connected — start talking';
-        const wf = document.getElementById('wf'); if (wf) wf.classList.remove('idle');
-        const ring = document.getElementById('cvRing'); if (ring) ring.classList.add('on');
+        const cst = document.getElementById('cst');
+        if (cst) cst.textContent = 'Connected — start talking';
+        const wf = document.getElementById('wf');
+        if (wf) wf.classList.remove('idle');
+        const ring = document.getElementById('cvRing');
+        if (ring) ring.classList.add('on');
         if (_s.mode !== 'investor_pitch') {
-          const eb = document.getElementById('eb'); if (eb) eb.style.display = 'flex';
+          const eb = document.getElementById('eb');
+          if (eb) eb.style.display = 'flex';
         }
         if (_s.mode === 'investor_pitch') {
           // Pitch mode: show countdown in the main timer, phase label above it
@@ -269,44 +404,78 @@ async function startCall() {
           const phaseBar = document.getElementById('pitchPhaseBar');
           const timer = document.getElementById('cvTimer');
           if (phaseBar) phaseBar.textContent = 'YOUR PITCH';
-          if (timer) { timer.textContent = '1:00'; timer.style.fontSize = '2.2rem'; timer.style.fontWeight = '800'; timer.style.color = 'var(--ink)'; }
+          if (timer) {
+            timer.textContent = '1:00';
+            timer.style.fontSize = '2.2rem';
+            timer.style.fontWeight = '800';
+            timer.style.color = 'var(--ink)';
+          }
           _s._pitchTimerInterval = setInterval(() => {
             pitchSecs--;
             const bar = document.getElementById('pitchPhaseBar');
             const t = document.getElementById('cvTimer');
             if (pitchSecs > 0) {
-              if (t) { t.textContent = fmtSecs(pitchSecs); t.style.color = pitchSecs <= 10 ? '#e05252' : 'var(--ink)'; }
+              if (t) {
+                t.textContent = fmtSecs(pitchSecs);
+                t.style.color = pitchSecs <= 10 ? '#e05252' : 'var(--ink)';
+              }
             } else {
               clearInterval(_s._pitchTimerInterval);
               _s._pitchPhase = 'qa';
               if (bar) bar.textContent = "NATALIE'S QUESTIONS";
-              if (t) { t.textContent = ''; t.style.fontSize = ''; t.style.fontWeight = ''; t.style.color = ''; }
+              if (t) {
+                t.textContent = '';
+                t.style.fontSize = '';
+                t.style.fontWeight = '';
+                t.style.color = '';
+              }
             }
           }, 1000);
         } else {
           _s.callTimerInterval = setInterval(() => {
             const elapsed = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
-            const el = document.getElementById('cvTimer'); if (el) el.textContent = fmtSecs(elapsed);
+            const el = document.getElementById('cvTimer');
+            if (el) el.textContent = fmtSecs(elapsed);
           }, 1000);
         }
       },
       onDisconnect: (details) => {
-        const reasonStr = details ? ` [${details.reason}${details.message ? ': ' + details.message : ''}]` : '';
+        const reasonStr = details
+          ? ` [${details.reason}${details.message ? ': ' + details.message : ''}]`
+          : '';
         uiLog('ElevenLabs disconnected — callEnding=' + _s._callEnding + reasonStr, 'info');
-        if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
-        if (_s._pitchTimerInterval) { clearInterval(_s._pitchTimerInterval); _s._pitchTimerInterval = null; }
+        if (_s.callTimerInterval) {
+          clearInterval(_s.callTimerInterval);
+          _s.callTimerInterval = null;
+        }
+        if (_s._pitchTimerInterval) {
+          clearInterval(_s._pitchTimerInterval);
+          _s._pitchTimerInterval = null;
+        }
         if (!_s._callEnding) {
           // Prospect/investor ended the call — reflect in UI then auto-transition
           _s._callEnding = true;
           _s.callDuration = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
-          const hangupMsg = _s.mode === 'investor_pitch' ? 'Natalie ended the call.' : 'Hendrik hung up.';
+          const hangupMsg =
+            _s.mode === 'investor_pitch' ? 'Natalie ended the call.' : 'Hendrik hung up.';
           uiLog(hangupMsg + ' (' + _s.callDuration + 's)', 'info');
-          const wf = document.getElementById('wf'); if (wf) wf.classList.add('idle');
-          const ring = document.getElementById('cvRing'); if (ring) ring.classList.remove('on');
-          const eb = document.getElementById('eb'); if (eb) eb.style.display = 'none';
-          const cst = document.getElementById('cst'); if (cst) cst.textContent = '';
-          const cvTimer = document.getElementById('cvTimer'); if (cvTimer) { cvTimer.textContent = ''; cvTimer.style.fontSize = ''; cvTimer.style.fontWeight = ''; cvTimer.style.color = ''; }
-          const phaseBar = document.getElementById('pitchPhaseBar'); if (phaseBar) phaseBar.textContent = '';
+          const wf = document.getElementById('wf');
+          if (wf) wf.classList.add('idle');
+          const ring = document.getElementById('cvRing');
+          if (ring) ring.classList.remove('on');
+          const eb = document.getElementById('eb');
+          if (eb) eb.style.display = 'none';
+          const cst = document.getElementById('cst');
+          if (cst) cst.textContent = '';
+          const cvTimer = document.getElementById('cvTimer');
+          if (cvTimer) {
+            cvTimer.textContent = '';
+            cvTimer.style.fontSize = '';
+            cvTimer.style.fontWeight = '';
+            cvTimer.style.color = '';
+          }
+          const phaseBar = document.getElementById('pitchPhaseBar');
+          if (phaseBar) phaseBar.textContent = '';
           const callStep = document.querySelector('.call-step');
           if (callStep) {
             const banner = document.createElement('div');
@@ -315,7 +484,9 @@ async function startCall() {
             callStep.insertBefore(banner, callStep.firstChild);
           }
           let convId = null;
-          try { convId = _s.conversation?.getId ? _s.conversation.getId() : null; } catch {}
+          try {
+            convId = _s.conversation?.getId ? _s.conversation.getId() : null;
+          } catch {}
           if (_s.mode !== 'investor_pitch') playSound('/end_call.mp3');
           setTimeout(() => _finishCall(convId), 2000);
         }
@@ -323,22 +494,34 @@ async function startCall() {
       onMessage: (msg) => {
         if (!msg) return;
         uiLog('msg: ' + (msg.type || msg.source || '?'), 'recv');
-        let isAgent = false, isUser = false;
+        let isAgent = false,
+          isUser = false;
         if (msg.source === 'ai' && msg.message) isAgent = true;
         else if (msg.source === 'user' && msg.message) isUser = true;
-        else if (msg.type === 'agent_response' && msg.agent_response_event?.agent_response) isAgent = true;
-        else if (msg.type === 'user_transcript' && msg.user_transcription_event?.user_transcript) isUser = true;
+        else if (msg.type === 'agent_response' && msg.agent_response_event?.agent_response)
+          isAgent = true;
+        else if (msg.type === 'user_transcript' && msg.user_transcription_event?.user_transcript)
+          isUser = true;
         const cst = document.getElementById('cst');
-        if (cst) cst.textContent = isAgent ? (_s.mode === 'investor_pitch' ? 'Natalie speaking' : 'Hendrik speaking') : isUser ? 'Your turn' : cst.textContent;
+        if (cst)
+          cst.textContent = isAgent
+            ? _s.mode === 'investor_pitch'
+              ? 'Natalie speaking'
+              : 'Hendrik speaking'
+            : isUser
+              ? 'Your turn'
+              : cst.textContent;
       },
       onError: (err) => {
         uiLog('ElevenLabs error: ' + (err?.message || err), 'err');
-        const cst = document.getElementById('cst'); if (cst) cst.textContent = 'Connection error';
+        const cst = document.getElementById('cst');
+        if (cst) cst.textContent = 'Connection error';
       },
     });
   } catch (err) {
     uiLog('startCall error: ' + err.message, 'err');
-    const cst = document.getElementById('cst'); if (cst) cst.textContent = 'Failed to connect';
+    const cst = document.getElementById('cst');
+    if (cst) cst.textContent = 'Failed to connect';
   }
 }
 
@@ -348,14 +531,19 @@ async function startCall() {
 async function endCall() {
   if (_s._callEnding) return; // already ending (e.g. Hendrik hung up)
   _s._callEnding = true;
-  if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
+  if (_s.callTimerInterval) {
+    clearInterval(_s.callTimerInterval);
+    _s.callTimerInterval = null;
+  }
   _s.callDuration = _s.callStart ? Math.floor((Date.now() - _s.callStart) / 1000) : 0;
   let conversationId = null;
   if (_s.conversation) {
     try {
       conversationId = _s.conversation.getId ? _s.conversation.getId() : null;
       await _s.conversation.endSession();
-    } catch (err) { uiLog('ElevenLabs end: ' + err.message, 'err'); }
+    } catch (err) {
+      uiLog('ElevenLabs end: ' + err.message, 'err');
+    }
   }
   await _finishCall(conversationId);
 }
@@ -376,12 +564,22 @@ async function _finishCall(conversationId) {
   uiLog('Ending session (duration: ' + _s.callDuration + 's)', 'send');
   try {
     const r = await fetch('/api/session/' + _s.sessionId + '/end', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ elevenlabs_conversation_id: conversationId || null, duration_seconds: _s.callDuration }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        elevenlabs_conversation_id: conversationId || null,
+        duration_seconds: _s.callDuration,
+      }),
     });
-    if (r.ok) { uiLog('Session ended, polling for results…', 'ok'); pollForResults(); }
-    else { uiLog('End session failed: HTTP ' + r.status, 'err'); }
-  } catch (err) { uiLog('End session error: ' + err.message, 'err'); }
+    if (r.ok) {
+      uiLog('Session ended, polling for results…', 'ok');
+      pollForResults();
+    } else {
+      uiLog('End session failed: HTTP ' + r.status, 'err');
+    }
+  } catch (err) {
+    uiLog('End session error: ' + err.message, 'err');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -394,7 +592,10 @@ async function pollForResults() {
   let attempts = 0;
   const check = async () => {
     attempts++;
-    if (attempts > 45) { _showLoadingError(); return; }
+    if (attempts > 45) {
+      _showLoadingError();
+      return;
+    }
     try {
       const res = await fetch('/api/session/' + _s.sessionId + '/status');
       const data = await res.json();
@@ -414,13 +615,20 @@ async function pollForResults() {
         uiLog('Polling gave up after ' + attempts + ' attempts, status=' + data.status, 'err');
         _showLoadingError();
       }
-    } catch (e) { uiLog('Poll error: ' + (e.message||e), 'err'); if (attempts <= 45) setTimeout(check, 3000); else _showLoadingError(); }
+    } catch (e) {
+      uiLog('Poll error: ' + (e.message || e), 'err');
+      if (attempts <= 45) setTimeout(check, 3000);
+      else _showLoadingError();
+    }
   };
   check();
 }
 
 function _showLoadingError() {
-  if (_loadCycleInterval) { clearInterval(_loadCycleInterval); _loadCycleInterval = null; }
+  if (_loadCycleInterval) {
+    clearInterval(_loadCycleInterval);
+    _loadCycleInterval = null;
+  }
   uiLog('Loading timed out — showing retry option', 'err');
   const cycleEl = document.getElementById('loadCycleText');
   if (cycleEl) cycleEl.textContent = 'Something went wrong.';
@@ -451,7 +659,9 @@ async function fetchFinishLb() {
     const res = await fetch('/api/leaderboard');
     const { entries } = await res.json();
     if (entries && entries.length > 0) _s._finishLb = entries;
-  } catch { /* use fallback */ }
+  } catch {
+    /* use fallback */
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -462,7 +672,8 @@ function addToHistory() {
   const histName = isPitch ? 'Natalie Pemberton' : 'Hendrik van der Berg';
   const histRole = isPitch ? 'Partner — Baobab Capital' : 'CFO — Vandermeer Logistics';
   _s.history.unshift({
-    name: histName, role: histRole,
+    name: histName,
+    role: histRole,
     score: _s.analysis?.score || 0,
     date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
     duration: fmtSecs(_s.callDuration),
@@ -475,15 +686,23 @@ function renderHistory() {
   const empty = document.getElementById('emptyState');
   const list = document.getElementById('historyList');
   if (!list) return;
-  if (_s.history.length === 0) { empty.style.display = 'flex'; list.style.display = 'none'; return; }
+  if (_s.history.length === 0) {
+    empty.style.display = 'flex';
+    list.style.display = 'none';
+    return;
+  }
   empty.style.display = 'none';
   list.style.display = 'flex';
-  list.innerHTML = _s.history.map(h => `<div class="hist-item">
+  list.innerHTML = _s.history
+    .map(
+      (h) => `<div class="hist-item">
     <div class="hist-flag" style="overflow:hidden;padding:0"><img src="/hendrik.jpg" alt="${escHtml(h.name)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.parentElement.innerHTML='<svg width=\\'18\\'height=\\'18\\'viewBox=\\'0 0 24 24\\'fill=\\'none\\'stroke=\\'currentColor\\'stroke-width=\\'1.6\\'stroke-linecap=\\'round\\'><circle cx=\\'12\\'cy=\\'8\\'r=\\'4\\'/><path d=\\'M4 20c0-4 3.6-7 8-7s8 3 8 7\\'/></svg>';this.parentElement.style.cssText='display:flex;align-items:center;justify-content:center;color:var(--ink-2)'"/></div>
     <div class="hist-info"><div class="hist-name">${escHtml(h.name)}</div><div class="hist-meta">${escHtml(h.role)} · ${h.duration}</div></div>
     <div class="hist-score">${h.score}</div>
     <div class="hist-date">${h.date}</div>
-  </div>`).join('');
+  </div>`
+    )
+    .join('');
 }
 
 // ---------------------------------------------------------------------------
@@ -496,15 +715,29 @@ async function dismissFinish() {
 }
 
 async function goAgain() {
-  _s.sessionId = null; _s.conversation = null; _s.analysis = null;
-  _s.callStart = null; _s.callDuration = 0; _s.muted = false; _s._callEnding = false;
-  _s.mode = 'cold_call'; _s._pitchPhase = null;
-  _testSessionPending = false; _briefTestMode = false;
-  if (_s.callTimerInterval) { clearInterval(_s.callTimerInterval); _s.callTimerInterval = null; }
-  if (_s._pitchTimerInterval) { clearInterval(_s._pitchTimerInterval); _s._pitchTimerInterval = null; }
+  _s.sessionId = null;
+  _s.conversation = null;
+  _s.analysis = null;
+  _s.callStart = null;
+  _s.callDuration = 0;
+  _s.muted = false;
+  _s._callEnding = false;
+  _s.mode = 'cold_call';
+  _s._pitchPhase = null;
+  _testSessionPending = false;
+  _briefTestMode = false;
+  if (_s.callTimerInterval) {
+    clearInterval(_s.callTimerInterval);
+    _s.callTimerInterval = null;
+  }
+  if (_s._pitchTimerInterval) {
+    clearInterval(_s._pitchTimerInterval);
+    _s._pitchTimerInterval = null;
+  }
   clearInterval(_briefInterval);
   // Close full-page screens if open
-  const rp = document.getElementById('resultsPage'); if (rp) rp.classList.remove('open');
+  const rp = document.getElementById('resultsPage');
+  if (rp) rp.classList.remove('open');
   const ap = document.getElementById('analysisPage');
   if (ap) {
     ap.classList.remove('open');
@@ -530,7 +763,10 @@ function shareLI() {
   } else {
     text = `Just practised a cold call on Outround against an AI Dutch CFO.\n\n${verdictLine}Scored ${score}/100.\n\nTry to beat it → outround.io`;
   }
-  window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(text), '_blank');
+  window.open(
+    'https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(text),
+    '_blank'
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -541,16 +777,26 @@ async function loadLeaderboard() {
     const res = await fetch('/api/leaderboard');
     const { entries } = await res.json();
     if (entries && entries.length > 0) renderLeaderboard(entries);
-  } catch { /* keep static */ }
+  } catch {
+    /* keep static */
+  }
 }
 
 function renderLeaderboard(entries) {
-  const body = document.getElementById('lbBody'); if (!body) return;
-  body.innerHTML = entries.map((e, i) => {
-    const rank = i + 1;
-    const ini = (e.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-    return `<div class="lb-row"><div class="lb-rank${rank <= 3 ? ' top' : ''}">${rank}</div><div class="lb-av">${escHtml(ini)}</div><div class="lb-info"><div class="lb-name">${escHtml(e.name)}</div><div class="lb-role">${escHtml(e.role || '')}${e.location ? ' · ' + escHtml(e.location) : ''}</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:${e.score}%"></div></div><div class="lb-sc">${e.score}</div></div>`;
-  }).join('');
+  const body = document.getElementById('lbBody');
+  if (!body) return;
+  body.innerHTML = entries
+    .map((e, i) => {
+      const rank = i + 1;
+      const ini = (e.name || '?')
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+      return `<div class="lb-row"><div class="lb-rank${rank <= 3 ? ' top' : ''}">${rank}</div><div class="lb-av">${escHtml(ini)}</div><div class="lb-info"><div class="lb-name">${escHtml(e.name)}</div><div class="lb-role">${escHtml(e.role || '')}${e.location ? ' · ' + escHtml(e.location) : ''}</div></div><div class="lb-bar-w"><div class="lb-bar-f" style="width:${e.score}%"></div></div><div class="lb-sc">${e.score}</div></div>`;
+    })
+    .join('');
 }
 
 // ---------------------------------------------------------------------------
@@ -570,17 +816,26 @@ const _LOAD_CYCLE_TEXTS_PITCH = [
 ];
 
 function _startLoadingCycle() {
-  if (_loadCycleInterval) { clearInterval(_loadCycleInterval); _loadCycleInterval = null; }
+  if (_loadCycleInterval) {
+    clearInterval(_loadCycleInterval);
+    _loadCycleInterval = null;
+  }
   const texts = _s.mode === 'investor_pitch' ? _LOAD_CYCLE_TEXTS_PITCH : _LOAD_CYCLE_TEXTS_COLD;
   let idx = 0;
   const set = () => {
     const el = document.getElementById('loadCycleText');
-    if (!el) { clearInterval(_loadCycleInterval); return; }
+    if (!el) {
+      clearInterval(_loadCycleInterval);
+      return;
+    }
     el.classList.add('fade');
     setTimeout(() => {
       idx = (idx + 1) % texts.length;
       const el2 = document.getElementById('loadCycleText');
-      if (el2) { el2.textContent = texts[idx]; el2.classList.remove('fade'); }
+      if (el2) {
+        el2.textContent = texts[idx];
+        el2.classList.remove('fade');
+      }
     }, 360);
   };
   _loadCycleInterval = setInterval(set, 3000);
@@ -590,12 +845,32 @@ function _startLoadingCycle() {
 // Survey — decision tree, runs in parallel with analysis
 // ---------------------------------------------------------------------------
 const _SURVEY_FLOW = {
-  q1: { q: 'How did that round feel?', opts: ['Tough', 'Decent', 'Strong'], next: (a) => a === 'Tough' ? 'q2a' : a === 'Decent' ? 'q2b' : 'q2c' },
-  q2a: { q: 'What caught you off guard?', opts: ['The opener', 'First objection', 'Ran out of things to say'], next: () => 'q3' },
-  q2b: { q: 'What would have helped most?', opts: ['Better opening line', 'Handling objections', 'Knowing when to close'], next: () => 'q3' },
-  q2c: { q: 'Do you prep like this before every call?', opts: ['Yes always', 'Sometimes', 'This was my first time'], next: () => 'q3' },
+  q1: {
+    q: 'How did that round feel?',
+    opts: ['Tough', 'Decent', 'Strong'],
+    next: (a) => (a === 'Tough' ? 'q2a' : a === 'Decent' ? 'q2b' : 'q2c'),
+  },
+  q2a: {
+    q: 'What caught you off guard?',
+    opts: ['The opener', 'First objection', 'Ran out of things to say'],
+    next: () => 'q3',
+  },
+  q2b: {
+    q: 'What would have helped most?',
+    opts: ['Better opening line', 'Handling objections', 'Knowing when to close'],
+    next: () => 'q3',
+  },
+  q2c: {
+    q: 'Do you prep like this before every call?',
+    opts: ['Yes always', 'Sometimes', 'This was my first time'],
+    next: () => 'q3',
+  },
   q3: { q: "What's your role?", opts: ['SDR', 'AE', 'Founder', 'Other'], next: () => 'q4' },
-  q4: { q: 'How often are you in high-stakes calls?', opts: ['Daily', 'Weekly', 'A few times a month'], next: () => null },
+  q4: {
+    q: 'How often are you in high-stakes calls?',
+    opts: ['Daily', 'Weekly', 'A few times a month'],
+    next: () => null,
+  },
 };
 
 function startSurvey(targetId) {
@@ -608,19 +883,28 @@ function _renderSurveyQ(qId) {
   const panel = document.getElementById(window._surveyTargetId || 'surveyPanel');
   if (!panel) return;
   const q = _SURVEY_FLOW[qId];
-  if (!q) { _finishSurvey(); return; }
+  if (!q) {
+    _finishSurvey();
+    return;
+  }
   panel.innerHTML = `<div class="survey-q">
     <div class="survey-eyebrow">Quick question</div>
     <div class="survey-question">${escHtml(q.q)}</div>
-    <div class="survey-options">${q.opts.map(o =>
-      `<button class="survey-opt" onclick="_pickSurveyOpt('${qId}','${escHtml(o).replace(/'/g,"\\'")}',this)">${escHtml(o)}</button>`
-    ).join('')}</div>
+    <div class="survey-options">${q.opts
+      .map(
+        (o) =>
+          `<button class="survey-opt" onclick="_pickSurveyOpt('${qId}','${escHtml(o).replace(/'/g, "\\'")}',this)">${escHtml(o)}</button>`
+      )
+      .join('')}</div>
     <span class="survey-skip-link" onclick="_skipSurvey()">Skip</span>
   </div>`;
 }
 
 function _pickSurveyOpt(qId, value, btn) {
-  btn.closest('.survey-options').querySelectorAll('.survey-opt').forEach(b => b.classList.remove('selected'));
+  btn
+    .closest('.survey-options')
+    .querySelectorAll('.survey-opt')
+    .forEach((b) => b.classList.remove('selected'));
   btn.classList.add('selected');
   window._surveyAnswers[qId] = value;
   setTimeout(() => {
@@ -633,19 +917,22 @@ function _pickSurveyOpt(qId, value, btn) {
 function _skipSurvey() {
   _postSurvey();
   const panel = document.getElementById('surveyPanel');
-  if (panel) panel.innerHTML = `<div class="survey-done"><div class="survey-done-icon">→</div><div class="survey-done-text">Skipped. Results incoming.</div></div>`;
+  if (panel)
+    panel.innerHTML = `<div class="survey-done"><div class="survey-done-icon">→</div><div class="survey-done-text">Skipped. Results incoming.</div></div>`;
 }
 
 function _finishSurvey() {
   _postSurvey();
   const panel = document.getElementById('surveyPanel');
-  if (panel) panel.innerHTML = `<div class="survey-done"><div class="survey-done-icon">✦</div><div class="survey-done-text">Thanks — that helps.</div></div>`;
+  if (panel)
+    panel.innerHTML = `<div class="survey-done"><div class="survey-done-icon">✦</div><div class="survey-done-text">Thanks — that helps.</div></div>`;
 }
 
 function _postSurvey() {
   if (!_s.sessionId) return;
   fetch('/api/survey', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ session_id: _s.sessionId, answers: window._surveyAnswers || {} }),
   }).catch(() => {});
 }
@@ -676,15 +963,23 @@ function _triggerWinCelebration(mode) {
   // Banner
   const banner = document.createElement('div');
   banner.style.cssText = [
-    'position:fixed', 'top:22%', 'left:50%',
+    'position:fixed',
+    'top:22%',
+    'left:50%',
     'transform:translateX(-50%)',
-    'background:#111', 'color:#fff',
-    'font-size:1.05rem', 'font-weight:800',
-    'letter-spacing:0.07em', 'text-transform:uppercase',
-    'padding:14px 36px', 'border-radius:12px',
-    'z-index:9999', 'pointer-events:none',
+    'background:#111',
+    'color:#fff',
+    'font-size:1.05rem',
+    'font-weight:800',
+    'letter-spacing:0.07em',
+    'text-transform:uppercase',
+    'padding:14px 36px',
+    'border-radius:12px',
+    'z-index:9999',
+    'pointer-events:none',
     'animation:_winBannerIn 3s ease forwards',
-    'white-space:nowrap', 'box-shadow:0 8px 32px rgba(0,0,0,0.18)',
+    'white-space:nowrap',
+    'box-shadow:0 8px 32px rgba(0,0,0,0.18)',
   ].join(';');
   banner.textContent = mode === 'investor_pitch' ? 'Meeting booked ✓' : 'Meeting set ✓';
   document.body.appendChild(banner);
@@ -700,11 +995,15 @@ function _triggerWinCelebration(mode) {
     const dur = 1.6 + Math.random() * 1.6;
     const colour = colours[Math.floor(Math.random() * colours.length)];
     p.style.cssText = [
-      'position:fixed', 'top:0', `left:${left}%`,
-      `width:${size}px`, `height:${size}px`,
+      'position:fixed',
+      'top:0',
+      `left:${left}%`,
+      `width:${size}px`,
+      `height:${size}px`,
       `background:${colour}`,
       `border-radius:${Math.random() > 0.5 ? '50%' : '2px'}`,
-      'z-index:9998', 'pointer-events:none',
+      'z-index:9998',
+      'pointer-events:none',
       `animation:_confettiFall ${dur}s ${delay}s ease-in forwards`,
     ].join(';');
     document.body.appendChild(p);
@@ -716,7 +1015,10 @@ function _triggerWinCelebration(mode) {
 // ---------------------------------------------------------------------------
 function openResultsPage(data) {
   // Stop loading cycle
-  if (_loadCycleInterval) { clearInterval(_loadCycleInterval); _loadCycleInterval = null; }
+  if (_loadCycleInterval) {
+    clearInterval(_loadCycleInterval);
+    _loadCycleInterval = null;
+  }
   // Close loading overlay
   const overlay = document.getElementById('focusOverlay');
   if (overlay) overlay.classList.remove('open');
@@ -738,19 +1040,29 @@ function renderResultsPage(data) {
   const bd = data.score_breakdown || {};
   // Auto-detect pitch mode from breakdown keys in case data.mode was lost
   let mode = data.mode || bd.mode || _s.mode || 'cold_call';
-  if (mode !== 'investor_pitch' && (bd.problem_clarity !== undefined || bd.why_now !== undefined || bd.right_to_win !== undefined)) {
+  if (
+    mode !== 'investor_pitch' &&
+    (bd.problem_clarity !== undefined || bd.why_now !== undefined || bd.right_to_win !== undefined)
+  ) {
     mode = 'investor_pitch';
   }
   const isPitch = mode === 'investor_pitch';
-  const vMap = { advance: 'Meeting advanced', soft_advance: 'Soft advance', dead: 'No next step', meeting_set: 'Meeting set', deck_requested: 'Deck requested', passed: 'Passed' };
+  const vMap = {
+    advance: 'Meeting advanced',
+    soft_advance: 'Soft advance',
+    dead: 'No next step',
+    meeting_set: 'Meeting set',
+    deck_requested: 'Deck requested',
+    passed: 'Passed',
+  };
   const mMap = { building: '↗ Building', flat: '→ Flat', declining: '↘ Declining' };
 
   const labels = isPitch
     ? ['Problem clarity', 'Why now', 'Right to win', 'Ask clarity']
     : ['Opening', 'Objections', 'Talk ratio', 'Clear ask'];
   const vals = isPitch
-    ? [bd.problem_clarity||0, bd.why_now||0, bd.right_to_win||0, bd.ask_clarity||0]
-    : [bd.opening||0, bd.objections||0, bd.talk_ratio||0, bd.clear_ask||0];
+    ? [bd.problem_clarity || 0, bd.why_now || 0, bd.right_to_win || 0, bd.ask_clarity || 0]
+    : [bd.opening || 0, bd.objections || 0, bd.talk_ratio || 0, bd.clear_ask || 0];
 
   el.innerHTML = `
     <div class="res-score-num">${score}</div>
@@ -793,9 +1105,11 @@ function renderResultsPage(data) {
   // Animate sub-scores
   setTimeout(() => {
     vals.forEach((v, i) => {
-      const vi = 'rsc' + (i+1); const fi = 'rsf' + (i+1);
+      const vi = 'rsc' + (i + 1);
+      const fi = 'rsf' + (i + 1);
       setTimeout(() => {
-        const vel = document.getElementById(vi); const fel = document.getElementById(fi);
+        const vel = document.getElementById(vi);
+        const fel = document.getElementById(fi);
         if (vel) vel.textContent = v;
         if (fel) fel.style.width = v + '%';
       }, i * 150);
@@ -811,14 +1125,26 @@ function shareResults(platform) {
     : `I scored ${score}/100 on a cold call against an AI Dutch CFO. Think you can beat it? → outround.io`;
   const enc = encodeURIComponent(text);
   switch (platform) {
-    case 'linkedin': window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + enc, '_blank'); break;
-    case 'whatsapp': window.open('https://wa.me/?text=' + enc, '_blank'); break;
-    case 'twitter':  window.open('https://twitter.com/intent/tweet?text=' + enc, '_blank'); break;
+    case 'linkedin':
+      window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + enc, '_blank');
+      break;
+    case 'whatsapp':
+      window.open('https://wa.me/?text=' + enc, '_blank');
+      break;
+    case 'twitter':
+      window.open('https://twitter.com/intent/tweet?text=' + enc, '_blank');
+      break;
     case 'slack':
-      navigator.clipboard.writeText(text).then(() => showToast('Copied for Slack')).catch(() => showToast('Copied for Slack'));
+      navigator.clipboard
+        .writeText(text)
+        .then(() => showToast('Copied for Slack'))
+        .catch(() => showToast('Copied for Slack'));
       break;
     case 'copy':
-      navigator.clipboard.writeText('outround.io').then(() => showToast('Link copied')).catch(() => showToast('Link copied'));
+      navigator.clipboard
+        .writeText('outround.io')
+        .then(() => showToast('Link copied'))
+        .catch(() => showToast('Link copied'));
       break;
   }
 }

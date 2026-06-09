@@ -26,12 +26,21 @@ export function LeaderboardCard({ data, loading, error }: Props) {
       )}
 
       {!loading && !error && data && data.entries.length > 0 && (
-        <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <ol
+          style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+          }}
+        >
           {data.entries.slice(0, 5).map((e, i) => {
-            const isYou = e.is_you || (youName && e.name.toLowerCase() === youName);
+            const isYou = e.is_you ?? (youName != null && e.name.toLowerCase() === youName);
             return (
               <li
-                key={`${e.name}-${i}`}
+                key={`${e.name}-${String(i)}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

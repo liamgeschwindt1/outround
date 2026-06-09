@@ -37,7 +37,17 @@ const TIERS = [
 
 function Check() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 3 }}>
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, marginTop: 3 }}
+    >
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -62,25 +72,45 @@ function TierCard({ tier, isInView, delay }) {
       }}
     >
       <div>
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 11,
-          color: tier.highlighted ? 'var(--coral)' : 'var(--text-muted)',
-          letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16,
-        }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: tier.highlighted ? 'var(--coral)' : 'var(--text-muted)',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            marginBottom: 16,
+          }}
+        >
           {tier.name}
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
-          <span style={{
-            fontFamily: 'var(--font-display)', fontSize: 'clamp(36px, 5vw, 48px)',
-            fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1,
-          }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(36px, 5vw, 48px)',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.03em',
+              lineHeight: 1,
+            }}
+          >
             {tier.price}
           </span>
-          <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-muted)' }}>
+          <span
+            style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-muted)' }}
+          >
             {tier.unit}
           </span>
         </div>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.5 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 14,
+            color: 'var(--text-sub)',
+            lineHeight: 1.5,
+          }}
+        >
           {tier.blurb}
         </div>
       </div>
@@ -90,12 +120,17 @@ function TierCard({ tier, isInView, delay }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
         {tier.features.map((f, i) => (
           <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <span style={{ color: tier.highlighted ? 'var(--coral)' : 'var(--text-muted)' }}><Check /></span>
-            <span style={{
-              fontFamily: 'var(--font-body)', fontSize: 14,
-              color: i === 0 && tier.highlighted ? 'var(--text-muted)' : 'var(--text-primary)',
-              lineHeight: 1.5,
-            }}>
+            <span style={{ color: tier.highlighted ? 'var(--coral)' : 'var(--text-muted)' }}>
+              <Check />
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 14,
+                color: i === 0 && tier.highlighted ? 'var(--text-muted)' : 'var(--text-primary)',
+                lineHeight: 1.5,
+              }}
+            >
               {f}
             </span>
           </div>
@@ -106,20 +141,34 @@ function TierCard({ tier, isInView, delay }) {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => document.getElementById('cta')?.scrollIntoView({ behavior: 'smooth' })}
-        style={tier.highlighted ? {
-          background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
-          color: '#0a0a0b',
-          fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700,
-          padding: '14px 24px', borderRadius: 999, border: 'none',
-          cursor: 'pointer', minHeight: 48, boxShadow: '0 0 28px rgba(242,107,69,0.22)',
-        } : {
-          background: 'transparent',
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600,
-          padding: '13px 24px', borderRadius: 999,
-          border: '0.5px solid var(--border-md)',
-          cursor: 'pointer', minHeight: 48,
-        }}
+        style={
+          tier.highlighted
+            ? {
+                background: 'linear-gradient(135deg, #f26b45, #4ba3e3)',
+                color: '#0a0a0b',
+                fontFamily: 'var(--font-body)',
+                fontSize: 15,
+                fontWeight: 700,
+                padding: '14px 24px',
+                borderRadius: 999,
+                border: 'none',
+                cursor: 'pointer',
+                minHeight: 48,
+                boxShadow: '0 0 28px rgba(242,107,69,0.22)',
+              }
+            : {
+                background: 'transparent',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 15,
+                fontWeight: 600,
+                padding: '13px 24px',
+                borderRadius: 999,
+                border: '0.5px solid var(--border-md)',
+                cursor: 'pointer',
+                minHeight: 48,
+              }
+        }
       >
         Start 14-day trial
       </motion.button>
@@ -128,7 +177,7 @@ function TierCard({ tier, isInView, delay }) {
 }
 
 export default function Pricing() {
-  const ref      = useRef(null);
+  const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
@@ -145,23 +194,50 @@ export default function Pricing() {
       }}
     >
       {/* Corner metadata */}
-      <div style={{
-        width: '100%', maxWidth: 1000,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 'clamp(40px, 6vw, 56px)', gap: 24,
-      }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 10,
-          fontFamily: 'var(--font-mono)', fontSize: 11,
-          color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase',
-        }}>
-          <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 'clamp(40px, 6vw, 56px)',
+          gap: 24,
+        }}
+      >
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 10,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+          }}
+        >
+          <span
+            style={{
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              background: 'var(--coral)',
+              opacity: 0.8,
+            }}
+          />
           07 / PRICING
         </div>
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 10,
-          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65, whiteSpace: 'nowrap',
-        }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.1em',
+            opacity: 0.65,
+            whiteSpace: 'nowrap',
+          }}
+        >
           {'/* self-serve \u00b7 no sales call */'}
         </div>
       </div>
@@ -171,7 +247,8 @@ export default function Pricing() {
         animate={isInView ? { opacity: 1, y: 0 } : {}}
         transition={EASE}
         style={{
-          width: '100%', maxWidth: 1000,
+          width: '100%',
+          maxWidth: 1000,
           fontFamily: 'var(--font-display)',
           fontSize: 'clamp(28px, 4vw, 44px)',
           fontWeight: 700,
@@ -187,7 +264,8 @@ export default function Pricing() {
       <div
         className="pricing-grid"
         style={{
-          width: '100%', maxWidth: 1000,
+          width: '100%',
+          maxWidth: 1000,
           display: 'grid',
           gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
           gap: 'clamp(20px, 3vw, 32px)',
@@ -204,10 +282,14 @@ export default function Pricing() {
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ ...EASE, delay: 0.4 }}
         style={{
-          width: '100%', maxWidth: 1000,
-          fontFamily: 'var(--font-mono)', fontSize: 11,
-          color: 'var(--text-muted)', letterSpacing: '0.04em',
-          lineHeight: 1.7, textAlign: 'center',
+          width: '100%',
+          maxWidth: 1000,
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          color: 'var(--text-muted)',
+          letterSpacing: '0.04em',
+          lineHeight: 1.7,
+          textAlign: 'center',
         }}
       >
         First 100 customers: &euro;49 flat rate, no tier restrictions, 12-month lock.

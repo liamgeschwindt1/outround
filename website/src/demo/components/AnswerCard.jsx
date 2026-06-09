@@ -1,22 +1,25 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import PropTypes from 'prop-types';
 
 function useTypewriter(text, speed = 18) {
   const [displayed, setDisplayed] = useState('');
   useEffect(() => {
-    setDisplayed('');
     let i = 0;
     const id = setInterval(() => {
       i++;
       setDisplayed(text.slice(0, i));
       if (i >= text.length) clearInterval(id);
     }, speed);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      setDisplayed('');
+    };
   }, [text, speed]);
   return displayed;
 }
 
-export default function AnswerCard({ question, answer, source }) {
+function AnswerCard({ question, answer, source }) {
   const displayed = useTypewriter(answer);
 
   return (
@@ -35,7 +38,7 @@ export default function AnswerCard({ question, answer, source }) {
         padding: '16px 20px',
         boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
       }}
-      onClick={e => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
     >
       <div
         style={{
@@ -82,3 +85,11 @@ export default function AnswerCard({ question, answer, source }) {
     </motion.div>
   );
 }
+
+AnswerCard.propTypes = {
+  question: PropTypes.string.isRequired,
+  answer: PropTypes.string.isRequired,
+  source: PropTypes.string.isRequired,
+};
+
+export default AnswerCard;

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 import { orbAnswers, QUESTIONS } from '../data/orbQuestions';
 import EUBadge from '../components/EUBadge';
 import AnswerCard from '../components/AnswerCard';
@@ -61,14 +62,16 @@ function OrbCanvas({ size, flash }) {
       const gradT = (Math.sin((elapsed / 8000) * Math.PI * 2) + 1) / 2;
       const cr = Math.round(242 - (242 - 75) * gradT);
       const cg = Math.round(107 - (107 - 163) * gradT);
-      const cb = Math.round(69  - (69  - 227) * gradT);
+      const cb = Math.round(69 - (69 - 227) * gradT);
 
       // Slow rotation
       rotY = elapsed * 0.00022;
       rotX = elapsed * 0.00009;
 
-      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
-      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      const cosY = Math.cos(rotY),
+        sinY = Math.sin(rotY);
+      const cosX = Math.cos(rotX),
+        sinX = Math.sin(rotX);
 
       // Outer pulse ring
       const pulseT = (Math.sin((elapsed / 3000) * Math.PI * 2) + 1) / 2;
@@ -84,15 +87,17 @@ function OrbCanvas({ size, flash }) {
       ctx.restore();
 
       // Project and draw each dot
-      const projected = dots.map((d, i) => {
+      const projected = dots.map((d, _i) => {
         // Apply drift — tiny wobble on unit sphere surface
         const drift = Math.sin(elapsed * d.driftSpeed + d.phase) * d.driftAmp;
         let nx = d.nx + drift;
         let ny = d.ny + Math.cos(elapsed * d.driftSpeed + d.phase) * d.driftAmp * 0.5;
         let nz = d.nz;
         // Normalise back onto sphere
-        const len = Math.sqrt(nx*nx + ny*ny + nz*nz);
-        nx /= len; ny /= len; nz /= len;
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+        nx /= len;
+        ny /= len;
+        nz /= len;
 
         // Rotate Y
         const x1 = nx * cosY + nz * sinY;
@@ -136,8 +141,10 @@ function OrbCanvas({ size, flash }) {
     }
 
     rafRef.current = requestAnimationFrame(draw);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [size]);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [size, flash]);
 
   return (
     <canvas
@@ -157,9 +164,9 @@ function OrbCanvas({ size, flash }) {
 // 6 fixed positions relative to the orb centre (percentage of container)
 // Left column: 3 cards. Right column: 3 cards.
 const CARD_POSITIONS = [
-  { side: 'left',  top: '18%' },
-  { side: 'left',  top: '44%' },
-  { side: 'left',  top: '70%' },
+  { side: 'left', top: '18%' },
+  { side: 'left', top: '44%' },
+  { side: 'left', top: '70%' },
   { side: 'right', top: '18%' },
   { side: 'right', top: '44%' },
   { side: 'right', top: '70%' },
@@ -175,7 +182,10 @@ function QuestionCard({ question, onSelect, answered, idx }) {
       animate={{ opacity: answered ? 0.35 : 1, x: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.35, delay: idx * 0.08 }}
-      onClick={e => { e.stopPropagation(); if (!answered) onSelect(question); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!answered) onSelect(question);
+      }}
       whileHover={!answered ? { scale: 1.03, borderColor: 'rgba(242,107,69,0.9)' } : {}}
       style={{
         position: 'absolute',
@@ -201,7 +211,17 @@ function QuestionCard({ question, onSelect, answered, idx }) {
       }}
     >
       {answered && (
-        <span style={{ color: 'var(--coral)', marginRight: isLeft ? 0 : 6, marginLeft: isLeft ? 6 : 0, order: isLeft ? 1 : -1, fontSize: 11 }}>✓</span>
+        <span
+          style={{
+            color: 'var(--coral)',
+            marginRight: isLeft ? 0 : 6,
+            marginLeft: isLeft ? 6 : 0,
+            order: isLeft ? 1 : -1,
+            fontSize: 11,
+          }}
+        >
+          ✓
+        </span>
       )}
       {question}
     </motion.div>
@@ -251,11 +271,27 @@ function FinalFrame() {
       </motion.div>
 
       {/* Orb placeholder (keeps breathing) */}
-      <div style={{ height: 216, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+      <div
+        style={{
+          height: 216,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 20,
+        }}
+      >
         <OrbCanvas size={200} flash={0} />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: 12,
+        }}
+      >
         {LINES.map((line, i) => (
           <motion.div
             key={i}
@@ -289,8 +325,13 @@ function FinalFrame() {
           href="mailto:liam@outround.io"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 280, damping: 28, delay: 0.4 + LINES.length * 0.3 + 1 }}
-          onClick={e => e.stopPropagation()}
+          transition={{
+            type: 'spring',
+            stiffness: 280,
+            damping: 28,
+            delay: 0.4 + LINES.length * 0.3 + 1,
+          }}
+          onClick={(e) => e.stopPropagation()}
           whileHover={{ scale: 1.02, boxShadow: '0 0 32px rgba(242,107,69,0.4)' }}
           style={{
             display: 'inline-block',
@@ -318,7 +359,7 @@ function FinalFrame() {
 
 // ─── Scene 8 ─────────────────────────────────────────────────────────────────
 
-export default function Scene8_IntelligenceOrb({ isActive, sound, dotGridRef }) {
+function Scene8_IntelligenceOrb({ isActive, sound, dotGridRef }) {
   const [phase, setPhase] = useState('forming'); // forming | active | final
   const [orbFormed, setOrbFormed] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
@@ -329,17 +370,10 @@ export default function Scene8_IntelligenceOrb({ isActive, sound, dotGridRef }) 
   const orbSize = window.innerWidth < 640 ? 140 : 200;
 
   useEffect(() => {
-    if (!isActive) {
-      setPhase('forming');
-      setOrbFormed(false);
-      setShowBadge(false);
-      setSelectedQ(null);
-      setAnsweredQ(new Set());
-      return;
-    }
+    if (!isActive) return;
 
     // Trigger dot grid orb pull
-    setTimeout(() => dotGridRef?.current?.triggerOrbPull(), 200);
+    const gridTimer = setTimeout(() => dotGridRef?.current?.triggerOrbPull(), 200);
 
     // Form orb after 800ms
     const t1 = setTimeout(() => {
@@ -353,33 +387,52 @@ export default function Scene8_IntelligenceOrb({ isActive, sound, dotGridRef }) 
     // Show satellites after badge
     const t3 = setTimeout(() => setPhase('active'), 2000);
 
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [isActive]);
+    return () => {
+      clearTimeout(gridTimer);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      setPhase('forming');
+      setOrbFormed(false);
+      setShowBadge(false);
+      setSelectedQ(null);
+      setAnsweredQ(new Set());
+    };
+  }, [isActive, sound, dotGridRef]);
 
-  const handleSelectQ = useCallback((q) => {
-    setSelectedQ(q);
-    setAnsweredQ(prev => new Set([...prev, q]));
-    sound.play('notification');
+  const handleSelectQ = useCallback(
+    (q) => {
+      setSelectedQ(q);
+      setAnsweredQ((prev) => new Set([...prev, q]));
+      sound.play('notification');
 
-    // Flash
-    setFlashVal(1);
-    setTimeout(() => setFlashVal(0), 100);
+      // Flash
+      setFlashVal(1);
+      setTimeout(() => setFlashVal(0), 100);
 
-    // Pulse ring
-    setOrbPulse(true);
-    setTimeout(() => setOrbPulse(false), 400);
-  }, [sound]);
+      // Pulse ring
+      setOrbPulse(true);
+      setTimeout(() => setOrbPulse(false), 400);
+    },
+    [sound]
+  );
 
-  const handleBlankClick = useCallback((e) => {
-    e.stopPropagation();
-    if (phase === 'active' && answeredQ.size > 0) {
-      setPhase('final');
-    }
-  }, [phase, answeredQ]);
+  const handleBlankClick = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (phase === 'active' && answeredQ.size > 0) {
+        setPhase('final');
+      }
+    },
+    [phase, answeredQ]
+  );
 
   if (phase === 'final') {
     return (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }} onClick={e => e.stopPropagation()}>
+      <div
+        style={{ position: 'relative', width: '100%', height: '100%' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <FinalFrame />
       </div>
     );
@@ -409,9 +462,10 @@ export default function Scene8_IntelligenceOrb({ isActive, sound, dotGridRef }) 
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: orbPulse ? 1.08 : 1, opacity: 1 }}
-              transition={orbPulse
-                ? { type: 'spring', stiffness: 400, damping: 20 }
-                : { type: 'spring', stiffness: 200, damping: 22 }
+              transition={
+                orbPulse
+                  ? { type: 'spring', stiffness: 400, damping: 20 }
+                  : { type: 'spring', stiffness: 200, damping: 22 }
               }
             >
               <OrbCanvas size={orbSize} flash={flashVal} />
@@ -454,9 +508,7 @@ export default function Scene8_IntelligenceOrb({ isActive, sound, dotGridRef }) 
       {/* Fixed question cards */}
       <AnimatePresence>
         {phase === 'active' && (
-          <div
-            style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
-          >
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
             {QUESTIONS.map((q, i) => (
               <div key={q} style={{ pointerEvents: 'auto' }}>
                 <QuestionCard
@@ -473,3 +525,23 @@ export default function Scene8_IntelligenceOrb({ isActive, sound, dotGridRef }) 
     </div>
   );
 }
+
+OrbCanvas.propTypes = {
+  size: PropTypes.number.isRequired,
+  flash: PropTypes.number.isRequired,
+};
+
+QuestionCard.propTypes = {
+  question: PropTypes.string.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  answered: PropTypes.bool.isRequired,
+  idx: PropTypes.number.isRequired,
+};
+
+Scene8_IntelligenceOrb.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  sound: PropTypes.object.isRequired,
+  dotGridRef: PropTypes.object,
+};
+
+export default Scene8_IntelligenceOrb;

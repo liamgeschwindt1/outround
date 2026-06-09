@@ -1,26 +1,30 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 
 const FIELDS = [
-  { label: 'Objection type',      value: 'Implementation timeline',    source: '22:14' },
-  { label: 'Competitor mentioned', value: 'Salesforce',                source: '31:08' },
-  { label: 'Decision timeline',   value: 'September 2026',             source: '44:02' },
-  { label: 'Deal risk',           value: 'Medium',                     source: 'composite' },
-  { label: 'Next steps',          value: 'Send deployment case study by Friday', source: '51:33' },
+  { label: 'Objection type', value: 'Implementation timeline', source: '22:14' },
+  { label: 'Competitor mentioned', value: 'Salesforce', source: '31:08' },
+  { label: 'Decision timeline', value: 'September 2026', source: '44:02' },
+  { label: 'Deal risk', value: 'Medium', source: 'composite' },
+  { label: 'Next steps', value: 'Send deployment case study by Friday', source: '51:33' },
 ];
 
 function useTypewriter(text, active, speed = 30) {
   const [displayed, setDisplayed] = useState('');
   useEffect(() => {
-    if (!active) { setDisplayed(''); return; }
+    if (!active) return;
     let i = 0;
     const id = setInterval(() => {
       i++;
       setDisplayed(text.slice(0, i));
       if (i >= text.length) clearInterval(id);
     }, speed);
-    return () => clearInterval(id);
-  }, [text, active]);
+    return () => {
+      clearInterval(id);
+      setDisplayed('');
+    };
+  }, [text, active, speed]);
   return displayed;
 }
 
@@ -113,17 +117,21 @@ function CRMField({ label, value, source, active }) {
   );
 }
 
-export default function CRMPanel({ isActive, sound }) {
+function CRMPanel({ isActive, sound }) {
   const [visibleFields, setVisibleFields] = useState(0);
   const [showSynced, setShowSynced] = useState(false);
 
   useEffect(() => {
-    if (!isActive) { setVisibleFields(0); setShowSynced(false); return; }
+    if (!isActive) return;
 
+    let cancelled = false;
     let i = 0;
     function next() {
+      if (cancelled) return;
       if (i >= FIELDS.length) {
-        setTimeout(() => setShowSynced(true), 400);
+        setTimeout(() => {
+          if (!cancelled) setShowSynced(true);
+        }, 400);
         return;
       }
       setVisibleFields(i + 1);
@@ -133,8 +141,13 @@ export default function CRMPanel({ isActive, sound }) {
       setTimeout(next, charTime);
     }
     const t = setTimeout(next, 300);
-    return () => clearTimeout(t);
-  }, [isActive]);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+      setVisibleFields(0);
+      setShowSynced(false);
+    };
+  }, [isActive, sound]);
 
   return (
     <div
@@ -150,10 +163,24 @@ export default function CRMPanel({ isActive, sound }) {
       }}
     >
       {/* Header */}
-      <div style={{ marginBottom: 16, paddingBottom: 14, borderBottom: '0.5px solid var(--border-md)' }}>
+      <div
+        style={{
+          marginBottom: 16,
+          paddingBottom: 14,
+          borderBottom: '0.5px solid var(--border-md)',
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 17,
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                marginBottom: 2,
+              }}
+            >
               Mollie
             </div>
             <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-sub)' }}>
@@ -181,13 +208,20 @@ export default function CRMPanel({ isActive, sound }) {
             )}
           </AnimatePresence>
         </div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', marginTop: 8 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--text-muted)',
+            marginTop: 8,
+          }}
+        >
           Updated by Outround · Just now
         </div>
       </div>
 
       {/* Fields */}
-      {FIELDS.map((f, i) => (
+      {FIELDS.map((f, i) =>
         i < visibleFields ? (
           <CRMField
             key={i}
@@ -198,7 +232,21 @@ export default function CRMPanel({ isActive, sound }) {
             sound={sound}
           />
         ) : null
-      ))}
+      )}
     </div>
   );
 }
+
+CRMField.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  source: PropTypes.string.isRequired,
+  active: PropTypes.bool.isRequired,
+};
+
+CRMPanel.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  sound: PropTypes.object.isRequired,
+};
+
+export default CRMPanel;

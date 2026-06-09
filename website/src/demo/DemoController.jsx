@@ -49,7 +49,7 @@ export default function DemoController() {
     }
 
     setTimeout(() => {
-      setCurrentScene(prev => Math.min(prev + 1, SCENES.length - 1));
+      setCurrentScene((prev) => Math.min(prev + 1, SCENES.length - 1));
       setTimeout(() => setIsTransitioning(false), TRANSITION_LOCK_MS);
     }, 300);
   }, [isTransitioning, stopTyping]);
@@ -109,7 +109,13 @@ export default function DemoController() {
           animate="center"
           exit="exit"
           transition={{ duration: 0.3, ease: [0.0, 0.0, 0.2, 1] }}
-          style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <SceneComponent
             isActive={true}
@@ -128,7 +134,13 @@ export default function DemoController() {
       <div
         aria-live="polite"
         aria-atomic="true"
-        style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          clip: 'rect(0,0,0,0)',
+        }}
       >
         {SCENE_NAMES[currentScene]}
       </div>

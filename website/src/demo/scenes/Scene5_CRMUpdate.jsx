@@ -1,12 +1,19 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import SlackCard from '../components/SlackCard';
+import { motion } from 'framer-motion';
+import PropTypes from 'prop-types';
 import CRMPanel from '../components/CRMPanel';
 
-export default function Scene5_CRMUpdate({ isActive, sound }) {
+function Scene5_CRMUpdate({ isActive, sound }) {
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: 24 }}
-      onClick={e => e.stopPropagation()}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        padding: 24,
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       {/* Shrunken slack card in corner */}
       <motion.div
@@ -15,8 +22,25 @@ export default function Scene5_CRMUpdate({ isActive, sound }) {
         transition={{ type: 'spring', stiffness: 200, damping: 25, delay: 0.1 }}
         style={{ position: 'absolute', pointerEvents: 'none', zIndex: 5 }}
       >
-        <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border-md)', borderRadius: 12, borderLeft: '3px solid var(--coral)', padding: '16px 20px', width: 320, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '0.5px solid var(--border-md)',
+            borderRadius: 12,
+            borderLeft: '3px solid var(--coral)',
+            padding: '16px 20px',
+            width: 320,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 14,
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+            }}
+          >
             Call with Jana Novak — logged.
           </div>
         </div>
@@ -34,3 +58,10 @@ export default function Scene5_CRMUpdate({ isActive, sound }) {
     </div>
   );
 }
+
+Scene5_CRMUpdate.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  sound: PropTypes.object.isRequired,
+};
+
+export default Scene5_CRMUpdate;

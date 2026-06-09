@@ -7,41 +7,77 @@ const ORBIT_ITEMS = [
   {
     label: 'Audio',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f26b45" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 18.5a6.5 6.5 0 0 0 6.5-6.5V8a6.5 6.5 0 0 0-13 0v4A6.5 6.5 0 0 0 12 18.5z"/>
-        <line x1="12" y1="18.5" x2="12" y2="22"/>
-        <line x1="8" y1="22" x2="16" y2="22"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#f26b45"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 18.5a6.5 6.5 0 0 0 6.5-6.5V8a6.5 6.5 0 0 0-13 0v4A6.5 6.5 0 0 0 12 18.5z" />
+        <line x1="12" y1="18.5" x2="12" y2="22" />
+        <line x1="8" y1="22" x2="16" y2="22" />
       </svg>
     ),
   },
   {
     label: 'Transcripts',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f26b45" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 3 14 8 19 8"/>
-        <line x1="8" y1="13" x2="16" y2="13"/>
-        <line x1="8" y1="17" x2="13" y2="17"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#f26b45"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 3 14 8 19 8" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="13" y2="17" />
       </svg>
     ),
   },
   {
     label: 'CRM fields',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f26b45" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <ellipse cx="12" cy="5" rx="9" ry="3"/>
-        <path d="M3 5v4c0 1.656 4.03 3 9 3s9-1.344 9-3V5"/>
-        <path d="M3 9v4c0 1.656 4.03 3 9 3s9-1.344 9-3V9"/>
-        <path d="M3 13v4c0 1.656 4.03 3 9 3s9-1.344 9-3v-4"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#f26b45"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <ellipse cx="12" cy="5" rx="9" ry="3" />
+        <path d="M3 5v4c0 1.656 4.03 3 9 3s9-1.344 9-3V5" />
+        <path d="M3 9v4c0 1.656 4.03 3 9 3s9-1.344 9-3V9" />
+        <path d="M3 13v4c0 1.656 4.03 3 9 3s9-1.344 9-3v-4" />
       </svg>
     ),
   },
   {
     label: 'Rep profile',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f26b45" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="8" r="4"/>
-        <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#f26b45"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" />
       </svg>
     ),
   },
@@ -75,18 +111,24 @@ function DataOrbit({ isInView }) {
       </svg>
 
       {/* Central EU flag */}
-      <div style={{
-        position: 'absolute',
-        left: '50%',
-        top: '50%',
-        transform: 'translate(-50%, -50%)',
-        borderRadius: '50%',
-        overflow: 'hidden',
-        width: 72,
-        height: 72,
-        boxShadow: '0 0 0 1px rgba(242,107,69,0.3), 0 0 24px rgba(0,51,153,0.4)',
-      }}>
-        <img src="/icons/eu.webp" alt="EU" style={{ width: 72, height: 72, objectFit: 'cover', display: 'block' }} />
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          width: 72,
+          height: 72,
+          boxShadow: '0 0 0 1px rgba(242,107,69,0.3), 0 0 24px rgba(0,51,153,0.4)',
+        }}
+      >
+        <img
+          src="/icons/eu.webp"
+          alt="EU"
+          style={{ width: 72, height: 72, objectFit: 'cover', display: 'block' }}
+        />
       </div>
 
       {/* Orbiting icon group */}
@@ -191,29 +233,49 @@ export default function DataPrivacy() {
       }}
     >
       <div style={{ width: '100%', maxWidth: 1200 }}>
-
         {/* Corner metadata */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 'clamp(40px, 6vw, 72px)',
-          gap: 24,
-        }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 10,
-            fontFamily: 'var(--font-mono)', fontSize: 11,
-            color: 'var(--text-muted)', letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-          }}>
-            <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 'clamp(40px, 6vw, 72px)',
+            gap: 24,
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              color: 'var(--text-muted)',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <span
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: '50%',
+                background: 'var(--coral)',
+                opacity: 0.8,
+              }}
+            />
             06 / Data &amp; Privacy
           </div>
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 10,
-            color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65,
-            whiteSpace: 'nowrap',
-          }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              color: 'var(--text-muted)',
+              letterSpacing: '0.1em',
+              opacity: 0.65,
+              whiteSpace: 'nowrap',
+            }}
+          >
             {'/* EU hosted \u00b7 GDPR native \u00b7 EU AI Act compliant */'}
           </div>
         </div>
@@ -245,9 +307,12 @@ export default function DataPrivacy() {
               animate={isInView ? { opacity: 1 } : {}}
               transition={EASE}
               style={{
-                fontFamily: 'var(--font-mono)', fontSize: 11,
-                color: 'var(--coral)', letterSpacing: '0.14em',
-                textTransform: 'uppercase', marginBottom: 18,
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                color: 'var(--coral)',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                marginBottom: 18,
               }}
             >
               Ownership
@@ -279,20 +344,25 @@ export default function DataPrivacy() {
                   transition={{ ...EASE, delay: 0.2 + i * 0.07 }}
                   style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}
                 >
-                  <span style={{
-                    width: 5, height: 5,
-                    borderRadius: '50%',
-                    background: 'var(--coral)',
-                    flexShrink: 0,
-                    marginTop: 8,
-                  }} />
-                  <p style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'clamp(13px, 1.4vw, 15px)',
-                    color: 'var(--text-sub)',
-                    lineHeight: 1.65,
-                    margin: 0,
-                  }}>
+                  <span
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      background: 'var(--coral)',
+                      flexShrink: 0,
+                      marginTop: 8,
+                    }}
+                  />
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'clamp(13px, 1.4vw, 15px)',
+                      color: 'var(--text-sub)',
+                      lineHeight: 1.65,
+                      margin: 0,
+                    }}
+                  >
                     {s}
                   </p>
                 </motion.div>

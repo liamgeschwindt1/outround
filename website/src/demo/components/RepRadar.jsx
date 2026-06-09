@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 const AXES = ['Discovery', 'Objection\nHandling', 'Pricing', 'Closing', 'Talk\nRatio', 'Follow-up'];
 const SCORES = [8.4, 5.2, 4.8, 7.1, 6.3, 7.8];
@@ -12,7 +13,7 @@ function toXY(angle, r, cx, cy) {
   };
 }
 
-export default function RepRadar({ size = 240, animated = false }) {
+function RepRadar({ size = 240, animated = false }) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
 
@@ -78,21 +79,21 @@ export default function RepRadar({ size = 240, animated = false }) {
       grad.addColorStop(0, 'rgba(242,107,69,0.2)');
       grad.addColorStop(1, 'rgba(75,163,227,0.2)');
       ctx.beginPath();
-      pts.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+      pts.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
       ctx.closePath();
       ctx.fillStyle = grad;
       ctx.fill();
 
       // Stroke
       ctx.beginPath();
-      pts.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+      pts.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
       ctx.closePath();
       ctx.strokeStyle = 'rgba(242,107,69,0.6)';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       // Dots
-      pts.forEach(pt => {
+      pts.forEach((pt) => {
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
         ctx.fillStyle = '#f26b45';
@@ -137,3 +138,10 @@ export default function RepRadar({ size = 240, animated = false }) {
 
   return <canvas ref={canvasRef} style={{ display: 'block' }} />;
 }
+
+RepRadar.propTypes = {
+  size: PropTypes.number,
+  animated: PropTypes.bool,
+};
+
+export default RepRadar;

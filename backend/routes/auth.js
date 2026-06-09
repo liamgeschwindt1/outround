@@ -28,7 +28,9 @@ const { getUserFromToken, getOrCreateLocalUser } = require('../services/auth');
 const { verifyState, signState } = require('../utils/crypto');
 
 let pushEvent = () => {};
-try { pushEvent = require('./debug').pushEvent; } catch {}
+try {
+  pushEvent = require('./debug').pushEvent;
+} catch {}
 
 const router = express.Router();
 
@@ -65,7 +67,7 @@ async function supabaseAuthRequest(path, body) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'apikey': key,
+      apikey: key,
     },
     body: JSON.stringify(body),
   });
@@ -107,90 +109,109 @@ router.post('/confirm', async (req, res) => {
       if (supabaseUser) {
         await getOrCreateLocalUser(pool, supabaseUser);
         userId = supabaseUser.id;
-        pushEvent('success', 'auth', `Email confirmed — user upserted: ${supabaseUser.email}`, { email: supabaseUser.email });
+        pushEvent('success', 'auth', `Email confirmed — user upserted: ${supabaseUser.email}`, {
+          email: supabaseUser.email,
+        });
       } else {
         pushEvent('warn', 'auth', 'Confirm: token valid but getUserFromToken returned null');
       }
     }
   } catch (err) {
     // Non-fatal: requireAuth middleware will create the user on the next request
-    pushEvent('warn', 'auth', `Confirm: user upsert failed (non-fatal): ${err.message}`, { error: err.message });
+    pushEvent('warn', 'auth', `Confirm: user upsert failed (non-fatal): ${err.message}`, {
+      error: err.message,
+    });
     console.error('[auth/confirm] user upsert failed:', err.message);
   }
 
   res.json({ ok: true, user_id: userId });
 });
 
-router.post('/login', rateLimit({ windowMs: 60_000, max: 10, keyFn: (r) => r.ip }), async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+router.post(
+  '/login',
+  rateLimit({ windowMs: 60_000, max: 10, keyFn: (r) => r.ip }),
+  async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
-  pushEvent('info', 'auth', `Login attempt — ${email}`, { email });
+    pushEvent('info', 'auth', `Login attempt — ${email}`, { email });
 
-  try {
-    const { status, data } = await supabaseAuthRequest(
-      '/token?grant_type=password',
-      { email, password }
-    );
-
-    if (status !== 200 || !data.access_token) {
-      pushEvent('warn', 'auth', `Login failed — ${email}`, { email, status, reason: data.error_description });
-      return res.status(401).json({ error: data.error_description || 'Invalid credentials' });
-    }
-
-    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie('sb_token', data.access_token, {
-      httpOnly: true,
-      secure: isSecure,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    pushEvent('success', 'auth', `Login success — ${email}`, { email });
-    res.json({ ok: true });
-  } catch (err) {
-    pushEvent('error', 'auth', `Login error — ${email}: ${err.message}`, { email, error: err.message });
-    console.error('[auth] Email login error:', err.message);
-    res.status(503).json({ error: 'Auth service unavailable' });
-  }
-});
-
-router.post('/signup', rateLimit({ windowMs: 60_000, max: 10, keyFn: (r) => r.ip }), async (req, res) => {
-  const { email, password, name } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'email and password required' });
-
-  try {
-    const { status, data } = await supabaseAuthRequest('/signup', {
-      email,
-      password,
-      data: { full_name: name || '' },
-    });
-
-    if (status >= 400) {
-      return res.status(status).json({
-        error: data.error_description || data.msg || data.error || 'Signup failed'
+    try {
+      const { status, data } = await supabaseAuthRequest('/token?grant_type=password', {
+        email,
+        password,
       });
+
+      if (status !== 200 || !data.access_token) {
+        pushEvent('warn', 'auth', `Login failed — ${email}`, {
+          email,
+          status,
+          reason: data.error_description,
+        });
+        return res.status(401).json({ error: data.error_description || 'Invalid credentials' });
+      }
+
+      const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+      res.cookie('sb_token', data.access_token, {
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      pushEvent('success', 'auth', `Login success — ${email}`, { email });
+      res.json({ ok: true });
+    } catch (err) {
+      pushEvent('error', 'auth', `Login error — ${email}: ${err.message}`, {
+        email,
+        error: err.message,
+      });
+      console.error('[auth] Email login error:', err.message);
+      res.status(503).json({ error: 'Auth service unavailable' });
     }
-
-    // Email confirmation required — Supabase returns user but no access_token
-    if (!data.access_token) {
-      return res.json({ ok: true, email_confirmation: true });
-    }
-
-    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie('sb_token', data.access_token, {
-      httpOnly: true,
-      secure: isSecure,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.json({ ok: true, user_id: data.user?.id });
-  } catch (err) {
-    console.error('[auth] Signup error:', err.message);
-    res.status(503).json({ error: 'Auth service unavailable' });
   }
-});
+);
+
+router.post(
+  '/signup',
+  rateLimit({ windowMs: 60_000, max: 10, keyFn: (r) => r.ip }),
+  async (req, res) => {
+    const { email, password, name } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+
+    try {
+      const { status, data } = await supabaseAuthRequest('/signup', {
+        email,
+        password,
+        data: { full_name: name || '' },
+      });
+
+      if (status >= 400) {
+        return res.status(status).json({
+          error: data.error_description || data.msg || data.error || 'Signup failed',
+        });
+      }
+
+      // Email confirmation required — Supabase returns user but no access_token
+      if (!data.access_token) {
+        return res.json({ ok: true, email_confirmation: true });
+      }
+
+      const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+      res.cookie('sb_token', data.access_token, {
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      res.json({ ok: true, user_id: data.user?.id });
+    } catch (err) {
+      console.error('[auth] Signup error:', err.message);
+      res.status(503).json({ error: 'Auth service unavailable' });
+    }
+  }
+);
 
 // ---------------------------------------------------------------------------
 // Supabase Google SSO via Supabase
@@ -247,10 +268,9 @@ router.get('/google/callback', async (req, res) => {
   const pool = getPool();
   if (pool) {
     try {
-      const { rows } = await pool.query(
-        'SELECT onboarding_complete FROM users WHERE id = $1',
-        [data.user.id]
-      );
+      const { rows } = await pool.query('SELECT onboarding_complete FROM users WHERE id = $1', [
+        data.user.id,
+      ]);
       if (!rows.length || !rows[0].onboarding_complete) {
         return res.redirect(`${getAppUrl()}/onboarding`);
       }
@@ -292,29 +312,33 @@ async function upsertDevUser(pool) {
   );
 }
 
-router.post('/dev-login', rateLimit({ windowMs: 60_000, max: 5, keyFn: (r) => r.ip }), async (req, res) => {
-  if (!shellAllowed()) {
-    return res.status(404).json({ error: 'Not found' });
+router.post(
+  '/dev-login',
+  rateLimit({ windowMs: 60_000, max: 5, keyFn: (r) => r.ip }),
+  async (req, res) => {
+    if (!shellAllowed()) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const pool = getPool();
+    try {
+      await upsertDevUser(pool);
+    } catch (err) {
+      console.error('[auth] dev-login user upsert failed:', err.message);
+    }
+
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    res.cookie('sb_token', `dev:${DEV_USER_ID}`, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    pushEvent('success', 'auth', 'Dev login — shell access granted', { user_id: DEV_USER_ID });
+    res.json({ ok: true, dev: true, user_id: DEV_USER_ID });
   }
-
-  const pool = getPool();
-  try {
-    await upsertDevUser(pool);
-  } catch (err) {
-    console.error('[auth] dev-login user upsert failed:', err.message);
-  }
-
-  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-  res.cookie('sb_token', `dev:${DEV_USER_ID}`, {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  pushEvent('success', 'auth', 'Dev login — shell access granted', { user_id: DEV_USER_ID });
-  res.json({ ok: true, dev: true, user_id: DEV_USER_ID });
-});
+);
 
 // GET /auth/shell-config — tells frontend whether shell mode is available
 router.get('/shell-config', (_req, res) => {
@@ -363,18 +387,25 @@ router.get('/pipedrive/callback', async (req, res) => {
         const pool = getPool();
         let userEmail = null;
         if (pool) {
-          const { rows } = await pool.query('SELECT email FROM users WHERE id = $1', [userId]).catch(() => ({ rows: [] }));
+          const { rows } = await pool
+            .query('SELECT email FROM users WHERE id = $1', [userId])
+            .catch(() => ({ rows: [] }));
           userEmail = rows[0]?.email || null;
         }
         const orgId = await tokenManager.ensureOrgForUser(userId, userEmail);
         const expiresAt = tokenData.expires_in
           ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
           : null;
-        await tokenManager.saveIntegration(orgId, 'pipedrive', {
-          accessToken:  tokenData.access_token,
-          refreshToken: tokenData.refresh_token || null,
-          expiresAt,
-        }, { domain: tokenData.api_domain || null });
+        await tokenManager.saveIntegration(
+          orgId,
+          'pipedrive',
+          {
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token || null,
+            expiresAt,
+          },
+          { domain: tokenData.api_domain || null }
+        );
       } catch (e) {
         console.error('[auth] pipedrive integrations save failed:', e.message);
       }
@@ -394,10 +425,9 @@ router.delete('/pipedrive', requireAuth, async (req, res) => {
   const pool = getPool();
   if (!pool) return res.status(503).json({ error: 'Database not available' });
 
-  await pool.query(
-    `DELETE FROM oauth_tokens WHERE user_id = $1 AND provider = 'pipedrive'`,
-    [userId]
-  );
+  await pool.query(`DELETE FROM oauth_tokens WHERE user_id = $1 AND provider = 'pipedrive'`, [
+    userId,
+  ]);
   res.json({ ok: true });
 });
 
@@ -443,7 +473,9 @@ router.get('/gcal/callback', async (req, res) => {
         const pool = getPool();
         let userEmail = null;
         if (pool) {
-          const { rows } = await pool.query('SELECT email FROM users WHERE id = $1', [userId]).catch(() => ({ rows: [] }));
+          const { rows } = await pool
+            .query('SELECT email FROM users WHERE id = $1', [userId])
+            .catch(() => ({ rows: [] }));
           userEmail = rows[0]?.email || null;
         }
         const orgId = await tokenManager.ensureOrgForUser(userId, userEmail);
@@ -451,7 +483,7 @@ router.get('/gcal/callback', async (req, res) => {
           ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
           : null;
         await tokenManager.saveIntegration(orgId, 'google', {
-          accessToken:  tokenData.access_token,
+          accessToken: tokenData.access_token,
           refreshToken: tokenData.refresh_token || null,
           expiresAt,
         });
@@ -474,10 +506,7 @@ router.delete('/gcal', requireAuth, async (req, res) => {
   const pool = getPool();
   if (!pool) return res.status(503).json({ error: 'Database not available' });
 
-  await pool.query(
-    `DELETE FROM oauth_tokens WHERE user_id = $1 AND provider = 'gcal'`,
-    [userId]
-  );
+  await pool.query(`DELETE FROM oauth_tokens WHERE user_id = $1 AND provider = 'gcal'`, [userId]);
   res.json({ ok: true });
 });
 
@@ -490,18 +519,18 @@ router.get('/slack', requireAuth, (req, res) => {
   const clientId = process.env.SLACK_CLIENT_ID;
   if (!clientId) return res.status(503).json({ error: 'Slack integration not configured' });
 
-  const userId   = req.user?.id || req.supabaseUser?.id;
+  const userId = req.user?.id || req.supabaseUser?.id;
   if (!userId) return res.status(401).json({ error: 'Unauthorised' });
 
-  const returnTo  = req.query.return_to || '/settings';
+  const returnTo = req.query.return_to || '/settings';
   const stateData = signState({ userId, returnTo });
   const redirectUri = `${process.env.BACKEND_URL || req.protocol + '://' + req.get('host')}/auth/slack/callback`;
 
   const params = new URLSearchParams({
-    client_id:    clientId,
-    scope:        'chat:write',
+    client_id: clientId,
+    scope: 'chat:write',
     redirect_uri: redirectUri,
-    state:        stateData,
+    state: stateData,
   });
   res.redirect('https://slack.com/oauth/v2/authorize?' + params);
 });
@@ -516,10 +545,10 @@ router.get('/slack/callback', async (req, res) => {
   if (!decoded || !decoded.userId) {
     return res.redirect(`${getAppUrl()}/settings?error=invalid_state`);
   }
-  const userId  = decoded.userId;
+  const userId = decoded.userId;
   const returnTo = decoded.returnTo || '/settings';
 
-  const clientId     = process.env.SLACK_CLIENT_ID;
+  const clientId = process.env.SLACK_CLIENT_ID;
   const clientSecret = process.env.SLACK_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return res.redirect(`${getAppUrl()}${returnTo}?error=slack_not_configured`);
@@ -529,25 +558,37 @@ router.get('/slack/callback', async (req, res) => {
 
   try {
     const resp = await fetch('https://slack.com/api/oauth.v2.access', {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body:    new URLSearchParams({ code, client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri }),
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+      }),
     });
     const data = await resp.json();
     if (!data.ok) throw new Error('Slack OAuth error: ' + data.error);
 
-    const botToken   = data.access_token;
+    const botToken = data.access_token;
     const slackUserId = data.authed_user?.id || null;
 
     if (tokenManager.isConfigured() && userId) {
       const pool = getPool();
       let userEmail = null;
       if (pool) {
-        const { rows } = await pool.query('SELECT email FROM users WHERE id = $1', [userId]).catch(() => ({ rows: [] }));
+        const { rows } = await pool
+          .query('SELECT email FROM users WHERE id = $1', [userId])
+          .catch(() => ({ rows: [] }));
         userEmail = rows[0]?.email || null;
       }
       const orgId = await tokenManager.ensureOrgForUser(userId, userEmail);
-      await tokenManager.saveIntegration(orgId, 'slack', { accessToken: botToken }, { slack_user_id: slackUserId });
+      await tokenManager.saveIntegration(
+        orgId,
+        'slack',
+        { accessToken: botToken },
+        { slack_user_id: slackUserId }
+      );
     }
 
     res.redirect(`${getAppUrl()}${returnTo}?slack=connected`);
@@ -599,13 +640,23 @@ router.get('/me', requireAuth, async (req, res) => {
   if (tokenManager.isConfigured()) {
     try {
       const sb = tokenManager.getClient();
-      const { data: userRow } = await sb.from('users').select('org_id').eq('id', userId).maybeSingle();
+      const { data: userRow } = await sb
+        .from('users')
+        .select('org_id')
+        .eq('id', userId)
+        .maybeSingle();
       if (userRow?.org_id) {
-        const { data: slack } = await sb.from('integrations')
-          .select('id').eq('org_id', userRow.org_id).eq('provider', 'slack').maybeSingle();
+        const { data: slack } = await sb
+          .from('integrations')
+          .select('id')
+          .eq('org_id', userRow.org_id)
+          .eq('provider', 'slack')
+          .maybeSingle();
         slackConnected = !!slack;
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   res.json({
@@ -615,7 +666,8 @@ router.get('/me', requireAuth, async (req, res) => {
     role: user?.role || null,
     avatar_url: user?.avatar_url || supabaseUser?.user_metadata?.avatar_url || null,
     coach_id: user?.coach_id || null,
-    onboarding_complete: user?.onboarding_complete || (req.supabaseUser?.app_metadata?.provider === 'dev') || false,
+    onboarding_complete:
+      user?.onboarding_complete || req.supabaseUser?.app_metadata?.provider === 'dev' || false,
     integrations: {
       pipedrive: pipedriveConnected,
       gcal: gcalConnected,

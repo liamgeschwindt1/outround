@@ -17,7 +17,6 @@ export default function Hero() {
         overflow: 'hidden',
       }}
     >
-
       <div
         className="hero-grid"
         style={{
@@ -48,15 +47,25 @@ export default function Hero() {
               marginBottom: 28,
             }}
           >
-            <span style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: 'var(--coral)', display: 'inline-block', flexShrink: 0,
-            }} />
-            <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: 11,
-              color: 'var(--coral)', letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-            }}>
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: 'var(--coral)',
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                color: 'var(--coral)',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+              }}
+            >
               Founding cohort &middot; 25 seats
             </span>
           </motion.div>
@@ -93,7 +102,9 @@ export default function Hero() {
               lineHeight: 1.7,
             }}
           >
-            Revenue teams don&rsquo;t lose because they lack data. They lose because context disappears between conversations. Outround is the commercial memory and coordination layer beneath every call your team makes.
+            Revenue teams don&rsquo;t lose because they lack data. They lose because context
+            disappears between conversations. Outround is the commercial memory and coordination
+            layer beneath every call your team makes.
           </motion.div>
 
           <motion.div
@@ -123,7 +134,9 @@ export default function Hero() {
               See what it&rsquo;s costing you
             </motion.button>
             <button
-              onClick={() => document.getElementById('what')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() =>
+                document.getElementById('what')?.scrollIntoView({ behavior: 'smooth' })
+              }
               style={{
                 background: 'transparent',
                 color: 'var(--text-sub)',
@@ -155,23 +168,32 @@ export default function Hero() {
             }}
           >
             {[
-              ['Before',    'Brief delivered'],
-              ['After',     'CRM completed'],
-              ['Across',    'Every deal'],
+              ['Before', 'Brief delivered'],
+              ['After', 'CRM completed'],
+              ['Across', 'Every deal'],
               ['Over time', 'Never resets'],
             ].map(([k, v]) => (
               <div key={k}>
-                <div style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 10,
-                  color: 'var(--text-muted)', letterSpacing: '0.12em',
-                  textTransform: 'uppercase', marginBottom: 4,
-                }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 10,
+                    color: 'var(--text-muted)',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    marginBottom: 4,
+                  }}
+                >
                   {k}
                 </div>
-                <div style={{
-                  fontFamily: 'var(--font-display)', fontSize: 14,
-                  color: 'var(--text-primary)', fontWeight: 600,
-                }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 14,
+                    color: 'var(--text-primary)',
+                    fontWeight: 600,
+                  }}
+                >
                   {v}
                 </div>
               </div>
