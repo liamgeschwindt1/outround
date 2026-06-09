@@ -57,6 +57,27 @@ console.warn = (...args) => {
 };
 
 // ---------------------------------------------------------------------------
+// GET /api/debug/auth-test  — public endpoint to diagnose auth config without logging in
+// Returns Supabase config status and the last 20 auth ring-buffer events
+// ---------------------------------------------------------------------------
+router.get('/auth-test', (req, res) => {
+  const authEvents = ring.filter(e => e.tag === 'auth').slice(-20);
+  res.json({
+    config: {
+      supabase_url: process.env.SUPABASE_URL
+        ? process.env.SUPABASE_URL.replace(/https:\/\//, '').slice(0, 25) + '...'
+        : 'NOT SET',
+      has_service_key: !!process.env.SUPABASE_SERVICE_KEY,
+      service_key_prefix: process.env.SUPABASE_SERVICE_KEY
+        ? process.env.SUPABASE_SERVICE_KEY.slice(0, 15) + '...'
+        : 'NOT SET',
+      has_anon_key: !!process.env.SUPABASE_ANON_KEY,
+      node_version: process.version,
+    },
+    recent_auth_events: authEvents,
+  });
+});
+
 // GET /api/debug/logs  — no requireAuth so it works even when auth is broken
 // ---------------------------------------------------------------------------
 router.get('/logs', async (req, res) => {

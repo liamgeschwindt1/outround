@@ -8,6 +8,9 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
+let pushEvent = () => {};
+try { pushEvent = require('../routes/debug').pushEvent; } catch {}
+
 let _client = null;
 
 function getAdminClient() {
@@ -18,8 +21,17 @@ function getAdminClient() {
 
   if (!url || !key) {
     console.warn('[auth] SUPABASE_URL or SUPABASE_SERVICE_KEY not set — auth disabled');
+    pushEvent('error', 'auth', 'getAdminClient: SUPABASE_URL or SUPABASE_SERVICE_KEY missing', {
+      has_url: !!url,
+      has_service_key: !!key,
+    });
     return null;
   }
+
+  pushEvent('info', 'auth', 'getAdminClient: creating Supabase admin client', {
+    url: url.replace(/https:\/\//, '').slice(0, 20) + '...',
+    key_prefix: key.slice(0, 15) + '...',
+  });
 
   _client = createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false }
@@ -33,13 +45,36 @@ function getAdminClient() {
  */
 async function getUserFromToken(jwt) {
   const client = getAdminClient();
-  if (!client) return null;
+  if (!client) {
+    pushEvent('error', 'auth', 'getUserFromToken: no admin client — Supabase not configured');
+    return null;
+  }
+
+  const tokenPreview = jwt ? `${jwt.slice(0, 20)}...` : 'null';
+  pushEvent('info', 'auth', `getUserFromToken: verifying token ${tokenPreview}`);
 
   try {
     const { data, error } = await client.auth.getUser(jwt);
-    if (error || !data?.user) return null;
+    if (error) {
+      pushEvent('error', 'auth', `getUserFromToken: Supabase returned error`, {
+        error_message: error.message,
+        error_status: error.status,
+        error_code: error.code,
+        token_preview: tokenPreview,
+      });
+      return null;
+    }
+    if (!data?.user) {
+      pushEvent('warn', 'auth', `getUserFromToken: no user in response`, { token_preview: tokenPreview });
+      return null;
+    }
+    pushEvent('success', 'auth', `getUserFromToken: verified — ${data.user.email}`, { email: data.user.email });
     return data.user;
   } catch (err) {
+    pushEvent('error', 'auth', `getUserFromToken: threw exception — ${err.message}`, {
+      error: err.message,
+      token_preview: tokenPreview,
+    });
     console.error('[auth] getUser threw:', err.message);
     return null;
   }
