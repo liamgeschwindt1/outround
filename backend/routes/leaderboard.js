@@ -3,9 +3,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/client');
+const { requireAuth } = require('../middleware/auth');
 
 // GET /api/leaderboard
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const result = await db.query(
       `SELECT user_name, user_role, MAX(score) AS best_score

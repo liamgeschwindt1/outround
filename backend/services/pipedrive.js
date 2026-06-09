@@ -11,7 +11,7 @@
  * Tokens are stored encrypted in the oauth_tokens table.
  */
 
-const { encrypt, decrypt } = require('../utils/crypto');
+const { encrypt, decrypt, signState } = require('../utils/crypto');
 const { getPool } = require('../db/client');
 
 const PIPEDRIVE_AUTH_URL = 'https://oauth.pipedrive.com/oauth/authorize';
@@ -30,8 +30,7 @@ function getAuthUrl(userId, returnTo = '/settings') {
   const clientId = process.env.PIPEDRIVE_CLIENT_ID;
   if (!clientId) throw new Error('PIPEDRIVE_CLIENT_ID is not set');
 
-  const stateData = JSON.stringify({ userId, returnTo });
-  const state = Buffer.from(stateData).toString('base64url');
+  const state = signState({ userId, returnTo });
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: getRedirectUri(),

@@ -221,14 +221,24 @@ router.post('/start', requireAuth, async (req, res) => {
 // ---------------------------------------------------------------------------
 // GET /api/session/:id/voice-token
 // ---------------------------------------------------------------------------
-router.get('/:id/voice-token', async (req, res) => {
+router.get('/:id/voice-token', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const userId = req.user?.id || req.supabaseUser?.id;
 
-  // Determine persona — memStore is authoritative when present; only hit DB as fallback
-  let personaId = memStore.get(id)?.persona_id;  if (!personaId) {
+  // Verify this session belongs to the authenticated user (or allow if no user row yet)
+  let personaId = memStore.get(id)?.persona_id;
+  if (!personaId) {
     try {
-      const result = await db.query('SELECT persona_id FROM sessions WHERE id = $1', [id]);
-      if (result.rows.length > 0) personaId = result.rows[0].persona_id;
+      const result = await db.query(
+        'SELECT persona_id, user_id FROM sessions WHERE id = $1', [id]
+      );
+      if (result.rows.length > 0) {
+        // Enforce ownership: only the session owner can get a voice token
+        if (result.rows[0].user_id && userId && result.rows[0].user_id !== userId) {
+          return res.status(403).json({ error: 'Forbidden' });
+        }
+        personaId = result.rows[0].persona_id;
+      }
     } catch {
       // DB unavailable — fall back to default
     }
@@ -247,9 +257,23 @@ router.get('/:id/voice-token', async (req, res) => {
 // ---------------------------------------------------------------------------
 // POST /api/session/:id/end
 // ---------------------------------------------------------------------------
-router.post('/:id/end', async (req, res) => {
+router.post('/:id/end', requireAuth, async (req, res) => {
   const { id } = req.params;
   const { elevenlabs_conversation_id, duration_seconds } = req.body;
+  const userId = req.user?.id || req.supabaseUser?.id;
+
+  // Verify session ownership before accepting the end call
+  let ownerId = null;
+  try {
+    const { rows } = await db.query(
+      'SELECT user_id FROM sessions WHERE id = $1', [id]
+    );
+    if (rows.length > 0) ownerId = rows[0].user_id;
+  } catch { /* fall through — allow if DB unavailable */ }
+
+  if (ownerId && userId && ownerId !== userId) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
 
   // Update DB
   try {
@@ -283,9 +307,23 @@ router.post('/:id/end', async (req, res) => {
 // ---------------------------------------------------------------------------
 // POST /api/session/:id/end-test — inject a sample transcript, skip ElevenLabs
 // ---------------------------------------------------------------------------
-router.post('/:id/end-test', async (req, res) => {
+router.post('/:id/end-test', requireAuth, async (req, res) => {
   const { id } = req.params;
   const { transcript, duration_seconds } = req.body;
+  const userId = req.user?.id || req.supabaseUser?.id;
+
+  // Verify session ownership
+  let ownerId = null;
+  try {
+    const { rows } = await db.query(
+      'SELECT user_id FROM sessions WHERE id = $1', [id]
+    );
+    if (rows.length > 0) ownerId = rows[0].user_id;
+  } catch { /* fall through */ }
+
+  if (ownerId && userId && ownerId !== userId) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
 
   if (!Array.isArray(transcript) || transcript.length === 0) {
     return res.status(400).json({ error: 'transcript array required' });
@@ -369,18 +407,23 @@ async function _processTestSession(sessionId, injectedTranscript, durationSecs) 
 // ---------------------------------------------------------------------------
 // GET /api/session/:id/status
 // ---------------------------------------------------------------------------
-router.get('/:id/status', async (req, res) => {
+router.get('/:id/status', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const userId = req.user?.id || req.supabaseUser?.id;
 
   // Try DB first
   try {
     const result = await db.query(
-      `SELECT score, score_breakdown, transcript, audio_metrics, mode
+      `SELECT score, score_breakdown, transcript, audio_metrics, mode, user_id
        FROM sessions WHERE id = $1`,
       [id]
     );
     if (result.rows.length > 0) {
       const row = result.rows[0];
+      // Enforce ownership
+      if (row.user_id && userId && row.user_id !== userId) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
       if (row.score === null) {
         return res.json({
           status: 'processing',
@@ -564,8 +607,23 @@ async function storeResults(sessionId, useMemOnly, grading, transcript, audioMet
 // ---------------------------------------------------------------------------
 // POST /api/session/:id/deep-analysis  — trigger on-demand deep annotation
 // ---------------------------------------------------------------------------
-router.post('/:id/deep-analysis', async (req, res) => {
+router.post('/:id/deep-analysis', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const userId = req.user?.id || req.supabaseUser?.id;
+
+  // Verify session ownership
+  let ownerId = null;
+  try {
+    const { rows } = await db.query(
+      'SELECT user_id FROM sessions WHERE id = $1', [id]
+    );
+    if (rows.length > 0) ownerId = rows[0].user_id;
+  } catch { /* fall through */ }
+
+  if (ownerId && userId && ownerId !== userId) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
   const mem = memStore.get(id);
 
   // Must have basic analysis done first
@@ -592,17 +650,22 @@ router.post('/:id/deep-analysis', async (req, res) => {
 // ---------------------------------------------------------------------------
 // GET /api/session/:id/deep-status
 // ---------------------------------------------------------------------------
-router.get('/:id/deep-status', async (req, res) => {
+router.get('/:id/deep-status', requireAuth, async (req, res) => {
   const { id } = req.params;
+  const userId = req.user?.id || req.supabaseUser?.id;
 
   // Try DB first
   try {
     const result = await db.query(
-      `SELECT deep_analysis, deep_analysis_status FROM sessions WHERE id = $1`,
+      `SELECT deep_analysis, deep_analysis_status, user_id FROM sessions WHERE id = $1`,
       [id]
     );
     if (result.rows.length > 0) {
       const row = result.rows[0];
+      // Enforce ownership
+      if (row.user_id && userId && row.user_id !== userId) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
       if (row.deep_analysis_status === 'complete' && row.deep_analysis) {
         return res.json({ status: 'complete', ...row.deep_analysis });
       }

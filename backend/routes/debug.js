@@ -10,6 +10,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/client');
+const { requireAuth } = require('../middleware/auth');
 
 // ---------------------------------------------------------------------------
 // In-process event ring buffer — 500 entries, survives route reloads
@@ -42,6 +43,28 @@ pushEvent('info', 'server', 'Backend process started', {
 // Export early so server.js can import before routes are mounted
 module.exports.pushEvent = pushEvent;
 
+// Redact PII and key material from log metadata before returning to clients
+function sanitizeMeta(meta) {
+  if (!meta || typeof meta !== 'object') return meta;
+  const safe = { ...meta };
+  // Redact email addresses
+  if (safe.email) safe.email = redactEmail(safe.email);
+  if (safe.user && typeof safe.user === 'string' && safe.user.includes('@')) {
+    safe.user = redactEmail(safe.user);
+  }
+  // Strip key prefixes if they leaked
+  if (safe.key_prefix) delete safe.key_prefix;
+  if (safe.token_preview) delete safe.token_preview;
+  return safe;
+}
+
+function redactEmail(email) {
+  if (!email || !email.includes('@')) return email;
+  const [local, domain] = email.split('@');
+  const visible = local.length <= 3 ? local[0] : local.slice(0, 2);
+  return `${visible}***@${domain}`;
+}
+
 // Patch console.error + console.warn to feed into ring
 const _origError = console.error.bind(console);
 const _origWarn  = console.warn.bind(console);
@@ -58,29 +81,32 @@ console.warn = (...args) => {
 
 // ---------------------------------------------------------------------------
 // GET /api/debug/auth-test  — public endpoint to diagnose auth config without logging in
-// Returns Supabase config status and the last 20 auth ring-buffer events
+// Returns Supabase config status and the last 20 auth ring-buffer events.
+// Sensitive values (service key) are NEVER exposed — only boolean presence.
 // ---------------------------------------------------------------------------
 router.get('/auth-test', (req, res) => {
   const authEvents = ring.filter(e => e.tag === 'auth').slice(-20);
+  // Redact any key material from auth events before returning
+  const safeEvents = authEvents.map(e => ({
+    ...e,
+    meta: sanitizeMeta(e.meta),
+  }));
   res.json({
     config: {
       supabase_url: process.env.SUPABASE_URL
         ? process.env.SUPABASE_URL.replace(/https:\/\//, '').slice(0, 25) + '...'
         : 'NOT SET',
       has_service_key: !!process.env.SUPABASE_SERVICE_KEY,
-      service_key_prefix: process.env.SUPABASE_SERVICE_KEY
-        ? process.env.SUPABASE_SERVICE_KEY.slice(0, 15) + '...'
-        : 'NOT SET',
       has_anon_key: !!process.env.SUPABASE_ANON_KEY,
       node_version: process.version,
     },
-    recent_auth_events: authEvents,
+    recent_auth_events: safeEvents,
   });
 });
 
-// GET /api/debug/logs  — no requireAuth so it works even when auth is broken
+// GET /api/debug/logs  — requires auth; redacts PII from returned data
 // ---------------------------------------------------------------------------
-router.get('/logs', async (req, res) => {
+router.get('/logs', requireAuth, async (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 100, 500);
   const entries = [];
 
@@ -183,7 +209,15 @@ router.get('/logs', async (req, res) => {
     const key = e.id || `${e.ts}|${e.tag}|${e.message}`;
     if (!seen.has(key)) {
       seen.add(key);
-      deduped.push(e);
+      // Redact PII before returning
+      deduped.push({
+        ...e,
+        message: redactEmail(e.message),
+        meta: sanitizeMeta(e.meta),
+        ...(e.meta?.user && typeof e.meta.user === 'string'
+          ? { meta: { ...sanitizeMeta(e.meta), user: redactEmail(e.meta.user) } }
+          : {}),
+      });
     }
     if (deduped.length >= limit) break;
   }
@@ -192,9 +226,9 @@ router.get('/logs', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /api/debug/status  — system health snapshot, no auth required
+// GET /api/debug/status  — system health snapshot, requires auth
 // ---------------------------------------------------------------------------
-router.get('/status', async (req, res) => {
+router.get('/status', requireAuth, async (req, res) => {
   const pool = db.getPool ? db.getPool() : null;
   let dbStatus = 'not_configured';
   let dbMs = null;

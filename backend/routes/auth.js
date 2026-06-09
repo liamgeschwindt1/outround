@@ -21,10 +21,11 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const pipedrive = require('../services/pipedrive');
 const gcal = require('../services/gcal');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, rateLimit } = require('../middleware/auth');
 const { getPool } = require('../db/client');
 const tokenManager = require('../services/token-manager');
 const { getUserFromToken, getOrCreateLocalUser } = require('../services/auth');
+const { verifyState, signState } = require('../utils/crypto');
 
 let pushEvent = () => {};
 try { pushEvent = require('./debug').pushEvent; } catch {}
@@ -120,7 +121,7 @@ router.post('/confirm', async (req, res) => {
   res.json({ ok: true, user_id: userId });
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', rateLimit({ windowMs: 60_000, max: 10, keyFn: (r) => r.ip }), async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
@@ -154,7 +155,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.post('/signup', async (req, res) => {
+router.post('/signup', rateLimit({ windowMs: 60_000, max: 10, keyFn: (r) => r.ip }), async (req, res) => {
   const { email, password, name } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
@@ -291,7 +292,7 @@ async function upsertDevUser(pool) {
   );
 }
 
-router.post('/dev-login', async (req, res) => {
+router.post('/dev-login', rateLimit({ windowMs: 60_000, max: 5, keyFn: (r) => r.ip }), async (req, res) => {
   if (!shellAllowed()) {
     return res.status(404).json({ error: 'Not found' });
   }
@@ -346,18 +347,12 @@ router.get('/pipedrive/callback', async (req, res) => {
     return res.redirect(`${getAppUrl()}/settings?error=pipedrive_denied`);
   }
 
-  let userId;
-  let returnTo = '/settings';
-  try {
-    const decoded = JSON.parse(Buffer.from(state, 'base64url').toString('utf8'));
-    userId = decoded.userId;
-    returnTo = decoded.returnTo || '/settings';
-  } catch {
-    // Legacy: state was just the userId
-    try { userId = Buffer.from(state, 'base64url').toString('utf8'); } catch {
-      return res.redirect(`${getAppUrl()}/settings?error=invalid_state`);
-    }
+  const decoded = verifyState(state);
+  if (!decoded || !decoded.userId) {
+    return res.redirect(`${getAppUrl()}/settings?error=invalid_state`);
   }
+  const userId = decoded.userId;
+  const returnTo = decoded.returnTo || '/settings';
 
   try {
     const tokenData = await pipedrive.exchangeCode(code, userId);
@@ -432,18 +427,12 @@ router.get('/gcal/callback', async (req, res) => {
     return res.redirect(`${getAppUrl()}/settings?error=gcal_denied`);
   }
 
-  let userId;
-  let returnTo = '/onboarding';
-  try {
-    const decoded = JSON.parse(Buffer.from(state, 'base64url').toString('utf8'));
-    userId = decoded.userId;
-    returnTo = decoded.returnTo || '/onboarding';
-  } catch {
-    // Legacy: state was just the userId
-    try { userId = Buffer.from(state, 'base64url').toString('utf8'); } catch {
-      return res.redirect(`${getAppUrl()}/settings?error=invalid_state`);
-    }
+  const decoded = verifyState(state);
+  if (!decoded || !decoded.userId) {
+    return res.redirect(`${getAppUrl()}/settings?error=invalid_state`);
   }
+  const userId = decoded.userId;
+  const returnTo = decoded.returnTo || '/onboarding';
 
   try {
     const tokenData = await gcal.exchangeCode(code, userId);
@@ -505,7 +494,7 @@ router.get('/slack', requireAuth, (req, res) => {
   if (!userId) return res.status(401).json({ error: 'Unauthorised' });
 
   const returnTo  = req.query.return_to || '/settings';
-  const stateData = Buffer.from(JSON.stringify({ userId, returnTo })).toString('base64url');
+  const stateData = signState({ userId, returnTo });
   const redirectUri = `${process.env.BACKEND_URL || req.protocol + '://' + req.get('host')}/auth/slack/callback`;
 
   const params = new URLSearchParams({
@@ -523,15 +512,12 @@ router.get('/slack/callback', async (req, res) => {
     return res.redirect(`${getAppUrl()}/settings?error=slack_denied`);
   }
 
-  let userId;
-  let returnTo = '/settings';
-  try {
-    const decoded = JSON.parse(Buffer.from(state, 'base64url').toString('utf8'));
-    userId  = decoded.userId;
-    returnTo = decoded.returnTo || '/settings';
-  } catch {
+  const decoded = verifyState(state);
+  if (!decoded || !decoded.userId) {
     return res.redirect(`${getAppUrl()}/settings?error=invalid_state`);
   }
+  const userId  = decoded.userId;
+  const returnTo = decoded.returnTo || '/settings';
 
   const clientId     = process.env.SLACK_CLIENT_ID;
   const clientSecret = process.env.SLACK_CLIENT_SECRET;

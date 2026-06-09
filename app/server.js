@@ -11,6 +11,20 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 
+// ── Security headers ────────────────────────────────────────────────────────
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader(
+    'Strict-Transport-Security',
+    process.env.NODE_ENV === 'production'
+      ? 'max-age=63072000; includeSubDomains; preload'
+      : 'max-age=0'
+  );
+  next();
+});
+
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 const DIST_DIR = path.join(__dirname, 'dist');
 const PUBLIC_DIR = path.join(__dirname, 'public');

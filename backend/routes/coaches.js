@@ -43,7 +43,7 @@ const BUILT_IN_COACHES = [
 // ---------------------------------------------------------------------------
 // GET /api/coaches
 // ---------------------------------------------------------------------------
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   const pool = getPool();
 
   // Try DB first; fall back to built-in if DB not configured

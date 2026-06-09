@@ -11,7 +11,7 @@
  * Tokens are stored encrypted in the oauth_tokens table.
  */
 
-const { encrypt, decrypt } = require('../utils/crypto');
+const { encrypt, decrypt, signState } = require('../utils/crypto');
 const { getPool } = require('../db/client');
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -30,8 +30,7 @@ function getAuthUrl(userId, returnTo = '/onboarding') {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) throw new Error('GOOGLE_CLIENT_ID is not set');
 
-  const stateData = JSON.stringify({ userId, returnTo });
-  const state = Buffer.from(stateData).toString('base64url');
+  const state = signState({ userId, returnTo });
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: getRedirectUri(),

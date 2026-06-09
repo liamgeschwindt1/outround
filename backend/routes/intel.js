@@ -28,20 +28,34 @@ const meetingIntel    = require('../services/meeting-intel');
 const gladia          = require('../services/gladia');
 const calendarPoller  = require('../services/calendar-poller');
 const tokenManager    = require('../services/token-manager');
+const { requireAuth } = require('../middleware/auth');
 
 // ── Internal auth guard ─────────────────────────────────────────────────────
-// Protected by a shared secret in INTEL_SECRET env var.
-// If not set, only allow in non-production environments.
+// Two layers:
+//   1. requireAuth (primary) — standard user authentication
+//   2. INTEL_SECRET (secondary) — service-to-service calls from calendar poller etc.
+//
+// Either passing standard auth OR providing the correct INTEL_SECRET grants access.
+// If INTEL_SECRET is not set, only standard auth works.
+// In production, INTEL_SECRET MUST be set for the calendar poller to function.
 
 function guard(req, res, next) {
   const secret = process.env.INTEL_SECRET;
+
+  // If a valid shared secret is provided, allow bypass (for internal services)
   if (secret) {
     const provided = req.headers['x-intel-secret'] || req.query.secret;
-    if (provided !== secret) return res.status(401).json({ error: 'unauthorized' });
-  } else if (process.env.NODE_ENV === 'production') {
-    return res.status(401).json({ error: 'INTEL_SECRET must be set in production' });
+    if (provided === secret) {
+      // Clear the secret from query params so it doesn't leak into logs
+      if (req.query.secret) {
+        delete req.query.secret;
+      }
+      return next();
+    }
   }
-  next();
+
+  // Otherwise, fall through to standard user authentication
+  return requireAuth(req, res, next);
 }
 
 // ── Fake transcript used for Step 1 testing ────────────────────────────────

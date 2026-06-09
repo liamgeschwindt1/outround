@@ -45,4 +45,77 @@ function decrypt(ciphertext) {
   return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
 }
 
-module.exports = { encrypt, decrypt };
+/**
+ * Sign an OAuth state payload with HMAC-SHA256 to prevent tampering.
+ * Returns a base64url string: payload.base64url:hmac.base64url
+ *
+ * @param {object} payload — key/value pairs to protect
+ * @returns {string}
+ */
+function signState(payload) {
+  const key = getStateSecret();
+  const json = JSON.stringify(payload);
+  const encoded = Buffer.from(json).toString('base64url');
+  const hmac = crypto.createHmac('sha256', key).update(encoded).digest('base64url');
+  return `${encoded}:${hmac}`;
+}
+
+/**
+ * Verify and decode an HMAC-signed OAuth state.
+ * Returns the parsed payload, or null if the signature is invalid.
+ *
+ * @param {string} state — the state string from the OAuth callback
+ * @returns {object|null}
+ */
+function verifyState(state) {
+  if (!state || !state.includes(':')) {
+    // Legacy fallback: state was just a base64url-encoded userId
+    try {
+      const userId = Buffer.from(state, 'base64url').toString('utf8');
+      if (userId && userId.length > 0 && !userId.includes('{')) {
+        return { userId, legacy: true };
+      }
+    } catch { /* not valid legacy format either */ }
+    return null;
+  }
+
+  const parts = state.split(':');
+  if (parts.length < 2) return null;
+  // The last part is the HMAC; everything before it is the payload
+  const hmac = parts.pop();
+  const encoded = parts.join(':');
+
+  const key = getStateSecret();
+  const expectedHmac = crypto.createHmac('sha256', key).update(encoded).digest('base64url');
+
+  if (!crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(expectedHmac))) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the signing secret for OAuth state parameters.
+ * Uses STATE_SECRET env var, or falls back to ENCRYPTION_KEY (first 32 bytes).
+ */
+function getStateSecret() {
+  if (process.env.STATE_SECRET) {
+    return Buffer.from(process.env.STATE_SECRET.slice(0, 64).padEnd(32, '0'));
+  }
+  // Fall back to encryption key
+  const hex = process.env.ENCRYPTION_KEY;
+  if (!hex || hex.length < 32) {
+    // Last resort: use a hardcoded secret (better than no signing)
+    // Override this in production by setting STATE_SECRET or ENCRYPTION_KEY
+    console.warn('[crypto] No STATE_SECRET or ENCRYPTION_KEY set — OAuth state is not securely signed');
+    return Buffer.from('outround-oauth-state-fallback-2024');
+  }
+  return Buffer.from(hex.slice(0, 64), 'hex');
+}
+
+module.exports = { encrypt, decrypt, signState, verifyState };
