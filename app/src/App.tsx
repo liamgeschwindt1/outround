@@ -38,14 +38,8 @@ import Welcome from './routes/Welcome';
 import Login from './routes/Login';
 import Onboarding from './routes/Onboarding';
 import Dashboard from './routes/dashboard/Dashboard';
-import Round from './routes/round/Round';
-import Progress from './routes/progress/Progress';
-import Team from './routes/team/Team';
-import Leaderboard from './routes/leaderboard/Leaderboard';
 import Settings from './routes/settings/Settings';
 import MeetingPrep from './routes/MeetingPrep';
-import Stub from './routes/Stub';
-import LogBook from './routes/LogBook';
 
 function LoginGate() {
   const { user, loading } = useAuth();
@@ -84,27 +78,12 @@ export default function App() {
             <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
 
             <Route path="/"            element={<Guarded><Dashboard /></Guarded>} />
-            <Route path="/round"       element={<Guarded><Round /></Guarded>} />
-            <Route path="/progress"    element={<Guarded><Progress /></Guarded>} />
-            <Route path="/team"        element={<Guarded><Team /></Guarded>} />
-            <Route path="/leaderboard" element={<Guarded><Leaderboard /></Guarded>} />
             <Route path="/settings"    element={<Guarded><Settings /></Guarded>} />
-            <Route path="/settings/billing" element={<Guarded><Settings /></Guarded>} />
 
-            <Route path="/practice"    element={<Guarded><Round /></Guarded>} />
-            <Route path="/sessions"    element={<Guarded><Progress /></Guarded>} />
-            <Route path="/analytics"   element={<Guarded><Progress /></Guarded>} />
-
-            <Route
-              path="/analysis/:id"
-              element={<Guarded><Stub title="Round analysis" body="Detailed scoring — full view coming next." /></Guarded>}
-            />
             <Route
               path="/meeting/:id"
               element={<Guarded><MeetingPrep /></Guarded>}
             />
-            <Route path="/meetings"    element={<Guarded><Stub title="Meetings" body="Meeting bot — Phase 2." /></Guarded>} />
-            <Route path="/logbook"     element={<Guarded><LogBook /></Guarded>} />
 
             <Route path="*" element={<RootRedirect />} />
           </Routes>

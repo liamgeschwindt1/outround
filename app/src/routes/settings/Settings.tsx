@@ -7,15 +7,13 @@ import type { User } from '../../api/types';
 
 // ─── Left nav tabs ────────────────────────────────────────────────────────────
 
-type SettingsTab = 'profile' | 'workspace' | 'billing' | 'integrations' | 'notifications' | 'danger';
+type SettingsTab = 'profile' | 'billing' | 'integrations' | 'danger';
 
 const TABS: { id: SettingsTab; label: string }[] = [
-  { id: 'profile',       label: 'Profile'       },
-  { id: 'workspace',     label: 'Workspace'      },
-  { id: 'billing',       label: 'Plan & Billing' },
-  { id: 'integrations',  label: 'Integrations'   },
-  { id: 'notifications', label: 'Notifications'  },
-  { id: 'danger',        label: 'Danger'         },
+  { id: 'profile',      label: 'Profile'       },
+  { id: 'billing',      label: 'Plan & Billing' },
+  { id: 'integrations', label: 'Integrations'   },
+  { id: 'danger',       label: 'Danger'         },
 ];
 
 // ─── Integration row ──────────────────────────────────────────────────────────
@@ -99,13 +97,31 @@ function ProfileTab() {
 
 function BillingTab() {
   const plans = [
-    { name: 'Basic',  price: '€29/mo',  features: ['150 min/mo', '1 persona', 'Email reports'] },
-    { name: 'Growth', price: '€79/mo',  features: ['500 min/mo', 'All personas', 'Tone analysis', 'Leaderboard'], current: true },
-    { name: 'Pro',    price: '€149/mo', features: ['Unlimited', 'All personas', 'Team dashboard', 'API access'] },
+    {
+      name: 'Founder',
+      price: '€49',
+      period: '/mo',
+      features: ['1 seat', 'Unlimited meetings', 'Pre-meeting brief', 'CRM completion', 'Slack delivery', 'Follow-up drafting'],
+      current: true,
+    },
+    {
+      name: 'Team',
+      price: '€89',
+      period: '/seat/mo',
+      features: ['Everything in Founder', 'Manager digest', 'Team memory layer', 'Cross-call intelligence', 'Deal risk detection', 'Coordination workflows'],
+      current: false,
+    },
+    {
+      name: 'Enterprise',
+      price: 'Custom',
+      period: '',
+      features: ['Everything in Team', 'SOC2 compliance', 'Custom field mapping', 'API access', 'Dedicated success', 'SLA & legal review'],
+      current: false,
+      phase: 'Phase 3',
+    },
   ];
   return (
     <div>
-      <div style={{ fontSize: 12, color: T.t3, marginBottom: 20 }}>14-day trial · No credit card required until trial ends</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         {plans.map(plan => (
           <div
@@ -117,8 +133,16 @@ function BillingTab() {
               padding: 20,
             }}
           >
-            <div style={{ fontSize: 15, fontWeight: 600, color: T.t1, marginBottom: 4 }}>{plan.name}</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: plan.current ? T.coral : T.t1, marginBottom: 16, fontFamily: T.numeric }}>{plan.price}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: T.t1 }}>{plan.name}</div>
+              {'phase' in plan && plan.phase && (
+                <span style={{ fontSize: 10, fontFamily: T.mono, color: T.t4, background: T.bgSub, padding: '2px 6px', borderRadius: R.sm, border: `1px solid ${T.border}` }}>{plan.phase}</span>
+              )}
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <span style={{ fontSize: 24, fontWeight: 700, color: plan.current ? T.coral : T.t1, fontFamily: T.numeric }}>{plan.price}</span>
+              {plan.period && <span style={{ fontSize: 12, color: T.t3, marginLeft: 2 }}>{plan.period}</span>}
+            </div>
             {plan.features.map(f => (
               <div key={f} style={{ fontSize: 12, color: T.t2, marginBottom: 6 }}>✓ {f}</div>
             ))}
@@ -127,21 +151,21 @@ function BillingTab() {
                 marginTop: 16,
                 width: '100%',
                 padding: '8px 0',
-                background: plan.current ? 'transparent' : T.grad,
-                border: plan.current ? `1px solid ${T.borderMd}` : 'none',
+                background: plan.current ? 'transparent' : (plan.name === 'Enterprise' ? 'transparent' : T.grad),
+                border: plan.current ? `1px solid ${T.borderMd}` : (plan.name === 'Enterprise' ? `1px solid ${T.borderMd}` : 'none'),
                 borderRadius: R.md,
-                color: plan.current ? T.t3 : '#fff',
+                color: plan.current ? T.t3 : T.t1,
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: plan.current ? 'default' : 'pointer',
               }}
             >
-              {plan.current ? 'Current plan' : `Upgrade →`}
+              {plan.current ? 'Current plan' : plan.name === 'Enterprise' ? 'Contact us' : 'Upgrade →'}
             </button>
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 16, fontSize: 12, color: T.t3 }}>Annual billing saves 20%</div>
+      <div style={{ marginTop: 12, fontSize: 12, color: T.t3 }}>First 100 founding customers grandfathered at €49 for 12 months.</div>
     </div>
   );
 }
@@ -150,6 +174,7 @@ function IntegrationsTab() {
   const { data: user, refetch } = useApi<User>('/auth/me');
   const pipedrive = user?.integrations?.pipedrive ?? false;
   const gcal = user?.integrations?.gcal ?? false;
+  const slack = (user?.integrations as Record<string, boolean> | undefined)?.slack ?? false;
 
   const disconnectPipedrive = async () => {
     await fetch('/auth/pipedrive', { method: 'DELETE', credentials: 'include' });
@@ -158,6 +183,11 @@ function IntegrationsTab() {
 
   const disconnectGcal = async () => {
     await fetch('/auth/gcal', { method: 'DELETE', credentials: 'include' });
+    refetch?.();
+  };
+
+  const disconnectSlack = async () => {
+    await fetch('/auth/slack', { method: 'DELETE', credentials: 'include' });
     refetch?.();
   };
 
@@ -183,12 +213,17 @@ function IntegrationsTab() {
         />
       </Card>
       <Card style={{ marginBottom: 14 }}>
-        <CardHead kicker="Meeting Bot" title="" />
-        <IntegrationRow label="Auto-join calls" connected={false} locked lockLabel="Phase 2" />
+        <CardHead kicker="Slack" title="" />
+        <IntegrationRow
+          label="Slack"
+          connected={slack}
+          onConnect={() => { window.location.href = '/auth/slack?return_to=/settings'; }}
+          onDisconnect={disconnectSlack}
+        />
       </Card>
       <Card>
-        <CardHead kicker="Slack" title="" />
-        <IntegrationRow label="Coach nudges" connected={false} locked lockLabel="coming soon" />
+        <CardHead kicker="Meeting Bot" title="" />
+        <IntegrationRow label="Auto-join calls" connected={false} locked lockLabel="Phase 2" />
       </Card>
     </div>
   );
@@ -218,12 +253,10 @@ export default function Settings() {
   const [tab, setTab] = useState<SettingsTab>('profile');
 
   const content: Record<SettingsTab, React.ReactNode> = {
-    profile:       <ProfileTab />,
-    workspace:     <div style={{ color: T.t2, fontSize: 13 }}>Workspace settings — coming soon.</div>,
-    billing:       <BillingTab />,
-    integrations:  <IntegrationsTab />,
-    notifications: <div style={{ color: T.t2, fontSize: 13 }}>Notification preferences — coming soon.</div>,
-    danger:        <DangerTab />,
+    profile:      <ProfileTab />,
+    billing:      <BillingTab />,
+    integrations: <IntegrationsTab />,
+    danger:       <DangerTab />,
   };
 
   return (
