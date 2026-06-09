@@ -52,8 +52,6 @@ async function createBot({ meetingUrl, joinAt, botName = 'Outround Notetaker' },
   const payload = {
     meeting_url: meetingUrl,
     bot_name: botName,
-    transcription_options: { provider: 'gladia' },
-    recording_mode: 'speaker_view',
   };
   if (process.env.RECALL_WEBHOOK_URL) payload.webhook_url = process.env.RECALL_WEBHOOK_URL;
   if (joinAt) payload.join_at = joinAt;
