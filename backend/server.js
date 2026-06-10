@@ -2,25 +2,65 @@
 
 // Load .env in development (Railway injects env vars directly in production)
 if (process.env.NODE_ENV !== 'production') {
-  try { require('dotenv').config(); } catch { /* dotenv optional */ }
+  try {
+    require('dotenv').config();
+  } catch {
+    /* dotenv optional */
+  }
 }
 
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const app = express();
 
-app.use(express.json());
+// ── Security headers ────────────────────────────────────────────────────────
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
+  res.setHeader('X-Download-Options', 'noopen');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader(
+    'Strict-Transport-Security',
+    process.env.NODE_ENV === 'production'
+      ? 'max-age=63072000; includeSubDomains; preload'
+      : 'max-age=0'
+  );
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.elevenlabs.io https://*.recall.ai https://*.supabase.co https://*.pipedrive.com https://*.googleapis.com https://slack.com https://api.gladia.io wss://*.elevenlabs.io; img-src 'self' data: https:; font-src 'self'"
+  );
+  next();
+});
+
+// ── Request body size limit — prevent DoS via oversized payloads ────────────
+app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
 // CORS — allow demo, app and internal services to call this API
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (!origin || ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.includes('*')) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  // Never allow wildcard CORS with credentials — browsers reject it anyway,
+  // and it's a misconfiguration risk. If the user needs all-origins access,
+  // they should opt into it explicitly with an env var.
+  const allowAllOrigins = process.env.CORS_ALLOW_ALL === 'true';
+  if (allowAllOrigins && origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (!origin) {
+    // Same-origin requests (no Origin header) don't need CORS headers
   }
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
@@ -32,7 +72,9 @@ let pushEvent = () => {};
 try {
   const debug = require('./routes/debug');
   pushEvent = debug.pushEvent;
-} catch { /* debug route failed to load — ignore */ }
+} catch {
+  /* debug route failed to load — ignore */
+}
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -42,7 +84,10 @@ app.use((req, res, next) => {
     const status = res.statusCode;
     const level = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
     pushEvent(level, 'http', `${method} ${reqPath} → ${status} (${ms}ms)`, {
-      method, path: reqPath, status, ms,
+      method,
+      path: reqPath,
+      status,
+      ms,
       ip: req.headers['x-forwarded-for'] || ip || '?',
       user: req.user?.email || req.supabaseUser?.email || null,
     });

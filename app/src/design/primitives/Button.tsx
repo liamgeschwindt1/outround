@@ -84,7 +84,11 @@ export function Button({
     primary: { background: T.grad, color: '#fff' },
     secondary: { background: T.bgElevate, color: T.t1, borderColor: T.borderMd },
     ghost: { background: 'transparent', color: T.t2, borderColor: T.border },
-    danger: { background: 'rgba(220,38,38,0.10)', color: T.red, borderColor: 'rgba(220,38,38,0.35)' },
+    danger: {
+      background: 'rgba(220,38,38,0.10)',
+      color: T.red,
+      borderColor: 'rgba(220,38,38,0.35)',
+    },
   };
 
   return (

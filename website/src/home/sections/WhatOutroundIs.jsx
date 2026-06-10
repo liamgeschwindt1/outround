@@ -5,14 +5,14 @@ const EASE = { duration: 0.5, ease: [0.0, 0.0, 0.2, 1] };
 
 const ROWS = [
   ['Before the meeting', 'Intelligence arrives automatically.'],
-  ['After the meeting',  'CRM completed. Follow-up drafted.'],
-  ['Over time',          'Sharper with every call.'],
+  ['After the meeting', 'CRM completed. Follow-up drafted.'],
+  ['Over time', 'Sharper with every call.'],
 ];
 
 const NOT = ['Not a meeting recorder.', 'Not a CRM integration.', 'Not a pipeline assistant.'];
 
 export default function WhatOutroundIs() {
-  const ref      = useRef(null);
+  const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
@@ -29,23 +29,50 @@ export default function WhatOutroundIs() {
       }}
     >
       {/* Corner metadata */}
-      <div style={{
-        width: '100%', maxWidth: 1200,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 'clamp(40px, 5vw, 56px)', gap: 24,
-      }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 10,
-          fontFamily: 'var(--font-mono)', fontSize: 11,
-          color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase',
-        }}>
-          <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 1200,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 'clamp(40px, 5vw, 56px)',
+          gap: 24,
+        }}
+      >
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 10,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+          }}
+        >
+          <span
+            style={{
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              background: 'var(--coral)',
+              opacity: 0.8,
+            }}
+          />
           01 / WHAT IT IS
         </div>
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 10,
-          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65, whiteSpace: 'nowrap',
-        }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.1em',
+            opacity: 0.65,
+            whiteSpace: 'nowrap',
+          }}
+        >
           {'/* memory + coordination */'}
         </div>
       </div>
@@ -53,7 +80,8 @@ export default function WhatOutroundIs() {
       <div
         className="what-grid"
         style={{
-          width: '100%', maxWidth: 1200,
+          width: '100%',
+          maxWidth: 1200,
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
           gap: 'clamp(40px, 6vw, 88px)',
@@ -87,7 +115,12 @@ export default function WhatOutroundIs() {
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ ...EASE, delay: 0.4 }}
-            style={{ height: '0.5px', background: 'var(--border)', marginBottom: 'clamp(24px, 3vw, 32px)', maxWidth: 120 }}
+            style={{
+              height: '0.5px',
+              background: 'var(--border)',
+              marginBottom: 'clamp(24px, 3vw, 32px)',
+              maxWidth: 120,
+            }}
           />
 
           <motion.h2
@@ -131,21 +164,29 @@ export default function WhatOutroundIs() {
                 borderBottom: i < ROWS.length - 1 ? '0.5px solid var(--border)' : 'none',
               }}
             >
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 10,
-                color: 'var(--coral)', letterSpacing: '0.12em',
-                textTransform: 'uppercase', marginBottom: 8, opacity: 0.85,
-              }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  color: 'var(--coral)',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  marginBottom: 8,
+                  opacity: 0.85,
+                }}
+              >
                 {label}
               </div>
-              <div style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(17px, 2vw, 21px)',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                lineHeight: 1.3,
-                letterSpacing: '-0.015em',
-              }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 'clamp(17px, 2vw, 21px)',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.3,
+                  letterSpacing: '-0.015em',
+                }}
+              >
                 {value}
               </div>
             </div>

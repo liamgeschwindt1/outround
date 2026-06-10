@@ -13,22 +13,22 @@ const pipedrive = require('./pipedrive');
 const { getPool } = require('../db/client');
 
 const CONFERENCE_HOSTS = [
-  { re: /zoom\.us\//i,                              provider: 'zoom' },
-  { re: /meet\.google\.com/i,                       provider: 'google_meet' },
-  { re: /teams\.microsoft\.com|teams\.live\.com/i,  provider: 'teams' },
+  { re: /zoom\.us\//i, provider: 'zoom' },
+  { re: /meet\.google\.com/i, provider: 'google_meet' },
+  { re: /teams\.microsoft\.com|teams\.live\.com/i, provider: 'teams' },
 ];
 
 function detectConference(event) {
-  const entry = event?.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video');
+  const entry = event?.conferenceData?.entryPoints?.find((e) => e.entryPointType === 'video');
   if (entry?.uri) {
-    const match = CONFERENCE_HOSTS.find(h => h.re.test(entry.uri));
+    const match = CONFERENCE_HOSTS.find((h) => h.re.test(entry.uri));
     return { url: entry.uri, provider: match?.provider || 'other' };
   }
   const text = `${event?.location || ''} ${event?.description || ''}`;
   const urlRe = /https?:\/\/[^\s<>"]+/gi;
   const urls = text.match(urlRe) || [];
   for (const url of urls) {
-    const match = CONFERENCE_HOSTS.find(h => h.re.test(url));
+    const match = CONFERENCE_HOSTS.find((h) => h.re.test(url));
     if (match) return { url, provider: match.provider };
   }
   return { url: null, provider: null };
@@ -37,12 +37,7 @@ function detectConference(event) {
 function pickExternalAttendee(event, ownerEmail) {
   const list = event?.attendees || [];
   const owner = (ownerEmail || '').toLowerCase();
-  return list.find(a =>
-    a.email &&
-    a.email.toLowerCase() !== owner &&
-    !a.resource &&
-    !a.self
-  );
+  return list.find((a) => a.email && a.email.toLowerCase() !== owner && !a.resource && !a.self);
 }
 
 /**
@@ -61,7 +56,9 @@ async function findPipedrivePerson(userId, email) {
     try {
       const deals = await pipedrive.get(userId, `/persons/${item.id}/deals?status=open&limit=1`);
       deal = deals?.data?.[0] || null;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return { person: item, deal };
   } catch {
     return null;
@@ -93,7 +90,7 @@ async function syncUpcoming(userId, ownerEmail, days = 7) {
       external_event_id: ev.id,
       title: ev.summary || '(untitled)',
       starts_at: ev.start?.dateTime || ev.start?.date,
-      ends_at:   ev.end?.dateTime   || ev.end?.date,
+      ends_at: ev.end?.dateTime || ev.end?.date,
       attendees: ev.attendees || [],
       conference_url: conf.url,
       conference_provider: conf.provider,
@@ -122,10 +119,22 @@ async function syncUpcoming(userId, ownerEmail, days = 7) {
               pipedrive_deal_id=EXCLUDED.pipedrive_deal_id,
               raw=EXCLUDED.raw, updated_at=NOW()
            RETURNING id, outround_done, outround_session_id`,
-          [userId, row.external_event_id, row.title, row.starts_at, row.ends_at,
-           JSON.stringify(row.attendees), row.conference_url, row.conference_provider,
-           row.prospect_email, row.prospect_name, row.prospect_company,
-           row.pipedrive_person_id, row.pipedrive_deal_id, ev]
+          [
+            userId,
+            row.external_event_id,
+            row.title,
+            row.starts_at,
+            row.ends_at,
+            JSON.stringify(row.attendees),
+            row.conference_url,
+            row.conference_provider,
+            row.prospect_email,
+            row.prospect_name,
+            row.prospect_company,
+            row.pipedrive_person_id,
+            row.pipedrive_deal_id,
+            ev,
+          ]
         );
         Object.assign(row, rows[0]);
       } catch (err) {

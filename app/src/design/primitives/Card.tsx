@@ -18,7 +18,7 @@ export function Card({ children, elevate, span, pad = 20, style, ...rest }: Card
         border: `1px solid ${T.border}`,
         borderRadius: R.xl,
         padding: pad,
-        gridColumn: span ? `span ${span}` : undefined,
+        gridColumn: span ? `span ${String(span)}` : undefined,
         position: 'relative',
         ...style,
       }}

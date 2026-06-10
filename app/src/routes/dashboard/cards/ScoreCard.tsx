@@ -15,14 +15,9 @@ export function ScoreCard({ data, loading, error }: Props) {
     <Card span={4}>
       <CardHead kicker="THIS WEEK" title="Your readiness" />
       {loading && <SkeletonLines count={3} />}
-      {error && !loading && (
-        <EmptyState title="Score unavailable" body={error} />
-      )}
-      {!loading && !error && data && data.total_sessions === 0 && (
-        <EmptyState
-          title="No score yet"
-          body="One round and you're on the board."
-        />
+      {error && !loading && <EmptyState title="Score unavailable" body={error} />}
+      {!loading && !error && data?.total_sessions === 0 && (
+        <EmptyState title="No score yet" body="One round and you're on the board." />
       )}
       {!loading && !error && data && data.total_sessions > 0 && (
         <div>

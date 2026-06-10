@@ -1,116 +1,209 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Outround</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@11labs/client/+esm" crossorigin>
-<link rel="stylesheet" href="/css/app.css">
-<style>
-  /* Demo: card floats on dot-pattern background — no dashboard behind it */
-  .focus-overlay{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
-  .focus-card{box-shadow:0 2px 4px rgba(0,0,0,0.06),0 24px 72px rgba(0,0,0,0.14)}
-  .demo-logo{position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:10px;pointer-events:none}
-  .demo-logo-mark{width:28px;height:28px;background:var(--ink);border-radius:7px;display:flex;align-items:center;justify-content:center}
-  .demo-logo-mark svg{width:13px;height:13px}
-  .demo-logo-text{font-size:0.9rem;font-weight:800;letter-spacing:-0.01em;color:var(--ink)}
-</style>
-</head>
-<body>
-
-<!-- Logo -->
-<div class="demo-logo">
-  <div class="demo-logo-mark">
-    <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="6" y1="3" x2="6" y2="6"/><line x1="6" y1="6" x2="8" y2="8"/></svg>
-  </div>
-  <div class="demo-logo-text">Outround</div>
-</div>
-
-<!-- Debug widget — logs + notes side by side -->
-<div id="dbg-widget">
-  <div id="dbg-hdr" onclick="dbgToggle()">
-    <div class="dbg-dot"></div>
-    <div id="dbg-title">Debug Log</div>
-    <div id="dbg-count">0</div>
-    <button class="dbg-btn" onclick="event.stopPropagation();dbgCopy(this)">Copy all</button>
-    <button class="dbg-btn" onclick="event.stopPropagation();dbgClear()">Clear</button>
-    <button class="dbg-btn" id="dbg-tog" style="width:22px;padding:3px 0;text-align:center">−</button>
-  </div>
-  <div id="dbg-panels">
-    <div id="dbg-body">
-      <div class="dbg-empty" id="dbg-empty">No logs yet.</div>
-    </div>
-    <div id="dbg-notes-panel">
-      <div id="dbg-notes-hdr">
-        <span id="dbg-notes-label">Notes</span>
-        <button class="dbg-btn" onclick="dbgStampTime()" title="Insert timestamp at cursor">+ time</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Outround</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@11labs/client/+esm" crossorigin />
+    <link rel="stylesheet" href="/css/app.css" />
+    <style>
+      /* Demo: card floats on dot-pattern background — no dashboard behind it */
+      .focus-overlay {
+        background: transparent;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+      .focus-card {
+        box-shadow:
+          0 2px 4px rgba(0, 0, 0, 0.06),
+          0 24px 72px rgba(0, 0, 0, 0.14);
+      }
+      .demo-logo {
+        position: fixed;
+        top: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .demo-logo-mark {
+        width: 28px;
+        height: 28px;
+        background: var(--ink);
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .demo-logo-mark svg {
+        width: 13px;
+        height: 13px;
+      }
+      .demo-logo-text {
+        font-size: 0.9rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Logo -->
+    <div class="demo-logo">
+      <div class="demo-logo-mark">
+        <svg
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="white"
+          stroke-width="1.6"
+          stroke-linecap="round"
+        >
+          <circle cx="6" cy="6" r="4" />
+          <line x1="6" y1="3" x2="6" y2="6" />
+          <line x1="6" y1="6" x2="8" y2="8" />
+        </svg>
       </div>
-      <textarea id="dbg-notes" placeholder="Write notes here…" spellcheck="false"></textarea>
+      <div class="demo-logo-text">Outround</div>
     </div>
-  </div>
-</div>
 
-<!-- ===== FOCUS OVERLAY — the whole demo experience ===== -->
-<div class="focus-overlay open" id="focusOverlay">
-  <div class="focus-card" id="focusCard">
-    <div class="progress-dots" id="progressDots"></div>
-    <div class="card-step-wrap" id="cardStepWrap">
-      <!-- rendered by JS per step -->
-    </div>
-  </div>
-</div>
-
-<!-- ===== ANALYSIS PAGE — Step 6, full screen ===== -->
-<div class="analysis-page" id="analysisPage">
-  <div class="an-shell">
-    <aside class="an-sidebar">
-      <div class="sb-icon active" data-tip="Practice">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><line x1="8" y1="8" x2="10.5" y2="10.5"/></svg>
+    <!-- Debug widget — logs + notes side by side -->
+    <div id="dbg-widget">
+      <div id="dbg-hdr" onclick="dbgToggle()">
+        <div class="dbg-dot"></div>
+        <div id="dbg-title">Debug Log</div>
+        <div id="dbg-count">0</div>
+        <button
+          class="dbg-btn"
+          onclick="
+            event.stopPropagation();
+            dbgCopy(this);
+          "
+        >
+          Copy all
+        </button>
+        <button
+          class="dbg-btn"
+          onclick="
+            event.stopPropagation();
+            dbgClear();
+          "
+        >
+          Clear
+        </button>
+        <button
+          class="dbg-btn"
+          id="dbg-tog"
+          style="width: 22px; padding: 3px 0; text-align: center"
+        >
+          −
+        </button>
       </div>
-    </aside>
-
-    <div class="an-body">
-      <header class="an-topbar" id="anTopbar">
-        <div class="logo">
-          <div class="logo-mark">
-            <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="6" y1="3" x2="6" y2="6"/><line x1="6" y1="6" x2="8" y2="8"/></svg>
-          </div>
-          <div class="logo-text">Outround</div>
+      <div id="dbg-panels">
+        <div id="dbg-body">
+          <div class="dbg-empty" id="dbg-empty">No logs yet.</div>
         </div>
-        <div class="top-spacer"></div>
-        <button class="an-finish-btn" onclick="finishAnalysis()">Finish</button>
-      </header>
-
-      <div class="an-layout">
-        <div class="an-left" id="anLeft"></div>
-        <div class="an-middle" id="anMiddle"></div>
-        <div class="an-right" id="anRight"></div>
+        <div id="dbg-notes-panel">
+          <div id="dbg-notes-hdr">
+            <span id="dbg-notes-label">Notes</span>
+            <button class="dbg-btn" onclick="dbgStampTime()" title="Insert timestamp at cursor">
+              + time
+            </button>
+          </div>
+          <textarea id="dbg-notes" placeholder="Write notes here…" spellcheck="false"></textarea>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- ===== RESULTS PAGE — Screen 2 ===== -->
-<div class="results-page" id="resultsPage">
-  <div class="results-inner" id="resultsInner"></div>
-</div>
+    <!-- ===== FOCUS OVERLAY — the whole demo experience ===== -->
+    <div class="focus-overlay open" id="focusOverlay">
+      <div class="focus-card" id="focusCard">
+        <div class="progress-dots" id="progressDots"></div>
+        <div class="card-step-wrap" id="cardStepWrap">
+          <!-- rendered by JS per step -->
+        </div>
+      </div>
+    </div>
 
-<!-- ===== TOAST ===== -->
-<div class="toast" id="toastEl"></div>
+    <!-- ===== ANALYSIS PAGE — Step 6, full screen ===== -->
+    <div class="analysis-page" id="analysisPage">
+      <div class="an-shell">
+        <aside class="an-sidebar">
+          <div class="sb-icon active" data-tip="Practice">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            >
+              <circle cx="8" cy="8" r="6" />
+              <line x1="8" y1="5" x2="8" y2="8" />
+              <line x1="8" y1="8" x2="10.5" y2="10.5" />
+            </svg>
+          </div>
+        </aside>
 
-<script src="/js/state.js"></script>
-<script src="/js/debug.js"></script>
-<script src="/js/utils.js"></script>
-<script src="/js/router.js"></script>
-<script src="/js/steps.js"></script>
-<script src="/js/session.js"></script>
-<script src="/js/analysis.js"></script>
-<script>
-(function init() {
-  loadLeaderboard();
-  goToStep('mode');
-})();
-</script></body>
+        <div class="an-body">
+          <header class="an-topbar" id="anTopbar">
+            <div class="logo">
+              <div class="logo-mark">
+                <svg
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                >
+                  <circle cx="6" cy="6" r="4" />
+                  <line x1="6" y1="3" x2="6" y2="6" />
+                  <line x1="6" y1="6" x2="8" y2="8" />
+                </svg>
+              </div>
+              <div class="logo-text">Outround</div>
+            </div>
+            <div class="top-spacer"></div>
+            <button class="an-finish-btn" onclick="finishAnalysis()">Finish</button>
+          </header>
+
+          <div class="an-layout">
+            <div class="an-left" id="anLeft"></div>
+            <div class="an-middle" id="anMiddle"></div>
+            <div class="an-right" id="anRight"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RESULTS PAGE — Screen 2 ===== -->
+    <div class="results-page" id="resultsPage">
+      <div class="results-inner" id="resultsInner"></div>
+    </div>
+
+    <!-- ===== TOAST ===== -->
+    <div class="toast" id="toastEl"></div>
+
+    <script src="/js/state.js"></script>
+    <script src="/js/debug.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/router.js"></script>
+    <script src="/js/steps.js"></script>
+    <script src="/js/session.js"></script>
+    <script src="/js/analysis.js"></script>
+    <script>
+      (function init() {
+        loadLeaderboard();
+        goToStep('mode');
+      })();
+    </script>
+  </body>
 </html>

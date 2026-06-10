@@ -8,11 +8,11 @@ import type { MeetingsResponse, UpcomingMeeting } from '../../api/types';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const START_HOUR = 0;
-const END_HOUR   = 24;
-const HOUR_PX    = 52;
-const TOTAL_H    = (END_HOUR - START_HOUR) * HOUR_PX;
-const GUTTER_W   = 48;
-const HEADER_H   = 40;
+const END_HOUR = 24;
+const HOUR_PX = 52;
+const TOTAL_H = (END_HOUR - START_HOUR) * HOUR_PX;
+const GUTTER_W = 48;
+const HEADER_H = 40;
 const VIEWPORT_H = 560;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -28,10 +28,10 @@ function startOfWeek(d: Date, offset = 0): Date {
 
 function fmtDuration(starts: string, ends: string): string {
   const mins = Math.round((new Date(ends).getTime() - new Date(starts).getTime()) / 60000);
-  if (mins < 60) return `${mins}m`;
+  if (mins < 60) return `${String(mins)}m`;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return m ? `${h}h ${m}m` : `${h}h`;
+  return m ? `${String(h)}h ${String(m)}m` : `${String(h)}h`;
 }
 
 function topForTime(iso: string): number {
@@ -93,13 +93,13 @@ function MeetingBlock({
   selected: boolean;
   onClick: () => void;
 }) {
-  const top    = topForTime(m.starts_at);
+  const top = topForTime(m.starts_at);
   const height = heightForMeeting(m.starts_at, m.ends_at);
   const accent = isPast ? T.coral : T.sky;
-  const bg     = selected
+  const bg = selected
     ? `rgba(${isPast ? '240,90,50' : '61,159,212'},0.18)`
     : `rgba(${isPast ? '240,90,50' : '61,159,212'},0.08)`;
-  const label  = displayName(m).split(' ')[0];
+  const label = displayName(m).split(' ')[0];
 
   return (
     <div
@@ -145,9 +145,7 @@ function MeetingBlock({
           }}
         >
           {fmtTime(m.starts_at)}
-          {isPast && m.outround_done && (
-            <span style={{ color: T.coral, marginLeft: 4 }}>✓</span>
-          )}
+          {isPast && m.outround_done && <span style={{ color: T.coral, marginLeft: 4 }}>✓</span>}
         </div>
       )}
     </div>
@@ -158,23 +156,29 @@ function MeetingBlock({
 
 function botLabel(status: string): { text: string; color: string } {
   switch (status) {
-    case 'scheduled':   return { text: 'Notetaker scheduled', color: T.sky };
+    case 'scheduled':
+      return { text: 'Notetaker scheduled', color: T.sky };
     case 'joining':
     case 'in_call':
-    case 'recording':   return { text: 'Notetaker in call', color: T.green };
-    case 'done':        return { text: 'Recording ready', color: T.green };
-    case 'cancelled':   return { text: 'Notetaker cancelled', color: T.t3 };
-    case 'error':       return { text: 'Notetaker failed', color: T.red };
-    default:            return { text: `Notetaker · ${status}`, color: T.t2 };
+    case 'recording':
+      return { text: 'Notetaker in call', color: T.green };
+    case 'done':
+      return { text: 'Recording ready', color: T.green };
+    case 'cancelled':
+      return { text: 'Notetaker cancelled', color: T.t3 };
+    case 'error':
+      return { text: 'Notetaker failed', color: T.red };
+    default:
+      return { text: `Notetaker · ${status}`, color: T.t2 };
   }
 }
 
 function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) {
-  const nav    = useNavigate();
+  const nav = useNavigate();
   const isPast = new Date(m.starts_at) < new Date();
-  const label  = displayName(m);
-  const p      = m.prospect;
-  const inCrm  = !!p.pipedrive_person_id;
+  const label = displayName(m);
+  const p = m.prospect;
+  const inCrm = !!p.pipedrive_person_id;
   const hasDeal = !!m.deal;
 
   return (
@@ -211,8 +215,12 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
             {label}
           </div>
           <div style={{ fontSize: 11, color: T.t3, fontFamily: T.mono, marginTop: 3 }}>
-            {new Date(m.starts_at).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })} ·{' '}
-            {fmtTime(m.starts_at)} · {fmtDuration(m.starts_at, m.ends_at)}
+            {new Date(m.starts_at).toLocaleDateString([], {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+            })}{' '}
+            · {fmtTime(m.starts_at)} · {fmtDuration(m.starts_at, m.ends_at)}
           </div>
         </div>
         <button
@@ -250,10 +258,12 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
         </div>
         {inCrm ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.t1 }}>{p.name || 'Unknown'}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.t1 }}>{p.name ?? 'Unknown'}</div>
             {p.company && <div style={{ fontSize: 12, color: T.t2 }}>{p.company}</div>}
             {p.email && (
-              <div style={{ fontSize: 11, color: T.t3, fontFamily: T.mono, wordBreak: 'break-all' }}>
+              <div
+                style={{ fontSize: 11, color: T.t3, fontFamily: T.mono, wordBreak: 'break-all' }}
+              >
                 {p.email}
               </div>
             )}
@@ -294,10 +304,8 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {(p.name || p.email) && (
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.t1 }}>
-                {p.name || p.email}
-              </div>
+            {(p.name ?? p.email) && (
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.t1 }}>{p.name ?? p.email}</div>
             )}
             <div
               style={{
@@ -346,11 +354,19 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => m.outround_session_id && nav(`/analysis/${m.outround_session_id}`)}
+              onClick={() => {
+                if (m.outround_session_id) nav(`/analysis/${m.outround_session_id}`);
+              }}
             >
               View report
             </Button>
-            <Button variant="primary" size="sm" onClick={() => nav('/round')}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                nav('/round');
+              }}
+            >
               Go again
             </Button>
           </div>
@@ -371,12 +387,13 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
             variant="secondary"
             size="sm"
             style={{ width: '100%' }}
-            onClick={() => (m.id ? nav(`/meeting/${m.id}`) : undefined)}
+            onClick={() => {
+              if (m.id) nav(`/meeting/${m.id}`);
+            }}
             disabled={!m.id}
           >
             View details
           </Button>
-
         </div>
       )}
     </div>
@@ -387,13 +404,13 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
 
 export function WeekCalendar({ data, loading }: Props) {
   const [weekOffset, setWeekOffset] = useState(0);
-  const [selected, setSelected]     = useState<UpcomingMeeting | null>(null);
+  const [selected, setSelected] = useState<UpcomingMeeting | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const today     = new Date();
+  const today = new Date();
   const weekStart = startOfWeek(today, weekOffset);
-  const days      = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const hours     = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 
   const monthLabel = weekStart.toLocaleDateString([], { month: 'long', year: 'numeric' });
 
@@ -401,10 +418,10 @@ export function WeekCalendar({ data, loading }: Props) {
   days.forEach((_, i) => byDay.set(i, []));
   (data?.meetings ?? []).forEach((m) => {
     const idx = days.findIndex((d) => isSameDay(d, new Date(m.starts_at)));
-    if (idx >= 0) byDay.get(idx)!.push(m);
+    if (idx >= 0) byDay.get(idx)?.push(m);
   });
 
-  const nowTop   = topForTime(today.toISOString());
+  const nowTop = topForTime(today.toISOString());
   const todayIdx = days.findIndex((d) => isSameDay(d, today));
 
   // Auto-scroll to ~1h before the current time (or the work-day start) on mount.
@@ -418,10 +435,8 @@ export function WeekCalendar({ data, loading }: Props) {
 
   return (
     <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-
       {/* ── Calendar ──────────────────────────────────────────────────────── */}
       <div style={{ flex: 1, minWidth: 0 }}>
-
         {/* Nav header */}
         <div
           style={{
@@ -435,11 +450,35 @@ export function WeekCalendar({ data, loading }: Props) {
             {monthLabel}
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <Button variant="ghost" size="sm" onClick={() => setWeekOffset((o) => o - 1)}>‹</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setWeekOffset((o) => o - 1);
+              }}
+            >
+              ‹
+            </Button>
             {weekOffset !== 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>Today</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setWeekOffset(0);
+                }}
+              >
+                Today
+              </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setWeekOffset((o) => o + 1)}>›</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setWeekOffset((o) => o + 1);
+              }}
+            >
+              ›
+            </Button>
           </div>
         </div>
 
@@ -452,7 +491,9 @@ export function WeekCalendar({ data, loading }: Props) {
               <Button
                 variant="outline-gradient"
                 size="md"
-                onClick={() => { window.location.href = '/auth/gcal'; }}
+                onClick={() => {
+                  window.location.href = '/auth/gcal';
+                }}
               >
                 Connect Google Calendar
               </Button>
@@ -474,7 +515,6 @@ export function WeekCalendar({ data, loading }: Props) {
               position: 'relative',
             }}
           >
-
             {/* Time gutter */}
             <div
               style={{
@@ -530,8 +570,8 @@ export function WeekCalendar({ data, loading }: Props) {
               }}
             >
               {days.map((date, i) => {
-                const dayLabel    = DAY_LABELS[date.getDay() === 0 ? 6 : date.getDay() - 1];
-                const isToday     = isSameDay(date, today);
+                const dayLabel = DAY_LABELS[date.getDay() === 0 ? 6 : date.getDay() - 1];
+                const isToday = isSameDay(date, today);
                 const dayMeetings = byDay.get(i) ?? [];
 
                 return (
@@ -611,7 +651,7 @@ export function WeekCalendar({ data, loading }: Props) {
                       {/* Half-hour lines */}
                       {hours.map((h) => (
                         <div
-                          key={`${h}h`}
+                          key={`${String(h)}h`}
                           style={{
                             position: 'absolute',
                             left: 0,
@@ -657,7 +697,9 @@ export function WeekCalendar({ data, loading }: Props) {
                           m={m}
                           isPast={new Date(m.starts_at) < today}
                           selected={selected?.id === m.id}
-                          onClick={() => setSelected((s) => (s?.id === m.id ? null : m))}
+                          onClick={() => {
+                            setSelected((s) => (s?.id === m.id ? null : m));
+                          }}
                         />
                       ))}
                     </div>
@@ -670,7 +712,14 @@ export function WeekCalendar({ data, loading }: Props) {
       </div>
 
       {/* ── Side panel ────────────────────────────────────────────────────── */}
-      {selected && <SidePanel m={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <SidePanel
+          m={selected}
+          onClose={() => {
+            setSelected(null);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -18,9 +18,9 @@ function fmtDate(iso: string): string {
   const diff = now - d.getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return 'just now';
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return `${String(m)}m ago`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return `${String(h)}h ago`;
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
@@ -33,7 +33,13 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
         kicker="RECENT"
         title="Your rounds"
         right={
-          <Button variant="ghost" size="sm" onClick={() => nav('/sessions')}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              nav('/sessions');
+            }}
+          >
             All
           </Button>
         }
@@ -41,12 +47,18 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
 
       {loading && <SkeletonLines count={5} />}
       {!loading && error && <EmptyState title="Couldn’t load" body={error} />}
-      {!loading && !error && data && data.length === 0 && (
+      {!loading && !error && data?.length === 0 && (
         <EmptyState
           title="No rounds yet"
           body="One round and the history starts."
           cta={
-            <Button variant="primary" size="md" onClick={() => nav('/practice')}>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                nav('/practice');
+              }}
+            >
               Start a round
             </Button>
           }
@@ -54,11 +66,22 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
       )}
 
       {!loading && !error && data && data.length > 0 && (
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <ul
+          style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+          }}
+        >
           {data.slice(0, 5).map((s) => (
             <li key={s.id}>
               <button
-                onClick={() => nav(`/analysis/${s.id}`)}
+                onClick={() => {
+                  nav(`/analysis/${s.id}`);
+                }}
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -76,7 +99,7 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
                     {s.persona_id ? capitalize(s.persona_id) : 'Practice round'}
                   </div>
                   <div style={{ fontSize: 11, color: T.t3, marginTop: 2 }}>
-                    {fmtDate(s.created_at)} · {s.mode || 'cold_call'}
+                    {fmtDate(s.created_at)} · {s.mode ?? 'cold_call'}
                   </div>
                 </div>
                 {typeof s.score === 'number' ? (

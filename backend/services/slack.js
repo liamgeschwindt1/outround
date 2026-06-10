@@ -16,8 +16,8 @@
 
 function _resolve(creds) {
   return {
-    botToken:   creds?.botToken   || process.env.SLACK_BOT_TOKEN  || null,
-    slackUserId: creds?.slackUserId || process.env.SLACK_USER_ID   || null,
+    botToken: creds?.botToken || process.env.SLACK_BOT_TOKEN || null,
+    slackUserId: creds?.slackUserId || process.env.SLACK_USER_ID || null,
   };
 }
 
@@ -34,7 +34,10 @@ function isConfigured(creds) {
  */
 async function sendDM(creds, text) {
   // Back-compat: if creds is a string, treat as (text) call
-  if (typeof creds === 'string') { text = creds; creds = null; }
+  if (typeof creds === 'string') {
+    text = creds;
+    creds = null;
+  }
   const { botToken, slackUserId } = _resolve(creds);
   if (!botToken || !slackUserId) {
     console.warn('[slack] credentials missing — skipping DM');
@@ -44,7 +47,7 @@ async function sendDM(creds, text) {
   const resp = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${botToken}`,
+      Authorization: `Bearer ${botToken}`,
       'Content-Type': 'application/json; charset=utf-8',
     },
     body: JSON.stringify({ channel: slackUserId, text }),
@@ -64,7 +67,11 @@ async function sendDM(creds, text) {
  */
 async function sendBlocksDM(creds, text, blocks) {
   // Back-compat: if creds is a string, treat as (text, blocks) call
-  if (typeof creds === 'string') { blocks = text; text = creds; creds = null; }
+  if (typeof creds === 'string') {
+    blocks = text;
+    text = creds;
+    creds = null;
+  }
   const { botToken, slackUserId } = _resolve(creds);
   if (!botToken || !slackUserId) {
     console.warn('[slack] credentials missing — skipping DM');
@@ -74,7 +81,7 @@ async function sendBlocksDM(creds, text, blocks) {
   const resp = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${botToken}`,
+      Authorization: `Bearer ${botToken}`,
       'Content-Type': 'application/json; charset=utf-8',
     },
     body: JSON.stringify({ channel: slackUserId, text, blocks }),
@@ -93,9 +100,12 @@ async function sendBlocksDM(creds, text, blocks) {
  */
 async function sendCallBriefing(creds, opts) {
   // Back-compat: if creds has contactName it is the opts object
-  if (creds && creds.contactName) { opts = creds; creds = null; }
+  if (creds && creds.contactName) {
+    opts = creds;
+    creds = null;
+  }
 
-  const { contactName, summary, nextSteps, dealUrl, meetingTitle } = opts || {};
+  const { contactName, summary, nextSteps, dealUrl } = opts || {};
 
   const steps = nextSteps?.length
     ? nextSteps.map((s, i) => `${i + 1}. ${s}`).join('\n')
@@ -114,12 +124,14 @@ async function sendCallBriefing(creds, opts) {
   if (dealUrl) {
     blocks.push({
       type: 'actions',
-      elements: [{
-        type: 'button',
-        text: { type: 'plain_text', text: 'Open in Pipedrive', emoji: true },
-        url: dealUrl,
-        action_id: 'open_pipedrive',
-      }],
+      elements: [
+        {
+          type: 'button',
+          text: { type: 'plain_text', text: 'Open in Pipedrive', emoji: true },
+          url: dealUrl,
+          action_id: 'open_pipedrive',
+        },
+      ],
     });
   }
 

@@ -21,17 +21,26 @@ export function LeaderboardCard({ data, loading, error }: Props) {
 
       {loading && <SkeletonLines count={5} />}
       {!loading && error && <EmptyState title="Couldn’t load" body={error} />}
-      {!loading && !error && data && data.entries.length === 0 && (
+      {!loading && !error && data?.entries.length === 0 && (
         <EmptyState title="No scores yet" body="Be first on the board." />
       )}
 
       {!loading && !error && data && data.entries.length > 0 && (
-        <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <ol
+          style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+          }}
+        >
           {data.entries.slice(0, 5).map((e, i) => {
-            const isYou = e.is_you || (youName && e.name.toLowerCase() === youName);
+            const isYou = e.is_you ?? (youName != null && e.name.toLowerCase() === youName);
             return (
               <li
-                key={`${e.name}-${i}`}
+                key={`${e.name}-${String(i)}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

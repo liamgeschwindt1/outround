@@ -50,7 +50,7 @@ router.get('/transcripts', requireAuth, async (req, res) => {
     );
 
     res.json({
-      transcripts: rows.map(r => ({
+      transcripts: rows.map((r) => ({
         id: r.id,
         recall_bot_id: r.recall_bot_id,
         meeting_title: r.meeting_title || 'Untitled meeting',
@@ -124,7 +124,9 @@ function parseRawTranscript(raw) {
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed[0]?.speaker && parsed[0]?.text) return parsed;
-  } catch { /* not JSON */ }
+  } catch {
+    /* not JSON */
+  }
 
   // Parse "[Speaker X] text" or "Speaker X: text" line-by-line
   const utterances = [];
@@ -133,7 +135,11 @@ function parseRawTranscript(raw) {
 
   const flush = () => {
     if (currentSpeaker && currentLines.length) {
-      utterances.push({ speaker: currentSpeaker, text: currentLines.join(' ').trim(), start: null });
+      utterances.push({
+        speaker: currentSpeaker,
+        text: currentLines.join(' ').trim(),
+        start: null,
+      });
     }
     currentLines = [];
   };
@@ -143,22 +149,22 @@ function parseRawTranscript(raw) {
     if (!line) continue;
 
     const bracketMatch = line.match(/^\[([^\]]+)\]\s+(.+)/);
-    const colonMatch   = line.match(/^([A-Za-z0-9 _-]{1,40}):\s+(.+)/);
+    const colonMatch = line.match(/^([A-Za-z0-9 _-]{1,40}):\s+(.+)/);
 
     if (bracketMatch) {
       flush();
       currentSpeaker = bracketMatch[1].trim();
-      currentLines   = [bracketMatch[2].trim()];
+      currentLines = [bracketMatch[2].trim()];
     } else if (colonMatch) {
       flush();
       currentSpeaker = colonMatch[1].trim();
-      currentLines   = [colonMatch[2].trim()];
+      currentLines = [colonMatch[2].trim()];
     } else if (currentSpeaker) {
       currentLines.push(line);
     } else {
       // No speaker detected yet — treat as unknown speaker
       currentSpeaker = 'unknown';
-      currentLines   = [line];
+      currentLines = [line];
     }
   }
   flush();

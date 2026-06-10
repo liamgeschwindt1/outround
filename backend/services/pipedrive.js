@@ -11,15 +11,18 @@
  * Tokens are stored encrypted in the oauth_tokens table.
  */
 
-const { encrypt, decrypt } = require('../utils/crypto');
+const { encrypt, decrypt, signState } = require('../utils/crypto');
 const { getPool } = require('../db/client');
 
 const PIPEDRIVE_AUTH_URL = 'https://oauth.pipedrive.com/oauth/authorize';
 const PIPEDRIVE_TOKEN_URL = 'https://oauth.pipedrive.com/oauth/token';
-const SCOPES = 'deals:read deals:write contacts:read activities:read activities:write notes:read notes:write base';
+const SCOPES =
+  'deals:read deals:write contacts:read activities:read activities:write notes:read notes:write base';
 
 function getRedirectUri() {
-  return process.env.PIPEDRIVE_REDIRECT_URI || `${process.env.BACKEND_URL || ''}/auth/pipedrive/callback`;
+  return (
+    process.env.PIPEDRIVE_REDIRECT_URI || `${process.env.BACKEND_URL || ''}/auth/pipedrive/callback`
+  );
 }
 
 /**
@@ -30,8 +33,7 @@ function getAuthUrl(userId, returnTo = '/settings') {
   const clientId = process.env.PIPEDRIVE_CLIENT_ID;
   if (!clientId) throw new Error('PIPEDRIVE_CLIENT_ID is not set');
 
-  const stateData = JSON.stringify({ userId, returnTo });
-  const state = Buffer.from(stateData).toString('base64url');
+  const state = signState({ userId, returnTo });
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: getRedirectUri(),
@@ -55,7 +57,7 @@ async function exchangeCode(code, userId) {
   const resp = await fetch(PIPEDRIVE_TOKEN_URL, {
     method: 'POST',
     headers: {
-      'Authorization': `Basic ${credentials}`,
+      Authorization: `Basic ${credentials}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
@@ -98,7 +100,7 @@ async function refreshToken(userId) {
   const resp = await fetch(PIPEDRIVE_TOKEN_URL, {
     method: 'POST',
     headers: {
-      'Authorization': `Basic ${credentials}`,
+      Authorization: `Basic ${credentials}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
@@ -149,7 +151,7 @@ async function get(userId, path) {
   const baseUrl = process.env.PIPEDRIVE_API_URL || 'https://api.pipedrive.com/v1';
 
   const resp = await fetch(`${baseUrl}${path}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (resp.status === 401) {
@@ -157,7 +159,7 @@ async function get(userId, path) {
     await refreshToken(userId);
     const newToken = await getValidAccessToken(userId);
     const retry = await fetch(`${baseUrl}${path}`, {
-      headers: { 'Authorization': `Bearer ${newToken}` }
+      headers: { Authorization: `Bearer ${newToken}` },
     });
     if (!retry.ok) throw new Error(`Pipedrive API error: ${retry.status}`);
     return retry.json();
@@ -226,8 +228,8 @@ async function getPerson(userId, personId) {
       title: p.job_title || null,
       org: p.org_name || p.organization?.name || null,
       org_id: p.org_id?.value || p.org_id || null,
-      email: Array.isArray(p.email) ? (p.email[0]?.value || null) : (p.email || null),
-      phone: Array.isArray(p.phone) ? (p.phone[0]?.value || null) : (p.phone || null),
+      email: Array.isArray(p.email) ? p.email[0]?.value || null : p.email || null,
+      phone: Array.isArray(p.phone) ? p.phone[0]?.value || null : p.phone || null,
       linkedin: p.linkedin || null,
       open_deals_count: p.open_deals_count ?? null,
       closed_deals_count: p.closed_deals_count ?? null,
@@ -290,8 +292,11 @@ function stripHtml(html) {
 async function getPersonNotes(userId, personId, limit = 25) {
   if (!personId) return [];
   try {
-    const data = await get(userId, `/notes?person_id=${personId}&limit=${limit}&sort=add_time%20DESC`);
-    return (data?.data || []).map(n => ({
+    const data = await get(
+      userId,
+      `/notes?person_id=${personId}&limit=${limit}&sort=add_time%20DESC`
+    );
+    return (data?.data || []).map((n) => ({
       id: n.id,
       content: stripHtml(n.content),
       add_time: n.add_time,
@@ -308,7 +313,7 @@ async function getDealNotes(userId, dealId, limit = 25) {
   if (!dealId) return [];
   try {
     const data = await get(userId, `/notes?deal_id=${dealId}&limit=${limit}&sort=add_time%20DESC`);
-    return (data?.data || []).map(n => ({
+    return (data?.data || []).map((n) => ({
       id: n.id,
       content: stripHtml(n.content),
       add_time: n.add_time,
@@ -325,7 +330,7 @@ async function getPersonActivities(userId, personId, limit = 25) {
   if (!personId) return [];
   try {
     const data = await get(userId, `/persons/${personId}/activities?limit=${limit}`);
-    return (data?.data || []).map(a => ({
+    return (data?.data || []).map((a) => ({
       id: a.id,
       type: a.type,
       subject: a.subject,

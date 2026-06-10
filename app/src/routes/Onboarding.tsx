@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { api } from '../api/client';
@@ -30,20 +30,12 @@ export default function Onboarding() {
     }
   }, [params, refresh, setParams, toast]);
 
-  // Move past completed steps
-  useEffect(() => {
-    if (!user) return;
-    if (user.integrations.pipedrive && step === 1) setStep(2);
-    if (user.integrations.gcal && step === 2) setStep(3);
-    if (user.integrations.slack && step === 3) void complete();
-  }, [user, step]);
-
   // Bail out if already done
   useEffect(() => {
     if (!loading && user?.onboarding_complete) nav('/', { replace: true });
   }, [user, loading, nav]);
 
-  const complete = async () => {
+  const complete = useCallback(async () => {
     setBusy(true);
     try {
       await api.post('/auth/onboarding/complete', {});
@@ -55,7 +47,29 @@ export default function Onboarding() {
     } finally {
       setBusy(false);
     }
-  };
+  }, [refresh, toast, nav]);
+
+  // Derive effective step from integrations during render (no setState in effect)
+  const effectiveStep: Step = useMemo(() => {
+    if (!user) return step;
+    let derived: Step = 1;
+    if (user.integrations.pipedrive) derived = 2;
+    if (user.integrations.gcal) derived = 3;
+    return Math.max(step, derived) as Step;
+  }, [user, step]);
+
+  // Auto-complete when slack is connected and user is at step 3
+  const completedRef = useRef(false);
+  const completeRef = useRef(complete);
+  useEffect(() => {
+    completeRef.current = complete;
+  });
+  useEffect(() => {
+    if (!completedRef.current && user?.integrations.slack && effectiveStep === 3) {
+      completedRef.current = true;
+      void completeRef.current();
+    }
+  }, [user?.integrations.slack, effectiveStep]);
 
   return (
     <div
@@ -79,7 +93,7 @@ export default function Onboarding() {
                 height: 4,
                 width: 48,
                 borderRadius: R.pill,
-                background: n <= step ? T.coral : T.borderMd,
+                background: n <= effectiveStep ? T.coral : T.borderMd,
                 transition: 'background 200ms',
               }}
             />
@@ -94,11 +108,25 @@ export default function Onboarding() {
             padding: 40,
           }}
         >
-          {step === 1 && <StepPipedrive onSkip={() => setStep(2)} />}
-          {step === 2 && <StepGCal onSkip={() => setStep(3)} />}
-          {step === 3 && (
+          {effectiveStep === 1 && (
+            <StepPipedrive
+              onSkip={() => {
+                setStep(2);
+              }}
+            />
+          )}
+          {effectiveStep === 2 && (
+            <StepGCal
+              onSkip={() => {
+                setStep(3);
+              }}
+            />
+          )}
+          {effectiveStep === 3 && (
             <StepSlack
-              onSkip={complete}
+              onSkip={() => {
+                void complete();
+              }}
               busy={busy}
             />
           )}
@@ -152,16 +180,13 @@ function StepPipedrive({ onSkip }: { onSkip: () => void }) {
           variant="primary"
           size="lg"
           fullWidth
-          onClick={() => { window.location.href = '/auth/pipedrive?return_to=/onboarding'; }}
+          onClick={() => {
+            window.location.href = '/auth/pipedrive?return_to=/onboarding';
+          }}
         >
           Connect Pipedrive
         </Button>
-        <Button
-          variant="ghost"
-          size="md"
-          fullWidth
-          onClick={onSkip}
-        >
+        <Button variant="ghost" size="md" fullWidth onClick={onSkip}>
           Skip for now
         </Button>
       </div>
@@ -182,7 +207,9 @@ function StepGCal({ onSkip }: { onSkip: () => void }) {
           variant="primary"
           size="lg"
           fullWidth
-          onClick={() => { window.location.href = '/auth/gcal?return_to=/onboarding'; }}
+          onClick={() => {
+            window.location.href = '/auth/gcal?return_to=/onboarding';
+          }}
         >
           Connect Google Calendar
         </Button>
@@ -203,13 +230,7 @@ function StepSlack({ onSkip, busy }: { onSkip: () => void; busy: boolean }) {
         body="We'll deliver your pre-meeting brief 15 minutes before every call. No dashboard. No searching. It arrives before you need it."
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <Button
-          variant="primary"
-          size="lg"
-          fullWidth
-          disabled={busy}
-          onClick={onSkip}
-        >
+        <Button variant="primary" size="lg" fullWidth disabled={busy} onClick={onSkip}>
           {busy ? 'Finishing…' : 'Enter the round →'}
         </Button>
         <p style={{ fontSize: 12, color: T.t3, textAlign: 'center', margin: 0 }}>

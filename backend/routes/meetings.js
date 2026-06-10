@@ -26,10 +26,12 @@ function viewModel(m, bot) {
     title: m.title,
     starts_at: m.starts_at,
     ends_at: m.ends_at,
-    conference: m.conference_url ? {
-      url: m.conference_url,
-      provider: m.conference_provider,
-    } : null,
+    conference: m.conference_url
+      ? {
+          url: m.conference_url,
+          provider: m.conference_provider,
+        }
+      : null,
     prospect: {
       name: m.prospect_name || m.prospect_email || 'Unknown',
       email: m.prospect_email,
@@ -39,12 +41,14 @@ function viewModel(m, bot) {
     deal: m.pipedrive_deal_id ? { id: m.pipedrive_deal_id } : null,
     outround_done: !!m.outround_done,
     outround_session_id: m.outround_session_id || null,
-    bot: bot ? {
-      id: bot.id,
-      status: bot.status,
-      join_at: bot.join_at,
-      transcript_ready: !!bot.transcript,
-    } : null,
+    bot: bot
+      ? {
+          id: bot.id,
+          status: bot.status,
+          join_at: bot.join_at,
+          transcript_ready: !!bot.transcript,
+        }
+      : null,
     bot_supported: !!m.conference_url,
   };
 }
@@ -68,7 +72,7 @@ router.get('/meetings/upcoming', requireAuth, async (req, res) => {
     const pool = getPool();
     let botsByMeeting = {};
     if (pool) {
-      const ids = sync.meetings.map(m => m.id).filter(Boolean);
+      const ids = sync.meetings.map((m) => m.id).filter(Boolean);
       if (ids.length) {
         const { rows } = await pool.query(
           `SELECT DISTINCT ON (meeting_id) * FROM meeting_bots
@@ -76,14 +80,14 @@ router.get('/meetings/upcoming', requireAuth, async (req, res) => {
              ORDER BY meeting_id, created_at DESC`,
           [ids]
         );
-        botsByMeeting = Object.fromEntries(rows.map(b => [b.meeting_id, b]));
+        botsByMeeting = Object.fromEntries(rows.map((b) => [b.meeting_id, b]));
       }
     }
 
     res.json({
       connected: true,
       bot_configured: recall.isConfigured(),
-      meetings: sync.meetings.map(m => viewModel(m, botsByMeeting[m.id])),
+      meetings: sync.meetings.map((m) => viewModel(m, botsByMeeting[m.id])),
     });
   } catch (err) {
     console.error('[meetings] upcoming failed:', err);
@@ -110,12 +114,19 @@ router.get('/meetings/:id', requireAuth, async (req, res) => {
   );
   if (!rows.length) return res.status(404).json({ error: 'Not found' });
   const m = rows[0];
-  res.json(viewModel(m, m.bot_id ? {
-    id: m.bot_id,
-    status: m.bot_status,
-    join_at: m.bot_join_at,
-    transcript: m.bot_transcript_ready,
-  } : null));
+  res.json(
+    viewModel(
+      m,
+      m.bot_id
+        ? {
+            id: m.bot_id,
+            status: m.bot_status,
+            join_at: m.bot_join_at,
+            transcript: m.bot_transcript_ready,
+          }
+        : null
+    )
+  );
 });
 
 router.post('/meetings/:id/bot', requireAuth, async (req, res) => {
@@ -126,10 +137,10 @@ router.post('/meetings/:id/bot', requireAuth, async (req, res) => {
     return res.status(503).json({ error: 'Meeting bot not configured', code: 'recall_missing' });
   }
 
-  const { rows } = await pool.query(
-    'SELECT * FROM meetings WHERE id = $1 AND user_id = $2',
-    [req.params.id, userId]
-  );
+  const { rows } = await pool.query('SELECT * FROM meetings WHERE id = $1 AND user_id = $2', [
+    req.params.id,
+    userId,
+  ]);
   if (!rows.length) return res.status(404).json({ error: 'Meeting not found' });
   const meeting = rows[0];
   if (!meeting.conference_url) {
@@ -152,8 +163,15 @@ router.post('/meetings/:id/bot', requireAuth, async (req, res) => {
          (user_id, meeting_id, recall_bot_id, conference_url, join_at, status, status_detail)
        VALUES ($1,$2,$3,$4,$5,$6,$7)
        RETURNING *`,
-      [userId, meeting.id, bot.id, meeting.conference_url, joinAt, 'scheduled',
-       bot.status_changes?.[0]?.code || null]
+      [
+        userId,
+        meeting.id,
+        bot.id,
+        meeting.conference_url,
+        joinAt,
+        'scheduled',
+        bot.status_changes?.[0]?.code || null,
+      ]
     );
     res.json({ ok: true, bot: inserted[0] });
   } catch (err) {
@@ -177,13 +195,15 @@ router.delete('/meetings/:id/bot', requireAuth, async (req, res) => {
   const bot = rows[0];
 
   if (recall.isConfigured() && bot.recall_bot_id) {
-    try { await recall.deleteBot(bot.recall_bot_id); }
-    catch (e) { console.error('[meetings] recall delete failed:', e.message); }
+    try {
+      await recall.deleteBot(bot.recall_bot_id);
+    } catch (e) {
+      console.error('[meetings] recall delete failed:', e.message);
+    }
   }
-  await pool.query(
-    `UPDATE meeting_bots SET status='cancelled', updated_at=NOW() WHERE id=$1`,
-    [bot.id]
-  );
+  await pool.query(`UPDATE meeting_bots SET status='cancelled', updated_at=NOW() WHERE id=$1`, [
+    bot.id,
+  ]);
   res.json({ ok: true });
 });
 
@@ -228,7 +248,9 @@ router.get('/meetings/:id/prep', requireAuth, async (req, res) => {
   const m = rows[0];
 
   const refresh = req.query.refresh === '1';
-  const cacheAgeMs = m.prep_generated_at ? Date.now() - new Date(m.prep_generated_at).getTime() : Infinity;
+  const cacheAgeMs = m.prep_generated_at
+    ? Date.now() - new Date(m.prep_generated_at).getTime()
+    : Infinity;
   const cacheValid = !refresh && m.prep_data && cacheAgeMs < 24 * 3600 * 1000;
 
   if (cacheValid) {
@@ -246,20 +268,22 @@ router.get('/meetings/:id/prep', requireAuth, async (req, res) => {
 
   const [person, deal, personNotes, dealNotes, activities] = await Promise.all([
     personId ? pipedrive.getPerson(userId, personId) : Promise.resolve(null),
-    dealId   ? pipedrive.getDeal(userId, dealId)     : Promise.resolve(null),
+    dealId ? pipedrive.getDeal(userId, dealId) : Promise.resolve(null),
     personId ? pipedrive.getPersonNotes(userId, personId, 25) : Promise.resolve([]),
-    dealId   ? pipedrive.getDealNotes(userId, dealId, 25)     : Promise.resolve([]),
+    dealId ? pipedrive.getDealNotes(userId, dealId, 25) : Promise.resolve([]),
     personId ? pipedrive.getPersonActivities(userId, personId, 25) : Promise.resolve([]),
   ]);
 
   // Merge & dedupe notes by id, keep most recent first
   const allNotes = [...dealNotes, ...personNotes];
   const seen = new Set();
-  const notes = allNotes.filter(n => {
-    if (seen.has(n.id)) return false;
-    seen.add(n.id);
-    return true;
-  }).sort((a, b) => new Date(b.add_time) - new Date(a.add_time));
+  const notes = allNotes
+    .filter((n) => {
+      if (seen.has(n.id)) return false;
+      seen.add(n.id);
+      return true;
+    })
+    .sort((a, b) => new Date(b.add_time) - new Date(a.add_time));
 
   // Pull user's recent stats for coaching-note context
   let userStats = null;
@@ -272,7 +296,8 @@ router.get('/meetings/:id/prep', requireAuth, async (req, res) => {
     );
     if (statRows.length) {
       // Average sub-scores across recent sessions
-      const sums = {}; const counts = {};
+      const sums = {};
+      const counts = {};
       for (const r of statRows) {
         for (const [k, v] of Object.entries(r.score_breakdown || {})) {
           if (typeof v === 'number') {
@@ -294,7 +319,10 @@ router.get('/meetings/:id/prep', requireAuth, async (req, res) => {
   try {
     intel = await claude.generateMeetingPrepIntel({
       meeting: m,
-      person, deal, notes, activities,
+      person,
+      deal,
+      notes,
+      activities,
       user: { name: m.user_name, role: m.user_role },
       userStats,
     });
@@ -435,7 +463,10 @@ router.post('/bots/dispatch', requireAuth, async (req, res) => {
       inserted = rows[0];
     }
 
-    res.json({ ok: true, bot: inserted || { recall_bot_id: bot.id, conference_url: meeting_url, status: 'scheduled' } });
+    res.json({
+      ok: true,
+      bot: inserted || { recall_bot_id: bot.id, conference_url: meeting_url, status: 'scheduled' },
+    });
   } catch (err) {
     console.error('[bots] dispatch failed:', err.message);
     res.status(502).json({ error: err.message });

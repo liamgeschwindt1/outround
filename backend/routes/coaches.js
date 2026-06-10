@@ -43,7 +43,7 @@ const BUILT_IN_COACHES = [
 // ---------------------------------------------------------------------------
 // GET /api/coaches
 // ---------------------------------------------------------------------------
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   const pool = getPool();
 
   // Try DB first; fall back to built-in if DB not configured
@@ -77,10 +77,10 @@ router.post('/select', requireAuth, async (req, res) => {
     return res.json({ ok: true, coach_id });
   }
 
-  await pool.query(
-    'UPDATE users SET coach_id = $1, updated_at = NOW() WHERE id = $2',
-    [coach_id, userId]
-  );
+  await pool.query('UPDATE users SET coach_id = $1, updated_at = NOW() WHERE id = $2', [
+    coach_id,
+    userId,
+  ]);
 
   // Upsert preferences row too
   await pool.query(

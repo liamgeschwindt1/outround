@@ -28,16 +28,20 @@ export function MeetingsScrollerCard({ data, loading, error }: Props) {
 
       {loading && <SkeletonLines count={2} />}
 
-      {!loading && error && (
-        <EmptyState title="Couldn’t load meetings" body={error} />
-      )}
+      {!loading && error && <EmptyState title="Couldn’t load meetings" body={error} />}
 
       {!loading && !error && data && !data.connected && (
         <EmptyState
           title="Calendar not connected"
           body="Sync Google Calendar to see your next round."
           cta={
-            <Button variant="primary" size="md" onClick={() => { window.location.href = '/auth/gcal'; }}>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                window.location.href = '/auth/gcal';
+              }}
+            >
               Connect calendar
             </Button>
           }
@@ -110,9 +114,7 @@ function MeetingTile({ m }: { m: MeetingsResponse['meetings'][number] }) {
       >
         {m.title}
       </div>
-      {m.prospect.company && (
-        <div style={{ fontSize: 12, color: T.t2 }}>{m.prospect.company}</div>
-      )}
+      {m.prospect.company && <div style={{ fontSize: 12, color: T.t2 }}>{m.prospect.company}</div>}
       <div style={{ fontFamily: T.numeric, fontSize: 12, color: T.t2, marginTop: 'auto' }}>
         {time}
       </div>

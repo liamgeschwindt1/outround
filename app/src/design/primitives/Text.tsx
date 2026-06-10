@@ -29,7 +29,9 @@ export function SectionHead({ kicker, title }: { kicker?: string; title: string 
   return (
     <header style={{ marginBottom: 16 }}>
       {kicker && (
-        <Mono style={{ color: T.t3, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+        <Mono
+          style={{ color: T.t3, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}
+        >
           {kicker}
         </Mono>
       )}
@@ -62,11 +64,11 @@ export function Label({ children }: { children: ReactNode }) {
 type TagKind = 'neutral' | 'coral' | 'sky' | 'good' | 'warn' | 'bad';
 const tagPalette: Record<TagKind, { bg: string; bd: string; fg: string }> = {
   neutral: { bg: 'rgba(255,255,255,0.04)', bd: T.border, fg: T.t2 },
-  coral:   { bg: 'rgba(240,90,50,0.10)',  bd: 'rgba(240,90,50,0.35)', fg: T.coral },
-  sky:     { bg: 'rgba(61,159,212,0.10)', bd: 'rgba(61,159,212,0.35)', fg: T.sky },
-  good:    { bg: 'rgba(22,163,74,0.10)',  bd: 'rgba(22,163,74,0.35)',  fg: T.green },
-  warn:    { bg: 'rgba(217,119,6,0.10)',  bd: 'rgba(217,119,6,0.35)',  fg: T.amber },
-  bad:     { bg: 'rgba(220,38,38,0.10)',  bd: 'rgba(220,38,38,0.35)',  fg: T.red },
+  coral: { bg: 'rgba(240,90,50,0.10)', bd: 'rgba(240,90,50,0.35)', fg: T.coral },
+  sky: { bg: 'rgba(61,159,212,0.10)', bd: 'rgba(61,159,212,0.35)', fg: T.sky },
+  good: { bg: 'rgba(22,163,74,0.10)', bd: 'rgba(22,163,74,0.35)', fg: T.green },
+  warn: { bg: 'rgba(217,119,6,0.10)', bd: 'rgba(217,119,6,0.35)', fg: T.amber },
+  bad: { bg: 'rgba(220,38,38,0.10)', bd: 'rgba(220,38,38,0.35)', fg: T.red },
 };
 
 export function Tag({ children, kind = 'neutral' }: { children: ReactNode; kind?: TagKind }) {

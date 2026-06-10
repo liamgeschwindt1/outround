@@ -11,7 +11,7 @@
  * Tokens are stored encrypted in the oauth_tokens table.
  */
 
-const { encrypt, decrypt } = require('../utils/crypto');
+const { encrypt, decrypt, signState } = require('../utils/crypto');
 const { getPool } = require('../db/client');
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -30,8 +30,7 @@ function getAuthUrl(userId, returnTo = '/onboarding') {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) throw new Error('GOOGLE_CLIENT_ID is not set');
 
-  const stateData = JSON.stringify({ userId, returnTo });
-  const state = Buffer.from(stateData).toString('base64url');
+  const state = signState({ userId, returnTo });
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: getRedirectUri(),
@@ -195,7 +194,7 @@ async function listUpcomingEvents(userId, days = 7) {
 
   const resp = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-    { headers: { 'Authorization': `Bearer ${token}` } }
+    { headers: { Authorization: `Bearer ${token}` } }
   );
 
   if (resp.status === 401) {
@@ -231,22 +230,22 @@ async function isConnected(userId) {
  * @returns {Promise<Array>}           — raw Google Calendar event items
  */
 async function listUpcomingEventsWithToken(accessToken, opts = {}) {
-  const days       = opts.days       || 7;
+  const days = opts.days || 7;
   const maxResults = opts.maxResults || 50;
-  const timeMin    = new Date().toISOString();
-  const timeMax    = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  const timeMin = new Date().toISOString();
+  const timeMax = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
   const params = new URLSearchParams({
     timeMin,
     timeMax,
     singleEvents: 'true',
-    orderBy:      'startTime',
-    maxResults:   String(maxResults),
+    orderBy: 'startTime',
+    maxResults: String(maxResults),
   });
 
   const resp = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-    { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` } }
   );
 
   if (!resp.ok) {
@@ -258,4 +257,11 @@ async function listUpcomingEventsWithToken(accessToken, opts = {}) {
   return data.items || [];
 }
 
-module.exports = { getAuthUrl, exchangeCode, refreshToken, listUpcomingEvents, listUpcomingEventsWithToken, isConnected };
+module.exports = {
+  getAuthUrl,
+  exchangeCode,
+  refreshToken,
+  listUpcomingEvents,
+  listUpcomingEventsWithToken,
+  isConnected,
+};

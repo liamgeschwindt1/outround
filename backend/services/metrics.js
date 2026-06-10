@@ -24,8 +24,7 @@ function calculateMetricsFromTranscript(transcript, durationSeconds) {
 
   // Estimate WPM from rep word count and speaking time
   const repSpeakingSeconds = durationSeconds > 0 ? durationSeconds * (talkRatioRep / 100) : 60;
-  const wpm =
-    repSpeakingSeconds > 0 ? Math.round(repWords / (repSpeakingSeconds / 60)) : 0;
+  const wpm = repSpeakingSeconds > 0 ? Math.round(repWords / (repSpeakingSeconds / 60)) : 0;
 
   // Common filler words
   const fillerPattern =

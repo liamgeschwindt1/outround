@@ -38,12 +38,12 @@ function loadPersona(personaId) {
 async function getConversationToken(personaId) {
   const persona = loadPersona(personaId);
 
-  const agentId =
-    (persona._meta && persona._meta.agent_id) ||
-    process.env.ELEVENLABS_AGENT_ID;
+  const agentId = (persona._meta && persona._meta.agent_id) || process.env.ELEVENLABS_AGENT_ID;
 
   if (!agentId) {
-    throw new Error(`No agent_id found for persona "${personaId}" — set ELEVENLABS_AGENT_ID in env`);
+    throw new Error(
+      `No agent_id found for persona "${personaId}" — set ELEVENLABS_AGENT_ID in env`
+    );
   }
 
   // The ElevenLabs signed URL is a simple GET authenticated call.
@@ -102,7 +102,7 @@ async function getConversationTranscript(conversationId) {
   const client = getClient();
 
   // ElevenLabs processes conversations asynchronously; poll until done.
-  const MAX_ATTEMPTS = 18;  // 18 × 5 s = 90 s ceiling
+  const MAX_ATTEMPTS = 18; // 18 × 5 s = 90 s ceiling
   const POLL_INTERVAL_MS = 5000;
 
   let conversation;

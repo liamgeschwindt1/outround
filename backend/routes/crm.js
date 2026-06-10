@@ -31,7 +31,7 @@ router.get('/crm/contacts', requireAuth, async (req, res) => {
 
   try {
     const data = await pipedrive.get(userId, '/persons?limit=50&sort=add_time+DESC');
-    const persons = (data?.data || []).map(p => ({
+    const persons = (data?.data || []).map((p) => ({
       id: p.id,
       name: p.name,
       email: p.email?.[0]?.value || null,
@@ -42,10 +42,15 @@ router.get('/crm/contacts', requireAuth, async (req, res) => {
       won_deals_count: p.won_deals_count || 0,
       added: p.add_time || null,
     }));
-    res.json({ contacts: persons, total: data?.additional_data?.pagination?.total_count || persons.length });
+    res.json({
+      contacts: persons,
+      total: data?.additional_data?.pagination?.total_count || persons.length,
+    });
   } catch (err) {
     if (err.message?.includes('connect Pipedrive first')) {
-      return res.status(403).json({ error: 'not_connected', message: 'Connect Pipedrive in Settings first.' });
+      return res
+        .status(403)
+        .json({ error: 'not_connected', message: 'Connect Pipedrive in Settings first.' });
     }
     console.error('[crm] contacts error:', err.message);
     res.status(500).json({ error: err.message });
@@ -58,7 +63,7 @@ router.get('/crm/deals', requireAuth, async (req, res) => {
 
   try {
     const data = await pipedrive.get(userId, '/deals?status=open&limit=50&sort=add_time+DESC');
-    const deals = (data?.data || []).map(d => ({
+    const deals = (data?.data || []).map((d) => ({
       id: d.id,
       title: d.title,
       value: d.value,
@@ -77,7 +82,9 @@ router.get('/crm/deals', requireAuth, async (req, res) => {
     res.json({ deals, total: data?.additional_data?.pagination?.total_count || deals.length });
   } catch (err) {
     if (err.message?.includes('connect Pipedrive first')) {
-      return res.status(403).json({ error: 'not_connected', message: 'Connect Pipedrive in Settings first.' });
+      return res
+        .status(403)
+        .json({ error: 'not_connected', message: 'Connect Pipedrive in Settings first.' });
     }
     console.error('[crm] deals error:', err.message);
     res.status(500).json({ error: err.message });

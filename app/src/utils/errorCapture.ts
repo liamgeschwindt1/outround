@@ -9,14 +9,20 @@ export interface ErrorEntry {
 }
 
 let _id = 0;
-export const errorSubscribers: Array<(e: ErrorEntry) => void> = [];
+export const errorSubscribers: ((e: ErrorEntry) => void)[] = [];
 
 export function captureError(msg: string, detail?: string) {
   const entry: ErrorEntry = {
     id: ++_id,
-    ts: new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-    msg: String(msg).slice(0, 400),
-    detail: detail ? String(detail).slice(0, 800) : undefined,
+    ts: new Date().toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }),
+    msg: msg.slice(0, 400),
+    detail: detail ? detail.slice(0, 800) : undefined,
   };
-  errorSubscribers.forEach(fn => fn(entry));
+  errorSubscribers.forEach((fn) => {
+    fn(entry);
+  });
 }

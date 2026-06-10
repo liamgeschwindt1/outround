@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 
 function WaveformBar({ delay }) {
   return (
@@ -37,7 +38,14 @@ function Avatar({ initial, gradient, label }) {
       >
         {initial}
       </div>
-      <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-sub)', textAlign: 'center' }}>
+      <div
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 12,
+          color: 'var(--text-sub)',
+          textAlign: 'center',
+        }}
+      >
         {label}
       </div>
     </div>
@@ -50,7 +58,7 @@ function formatTime(s) {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-export default function Scene3_TheMeeting({ isActive }) {
+function Scene3_TheMeeting({ isActive }) {
   const [seconds, setSeconds] = useState(0);
   const [jumped, setJumped] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -58,12 +66,9 @@ export default function Scene3_TheMeeting({ isActive }) {
 
   useEffect(() => {
     if (!isActive) return;
-    setSeconds(0);
-    setJumped(false);
-    setShowHint(false);
 
     timerRef.current = setInterval(() => {
-      setSeconds(s => s + 1);
+      setSeconds((s) => s + 1);
     }, 1000);
 
     const jumpTimer = setTimeout(() => {
@@ -78,23 +83,43 @@ export default function Scene3_TheMeeting({ isActive }) {
       clearInterval(timerRef.current);
       clearTimeout(jumpTimer);
       clearTimeout(hintTimer);
+      setSeconds(0);
+      setJumped(false);
+      setShowHint(false);
     };
   }, [isActive]);
 
   return (
     <div
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', gap: 32, padding: 24 }}
-      onClick={e => e.stopPropagation()}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        gap: 32,
+        padding: 24,
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       {/* Avatars + waveform */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-        <Avatar initial="J" gradient="linear-gradient(135deg, #f26b45, #f59e0b)" label="Jana Novak" />
+        <Avatar
+          initial="J"
+          gradient="linear-gradient(135deg, #f26b45, #f59e0b)"
+          label="Jana Novak"
+        />
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, height: 40 }}>
           {[0, 0.15, 0.3, 0.15, 0].map((delay, i) => (
             <WaveformBar key={i} delay={delay} />
           ))}
         </div>
-        <Avatar initial="D" gradient="linear-gradient(135deg, #4ba3e3, #22c55e)" label="Daan · AE" />
+        <Avatar
+          initial="D"
+          gradient="linear-gradient(135deg, #4ba3e3, #22c55e)"
+          label="Daan · AE"
+        />
       </div>
 
       {/* Timer */}
@@ -137,3 +162,19 @@ export default function Scene3_TheMeeting({ isActive }) {
     </div>
   );
 }
+
+WaveformBar.propTypes = {
+  delay: PropTypes.number.isRequired,
+};
+
+Avatar.propTypes = {
+  initial: PropTypes.string.isRequired,
+  gradient: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+};
+
+Scene3_TheMeeting.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+};
+
+export default Scene3_TheMeeting;

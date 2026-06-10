@@ -1,9 +1,10 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import PropTypes from 'prop-types';
 
 const SPACING = 28;
 const DOT_RADIUS = 1;
-const PULSE_MIN = 0.10;
-const PULSE_MAX = 0.20;
+const PULSE_MIN = 0.1;
+const PULSE_MAX = 0.2;
 const PULSE_PERIOD = 3000;
 const RIPPLE_SPEED = 400; // px/s
 const RIPPLE_MAX = 600;
@@ -76,7 +77,7 @@ const DotGrid = forwardRef(function DotGrid({ slowPulse = false }, ref) {
         const cy = canvas.height / 2;
         const pullRadius = 300;
 
-        s.dots.forEach(d => {
+        s.dots.forEach((d) => {
           const dx = d.bx - cx;
           const dy = d.by - cy;
           const dist = Math.sqrt(dx * dx + dy * dy);
@@ -97,13 +98,13 @@ const DotGrid = forwardRef(function DotGrid({ slowPulse = false }, ref) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Ripple bookkeeping
-      s.ripples = s.ripples.filter(r => {
+      s.ripples = s.ripples.filter((r) => {
         if (!r.startTime) r.startTime = ts;
         const age = (ts - r.startTime) / 1000;
         return age * RIPPLE_SPEED < RIPPLE_MAX;
       });
 
-      s.dots.forEach(d => {
+      s.dots.forEach((d) => {
         const x = d.bx + d.ox;
         const y = d.by + d.oy;
         let opacity = baseOpacity;
@@ -156,5 +157,9 @@ const DotGrid = forwardRef(function DotGrid({ slowPulse = false }, ref) {
     />
   );
 });
+
+DotGrid.propTypes = {
+  slowPulse: PropTypes.bool,
+};
 
 export default DotGrid;

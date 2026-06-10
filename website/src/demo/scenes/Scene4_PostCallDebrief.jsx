@@ -1,26 +1,31 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 import SlackCard from '../components/SlackCard';
 
 const ITEMS = [
   'Budget freeze mentioned — Q3. Added to CRM.',
-  'Salesforce came up twice. She\'s evaluating.',
+  "Salesforce came up twice. She's evaluating.",
   'Decision timeline moved to September.',
 ];
 
-export default function Scene4_PostCallDebrief({ isActive, sound, dotGridRef }) {
+function Scene4_PostCallDebrief({ isActive, sound, dotGridRef: _dotGridRef }) {
   const [visibleItems, setVisibleItems] = useState(0);
   const [showCoaching, setShowCoaching] = useState(false);
 
   useEffect(() => {
-    if (!isActive) { setVisibleItems(0); setShowCoaching(false); return; }
+    if (!isActive) return;
 
+    let cancelled = false;
     let i = 0;
     function showNext() {
+      if (cancelled) return;
       if (i >= ITEMS.length) {
         setTimeout(() => {
-          setShowCoaching(true);
-          sound.play('success');
+          if (!cancelled) {
+            setShowCoaching(true);
+            sound.play('success');
+          }
         }, 400);
         return;
       }
@@ -30,13 +35,25 @@ export default function Scene4_PostCallDebrief({ isActive, sound, dotGridRef }) 
       setTimeout(showNext, 800);
     }
     const t = setTimeout(showNext, 400);
-    return () => clearTimeout(t);
-  }, [isActive]);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+      setVisibleItems(0);
+      setShowCoaching(false);
+    };
+  }, [isActive, sound]);
 
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: 24 }}
-      onClick={e => e.stopPropagation()}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        padding: 24,
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       <SlackCard timestamp="Just now" style={{ maxWidth: 440 }}>
         <div
@@ -101,7 +118,14 @@ export default function Scene4_PostCallDebrief({ isActive, sound, dotGridRef }) 
               >
                 One thing differently next time
               </div>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6 }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 13,
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.6,
+                }}
+              >
                 You lost frame at min 14 on pricing.
                 <br />
                 Acknowledge → redirect to ROI before price.
@@ -113,3 +137,11 @@ export default function Scene4_PostCallDebrief({ isActive, sound, dotGridRef }) 
     </div>
   );
 }
+
+Scene4_PostCallDebrief.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  sound: PropTypes.object.isRequired,
+  dotGridRef: PropTypes.object,
+};
+
+export default Scene4_PostCallDebrief;

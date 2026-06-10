@@ -15,8 +15,15 @@ function uiLog(msg, type) {
   const body = document.getElementById('dbg-body');
   const el = document.createElement('div');
   el.className = 'dbg-entry';
-  el.innerHTML = '<span class="dbg-ts">' + ts + '</span>'
-    + '<span class="dbg-msg ' + t + '">' + escHtml(String(msg)) + '</span>';
+  el.innerHTML =
+    '<span class="dbg-ts">' +
+    ts +
+    '</span>' +
+    '<span class="dbg-msg ' +
+    t +
+    '">' +
+    escHtml(String(msg)) +
+    '</span>';
   body.appendChild(el);
   body.scrollTop = body.scrollHeight;
   const cnt = document.getElementById('dbg-count');
@@ -35,24 +42,31 @@ function dbgToggle() {
 
 function dbgCopy(btn) {
   const notes = (document.getElementById('dbg-notes')?.value || '').trim();
-  const logsText = _dbgLogs.map(l => l.ts + '  ' + l.msg).join('\n');
+  const logsText = _dbgLogs.map((l) => l.ts + '  ' + l.msg).join('\n');
   const text = logsText + (notes ? '\n\n--- Notes ---\n' + notes : '');
-  navigator.clipboard.writeText(text).then(() => {
-    const orig = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = orig; }, 1200);
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    const orig = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = orig; }, 1200);
-  });
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = orig;
+      }, 1200);
+    })
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = orig;
+      }, 1200);
+    });
 }
 
 function dbgClear() {

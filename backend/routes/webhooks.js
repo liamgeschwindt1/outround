@@ -21,7 +21,11 @@ const router = express.Router();
 
 async function loadTranscriptUtterances(transcriptId) {
   const artifact = await recall.getTranscriptArtifact(transcriptId).catch(() => null);
-  const downloadUrl = artifact?.data?.download_url || artifact?.download_url || artifact?.data?.data?.download_url || null;
+  const downloadUrl =
+    artifact?.data?.download_url ||
+    artifact?.download_url ||
+    artifact?.data?.data?.download_url ||
+    null;
   if (!downloadUrl) return { utterances: null, downloadUrl: null };
 
   const resp = await fetch(downloadUrl);
@@ -38,29 +42,32 @@ async function hydrateMeetingContext(pool, botId) {
   let meetingMeta = {};
   let orgId = null;
 
-  const { rows } = await pool.query(
-    `SELECT b.org_id, b.recording_url, m.title, m.prospect_email, m.prospect_name, m.starts_at
+  const { rows } = await pool
+    .query(
+      `SELECT b.org_id, b.recording_url, m.title, m.prospect_email, m.prospect_name, m.starts_at
        FROM meeting_bots b
        LEFT JOIN meetings m ON m.id = b.meeting_id
       WHERE b.recall_bot_id = $1
       LIMIT 1`,
-    [botId]
-  ).catch(() => ({ rows: [] }));
+      [botId]
+    )
+    .catch(() => ({ rows: [] }));
 
   if (rows[0]) {
     orgId = rows[0].org_id || null;
     meetingMeta = {
-      meetingTitle:  rows[0].title,
+      meetingTitle: rows[0].title,
       prospectEmail: rows[0].prospect_email,
-      prospectName:  rows[0].prospect_name,
+      prospectName: rows[0].prospect_name,
       date: rows[0].starts_at?.toISOString?.()?.slice(0, 10),
       transcriptUrl: rows[0].recording_url || null,
     };
   }
 
-  const creds = (orgId && tokenManager.isConfigured())
-    ? await tokenManager.getOrgCredentials(orgId).catch(() => ({}))
-    : {};
+  const creds =
+    orgId && tokenManager.isConfigured()
+      ? await tokenManager.getOrgCredentials(orgId).catch(() => ({}))
+      : {};
 
   return { meetingMeta, creds };
 }
@@ -78,10 +85,15 @@ async function handleRecallWebhook(req, res) {
   }
 
   let event;
-  try { event = JSON.parse(raw); } catch { return res.status(400).end(); }
+  try {
+    event = JSON.parse(raw);
+  } catch {
+    return res.status(400).end();
+  }
 
   const botId = event?.data?.bot_id || event?.bot_id || event?.data?.bot?.id;
-  const recordingId = event?.data?.recording?.id || event?.recording?.id || event?.data?.recording_id || null;
+  const recordingId =
+    event?.data?.recording?.id || event?.recording?.id || event?.data?.recording_id || null;
   const transcriptId = event?.data?.transcript?.id || event?.transcript?.id || null;
   if (!botId && !recordingId && !transcriptId) return res.status(200).end();
 
@@ -159,21 +171,31 @@ async function handleRecallWebhook(req, res) {
       );
 
       if (!transcriptSource) {
-        console.warn(`[webhook] transcript.done without transcript payload for bot ${botId} -- skipping intel`);
+        console.warn(
+          `[webhook] transcript.done without transcript payload for bot ${botId} -- skipping intel`
+        );
         return;
       }
 
       setImmediate(async () => {
         try {
           const { meetingMeta, creds } = await hydrateMeetingContext(pool, botId);
-          meetingMeta.transcriptUrl = event?.data?.transcript?.download_url || event?.transcript?.download_url || meetingMeta.transcriptUrl || null;
+          meetingMeta.transcriptUrl =
+            event?.data?.transcript?.download_url ||
+            event?.transcript?.download_url ||
+            meetingMeta.transcriptUrl ||
+            null;
           await meetingIntel.runPipeline(transcriptSource, meetingMeta, creds);
         } catch (err) {
           console.error('[webhook] post-call pipeline error:', err.message);
         }
       });
     } else if (type === 'transcript.failed') {
-      const subCode = event.data?.status?.sub_code || event.data?.data?.sub_code || event.data?.sub_code || 'failed';
+      const subCode =
+        event.data?.status?.sub_code ||
+        event.data?.data?.sub_code ||
+        event.data?.sub_code ||
+        'failed';
       await pool.query(
         `UPDATE meeting_bots
             SET status='failed',
@@ -186,7 +208,9 @@ async function handleRecallWebhook(req, res) {
     } else if (type === 'bot.done') {
       // Legacy fallback: use the bot transcript endpoint if Recall sends it.
       let transcript = null;
-      try { transcript = await recall.getTranscript(botId); } catch {}
+      try {
+        transcript = await recall.getTranscript(botId);
+      } catch {}
       const bot = await recall.getBot(botId).catch(() => null);
 
       await pool.query(
@@ -240,14 +264,14 @@ router.post('/webhooks/recall', handleRecallWebhook);
 
 function mapStatus(code) {
   const m = {
-    'ready':                 'scheduled',
-    'joining_call':          'joining',
-    'in_waiting_room':       'joining',
-    'in_call_not_recording': 'in_call',
-    'in_call_recording':     'in_call',
-    'call_ended':            'done',
-    'done':                  'done',
-    'fatal':                 'failed',
+    ready: 'scheduled',
+    joining_call: 'joining',
+    in_waiting_room: 'joining',
+    in_call_not_recording: 'in_call',
+    in_call_recording: 'in_call',
+    call_ended: 'done',
+    done: 'done',
+    fatal: 'failed',
   };
   return m[code] || 'scheduled';
 }

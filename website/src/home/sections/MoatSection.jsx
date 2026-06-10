@@ -23,7 +23,7 @@ const TILES = [
 ];
 
 export default function MoatSection() {
-  const ref      = useRef(null);
+  const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
@@ -40,23 +40,50 @@ export default function MoatSection() {
       }}
     >
       {/* Corner metadata */}
-      <div style={{
-        width: '100%', maxWidth: 1200,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 'clamp(40px, 5vw, 56px)', gap: 24,
-      }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 10,
-          fontFamily: 'var(--font-mono)', fontSize: 11,
-          color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase',
-        }}>
-          <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--coral)', opacity: 0.8 }} />
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 1200,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 'clamp(40px, 5vw, 56px)',
+          gap: 24,
+        }}
+      >
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 10,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+          }}
+        >
+          <span
+            style={{
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              background: 'var(--coral)',
+              opacity: 0.8,
+            }}
+          />
           04 / WHY IT COMPOUNDS
         </div>
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 10,
-          color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.65, whiteSpace: 'nowrap',
-        }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.1em',
+            opacity: 0.65,
+            whiteSpace: 'nowrap',
+          }}
+        >
           {'/* the moat deepens with use */'}
         </div>
       </div>
@@ -104,22 +131,29 @@ export default function MoatSection() {
                 gap: 14,
               }}
             >
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 11,
-                color: 'var(--coral)', letterSpacing: '0.12em',
-                textTransform: 'uppercase', opacity: 0.9,
-              }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  color: 'var(--coral)',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  opacity: 0.9,
+                }}
+              >
                 {tile.label}
               </div>
-              <p style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(17px, 2vw, 21px)',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                lineHeight: 1.4,
-                letterSpacing: '-0.015em',
-                margin: 0,
-              }}>
+              <p
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 'clamp(17px, 2vw, 21px)',
+                  fontWeight: 500,
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.4,
+                  letterSpacing: '-0.015em',
+                  margin: 0,
+                }}
+              >
                 {tile.text}
               </p>
             </motion.div>

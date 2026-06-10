@@ -5,7 +5,16 @@
 // Session steps: mode=0, character=1, persona=2, brief=3, call=4, loading=5, finish=6 (total 7)
 // Pitch steps:   mode=0, character=1, pitchprep=2, call=3, loading=4, finish=5 (total 6)
 // ---------------------------------------------------------------------------
-const STEP_DOT_IDX = { mode: 0, character: 1, persona: 2, brief: 3, pitchprep: 2, call: 4, loading: 5, finish: 6 };
+const STEP_DOT_IDX = {
+  mode: 0,
+  character: 1,
+  persona: 2,
+  brief: 3,
+  pitchprep: 2,
+  call: 4,
+  loading: 5,
+  finish: 6,
+};
 
 function renderDots(activeIdx, total) {
   const el = document.getElementById('progressDots');

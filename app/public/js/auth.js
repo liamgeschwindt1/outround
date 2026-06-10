@@ -109,7 +109,9 @@ async function signUpWithEmail(email, password, name) {
 async function signOut() {
   try {
     await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   window.location.reload();
 }
 
@@ -126,7 +128,9 @@ function showLoginPage() {
  */
 function hideLoginPage() {
   document.getElementById('loginPage').classList.remove('open');
-  setTimeout(() => { document.getElementById('loginPage').style.display = 'none'; }, 300);
+  setTimeout(() => {
+    document.getElementById('loginPage').style.display = 'none';
+  }, 300);
 }
 
 // ---------------------------------------------------------------------------
@@ -222,7 +226,9 @@ async function completeOnboardingStep3(coachId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ coach_id: coachId }),
     });
-  } catch { /* non-fatal */ }
+  } catch {
+    /* non-fatal */
+  }
 
   // Mark onboarding complete
   try {
@@ -230,7 +236,9 @@ async function completeOnboardingStep3(coachId) {
       method: 'POST',
       credentials: 'include',
     });
-  } catch { /* non-fatal */ }
+  } catch {
+    /* non-fatal */
+  }
 
   if (_s.authUser) _s.authUser.onboarding_complete = true;
   _s.onboardingDone = true;

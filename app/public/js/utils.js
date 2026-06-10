@@ -4,11 +4,21 @@
 // ---------------------------------------------------------------------------
 function escHtml(str) {
   return String(str || '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
-function fmtSecs(s) { const m = Math.floor(s / 60); return m + ':' + String(s % 60).padStart(2, '0'); }
-function fmtMs(ms) { return fmtSecs(Math.floor(ms / 1000)); }
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function fmtSecs(s) {
+  const m = Math.floor(s / 60);
+  return m + ':' + String(s % 60).padStart(2, '0');
+}
+function fmtMs(ms) {
+  return fmtSecs(Math.floor(ms / 1000));
+}
+function delay(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 // ---------------------------------------------------------------------------
 // Authenticated fetch — always sends the httpOnly sb_token cookie
@@ -21,7 +31,13 @@ function apiFetch(url, options = {}) {
 // Audio helpers
 // ---------------------------------------------------------------------------
 function playSound(src) {
-  try { const a = new Audio(src); a.play().catch(() => {}); return a; } catch { return null; }
+  try {
+    const a = new Audio(src);
+    a.play().catch(() => {});
+    return a;
+  } catch {
+    return null;
+  }
 }
 
 function playSoundAndWait(src) {
@@ -30,8 +46,10 @@ function playSoundAndWait(src) {
       const a = new Audio(src);
       a.addEventListener('ended', resolve);
       a.addEventListener('error', resolve); // don't block if file missing
-      a.play().catch(resolve);              // don't block if autoplay denied
-    } catch { resolve(); }
+      a.play().catch(resolve); // don't block if autoplay denied
+    } catch {
+      resolve();
+    }
   });
 }
 

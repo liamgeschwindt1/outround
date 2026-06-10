@@ -32,12 +32,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_0_1_1"
-              ],
-              "apis": [
-                "google_oauth"
-              ],
+              "dependencies": ["task_0_1_1"],
+              "apis": ["google_oauth"],
               "notes": ""
             },
             {
@@ -46,9 +42,7 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_0_1_1"
-              ],
+              "dependencies": ["task_0_1_1"],
               "apis": [],
               "notes": ""
             },
@@ -58,9 +52,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "medium",
-              "dependencies": [
-                "task_0_1_3"
-              ],
+              "dependencies": ["task_0_1_3"],
               "apis": [],
               "notes": ""
             },
@@ -70,9 +62,7 @@
               "type": "backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_0_1_2"
-              ],
+              "dependencies": ["task_0_1_2"],
               "apis": [],
               "notes": ""
             },
@@ -82,9 +72,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_0_1_2"
-              ],
+              "dependencies": ["task_0_1_2"],
               "apis": [],
               "notes": ""
             }
@@ -101,9 +89,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_0_1_2"
-              ],
+              "dependencies": ["task_0_1_2"],
               "apis": [],
               "notes": ""
             },
@@ -113,12 +99,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_0_2_1"
-              ],
-              "apis": [
-                "pipedrive_oauth"
-              ],
+              "dependencies": ["task_0_2_1"],
+              "apis": ["pipedrive_oauth"],
               "notes": "Pipedrive OAuth 2.0. Scopes needed: deals:read, contacts:read, notes:read, activities:read"
             },
             {
@@ -127,12 +109,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_0_2_1"
-              ],
-              "apis": [
-                "google_calendar_oauth"
-              ],
+              "dependencies": ["task_0_2_1"],
+              "apis": ["google_calendar_oauth"],
               "notes": "Google Calendar API. Scopes needed: calendar.readonly"
             },
             {
@@ -141,9 +119,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_0_2_1"
-              ],
+              "dependencies": ["task_0_2_1"],
               "apis": [],
               "notes": "Coach personas stored in DB. Each has: id, name, photo, personality description, coaching style, voice_id (ElevenLabs)"
             },
@@ -153,9 +129,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "medium",
-              "dependencies": [
-                "task_0_2_1"
-              ],
+              "dependencies": ["task_0_2_1"],
               "apis": [],
               "notes": ""
             },
@@ -165,15 +139,8 @@
               "type": "frontend+backend",
               "status": "in_progress",
               "priority": "critical",
-              "dependencies": [
-                "task_0_2_2",
-                "task_0_2_3",
-                "task_0_2_4"
-              ],
-              "apis": [
-                "pipedrive_api",
-                "google_calendar_api"
-              ],
+              "dependencies": ["task_0_2_2", "task_0_2_3", "task_0_2_4"],
+              "apis": ["pipedrive_api", "google_calendar_api"],
               "notes": "Trigger initial data sync on onboarding completion"
             },
             {
@@ -182,9 +149,7 @@
               "type": "backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_0_2_6"
-              ],
+              "dependencies": ["task_0_2_6"],
               "apis": [],
               "notes": ""
             }
@@ -211,9 +176,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_0_2_6"
-              ],
+              "dependencies": ["task_0_2_6"],
               "apis": [],
               "notes": "FIFA-style card. Sub-scores out of 100. Overall rating is weighted average. Dummy data acceptable at launch."
             },
@@ -223,9 +186,7 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_1_1_1"
-              ],
+              "dependencies": ["task_1_1_1"],
               "apis": [],
               "notes": "Requires session history. Arrows only shown after 2+ sessions."
             },
@@ -235,9 +196,7 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "medium",
-              "dependencies": [
-                "task_1_1_1"
-              ],
+              "dependencies": ["task_1_1_1"],
               "apis": [],
               "notes": ""
             },
@@ -247,9 +206,7 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "medium",
-              "dependencies": [
-                "task_1_1_1"
-              ],
+              "dependencies": ["task_1_1_1"],
               "apis": [],
               "notes": ""
             },
@@ -259,10 +216,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "low",
-              "dependencies": [
-                "task_1_1_1",
-                "task_0_2_4"
-              ],
+              "dependencies": ["task_1_1_1", "task_0_2_4"],
               "apis": [],
               "notes": ""
             }
@@ -279,14 +233,8 @@
               "type": "frontend+backend",
               "status": "in_progress",
               "priority": "critical",
-              "dependencies": [
-                "task_0_2_3",
-                "task_0_2_2"
-              ],
-              "apis": [
-                "google_calendar_api",
-                "pipedrive_api"
-              ],
+              "dependencies": ["task_0_2_3", "task_0_2_2"],
+              "apis": ["google_calendar_api", "pipedrive_api"],
               "notes": "Match calendar events to Pipedrive contacts by email. Show next 7 days."
             },
             {
@@ -295,9 +243,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_1_2_1"
-              ],
+              "dependencies": ["task_1_2_1"],
               "apis": [],
               "notes": "Pipedrive-linked meetings show deal stage badge and prospect company logo if available"
             },
@@ -307,9 +253,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_1_2_1"
-              ],
+              "dependencies": ["task_1_2_1"],
               "notes": "Locked meetings show a lock icon. Tooltip: 'Available when this is your next meeting.'"
             },
             {
@@ -318,9 +262,7 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_1_2_1"
-              ],
+              "dependencies": ["task_1_2_1"],
               "apis": [],
               "notes": "Green checkmark or 'Ready' badge if round completed for this meeting"
             },
@@ -330,9 +272,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "medium",
-              "dependencies": [
-                "task_1_2_1"
-              ],
+              "dependencies": ["task_1_2_1"],
               "apis": [],
               "notes": ""
             },
@@ -342,9 +282,7 @@
               "type": "backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_1_2_1"
-              ],
+              "dependencies": ["task_1_2_1"],
               "apis": [],
               "notes": "Cache calendar and Pipedrive data. Refresh in background every 15 minutes."
             },
@@ -354,9 +292,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_1_2_1"
-              ],
+              "dependencies": ["task_1_2_1"],
               "apis": [],
               "notes": ""
             }
@@ -383,9 +319,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_1_2_3"
-              ],
+              "dependencies": ["task_1_2_3"],
               "apis": [],
               "notes": ""
             },
@@ -395,12 +329,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_2_1_1"
-              ],
-              "apis": [
-                "pipedrive_api"
-              ],
+              "dependencies": ["task_2_1_1"],
+              "apis": ["pipedrive_api"],
               "notes": "Pull from Pipedrive person record"
             },
             {
@@ -409,12 +339,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_2_1_1"
-              ],
-              "apis": [
-                "pipedrive_api"
-              ],
+              "dependencies": ["task_2_1_1"],
+              "apis": ["pipedrive_api"],
               "notes": ""
             },
             {
@@ -423,12 +349,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_2_1_1"
-              ],
-              "apis": [
-                "pipedrive_api"
-              ],
+              "dependencies": ["task_2_1_1"],
+              "apis": ["pipedrive_api"],
               "notes": "Pipedrive notes API. Show most recent 10, load more on scroll."
             },
             {
@@ -437,12 +359,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_2_1_4"
-              ],
-              "apis": [
-                "pipedrive_api"
-              ],
+              "dependencies": ["task_2_1_4"],
+              "apis": ["pipedrive_api"],
               "notes": "Pull from Pipedrive activities. If post-call analysis exists in Outround DB, use that."
             },
             {
@@ -451,12 +369,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_2_1_1"
-              ],
-              "apis": [
-                "pipedrive_api"
-              ],
+              "dependencies": ["task_2_1_1"],
+              "apis": ["pipedrive_api"],
               "notes": ""
             },
             {
@@ -465,13 +379,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_2_1_4",
-                "task_1_1_1"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_2_1_4", "task_1_1_1"],
+              "apis": ["claude_api"],
               "notes": "Claude prompt: given prospect history + user weak spots, generate 3 coaching bullets"
             },
             {
@@ -480,12 +389,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_2_1_4"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_2_1_4"],
+              "apis": ["claude_api"],
               "notes": "Claude prompt: synthesise all CRM notes, activities, deal history into a single paragraph. Who is this person, how do they buy, what matters to them, what has been tried."
             }
           ]
@@ -501,13 +406,8 @@
               "type": "backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_2_1_4"
-              ],
-              "apis": [
-                "claude_api",
-                "elevenlabs_api"
-              ],
+              "dependencies": ["task_2_1_4"],
+              "apis": ["claude_api", "elevenlabs_api"],
               "notes": "Claude generates system prompt from CRM data. Stored in session config. Passed to ElevenLabs as conversation override."
             },
             {
@@ -516,9 +416,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_2_2_1"
-              ],
+              "dependencies": ["task_2_2_1"],
               "apis": [],
               "notes": "Show user-facing summary only. Never expose raw system prompt."
             },
@@ -528,9 +426,7 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "medium",
-              "dependencies": [
-                "task_2_2_1"
-              ],
+              "dependencies": ["task_2_2_1"],
               "apis": [],
               "notes": "Fallback to generic persona templates stored in DB by role type"
             }
@@ -557,9 +453,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_2_2_1"
-              ],
+              "dependencies": ["task_2_2_1"],
               "apis": [],
               "notes": ""
             },
@@ -569,12 +463,8 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_3_1_1"
-              ],
-              "apis": [
-                "elevenlabs_api"
-              ],
+              "dependencies": ["task_3_1_1"],
+              "apis": ["elevenlabs_api"],
               "notes": "Coach voice is distinct from prospect voice. Different ElevenLabs voice ID per coach persona."
             },
             {
@@ -583,12 +473,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_3_1_2"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_3_1_2"],
+              "apis": ["claude_api"],
               "notes": "Claude generates coach warm-up script from: user name, last 3 session scores, identified weak spots, prospect profile summary"
             },
             {
@@ -597,12 +483,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_3_1_3"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_3_1_3"],
+              "apis": ["claude_api"],
               "notes": ""
             },
             {
@@ -611,13 +493,8 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "medium",
-              "dependencies": [
-                "task_3_1_2"
-              ],
-              "apis": [
-                "claude_api",
-                "pipedrive_api"
-              ],
+              "dependencies": ["task_3_1_2"],
+              "apis": ["claude_api", "pipedrive_api"],
               "notes": "Coach has access to full CRM context for this prospect during warm-up"
             },
             {
@@ -626,9 +503,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_3_1_1"
-              ],
+              "dependencies": ["task_3_1_1"],
               "apis": [],
               "notes": ""
             }
@@ -645,9 +520,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_3_1_1"
-              ],
+              "dependencies": ["task_3_1_1"],
               "apis": [],
               "notes": "Cannot be skipped. Auto-transitions after 30 seconds."
             },
@@ -657,14 +530,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_3_2_1",
-                "task_2_2_1"
-              ],
-              "apis": [
-                "elevenlabs_api",
-                "gladia_api"
-              ],
+              "dependencies": ["task_3_2_1", "task_2_2_1"],
+              "apis": ["elevenlabs_api", "gladia_api"],
               "notes": "ElevenLabs Conversational Agent with dynamic system prompt. Gladia for transcription. EU data residency required."
             },
             {
@@ -673,12 +540,8 @@
               "type": "backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_3_2_2"
-              ],
-              "apis": [
-                "elevenlabs_api"
-              ],
+              "dependencies": ["task_3_2_2"],
+              "apis": ["elevenlabs_api"],
               "notes": "System prompt instructs persona on resistance level, objection triggers, hang-up conditions"
             },
             {
@@ -687,9 +550,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_3_2_2"
-              ],
+              "dependencies": ["task_3_2_2"],
               "apis": [],
               "notes": ""
             },
@@ -699,12 +560,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_3_2_3"
-              ],
-              "apis": [
-                "elevenlabs_api"
-              ],
+              "dependencies": ["task_3_2_3"],
+              "apis": ["elevenlabs_api"],
               "notes": "Listen for ElevenLabs disconnection event. Show 'They hung up.' message for 2 seconds then auto-transition."
             },
             {
@@ -713,9 +570,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_3_2_2"
-              ],
+              "dependencies": ["task_3_2_2"],
               "apis": [],
               "notes": ""
             }
@@ -732,9 +587,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_3_2_4"
-              ],
+              "dependencies": ["task_3_2_4"],
               "apis": [],
               "notes": "Steps: Transcribing → Analysing → Generating coaching → Building report"
             },
@@ -744,12 +597,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_3_3_1"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_3_3_1"],
+              "apis": ["claude_api"],
               "notes": "Stream verdict first. Full analysis populates in background."
             },
             {
@@ -758,13 +607,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_3_3_2"
-              ],
-              "apis": [
-                "claude_api",
-                "gladia_api"
-              ],
+              "dependencies": ["task_3_3_2"],
+              "apis": ["claude_api", "gladia_api"],
               "notes": "Left: annotated transcript. Right sidebar: score, sub-scores, metrics strip."
             },
             {
@@ -773,9 +617,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_3_3_3"
-              ],
+              "dependencies": ["task_3_3_3"],
               "apis": [],
               "notes": "Coaching feedback collapsed by default. Expandable on click per line."
             },
@@ -785,12 +627,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_3_3_3"
-              ],
-              "apis": [
-                "gladia_api"
-              ],
+              "dependencies": ["task_3_3_3"],
+              "apis": ["gladia_api"],
               "notes": "All metrics from Gladia transcript data. No emotion inference. Objective only."
             },
             {
@@ -799,12 +637,8 @@
               "type": "frontend+backend",
               "status": "complete",
               "priority": "critical",
-              "dependencies": [
-                "task_3_3_2"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_3_3_2"],
+              "apis": ["claude_api"],
               "notes": "Claude prompt: generate a single sentence verdict in the voice of the chosen coach persona. Direct. No softening. Makes the user wince."
             },
             {
@@ -813,9 +647,7 @@
               "type": "backend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_3_3_3"
-              ],
+              "dependencies": ["task_3_3_3"],
               "apis": [],
               "notes": ""
             },
@@ -825,9 +657,7 @@
               "type": "frontend",
               "status": "complete",
               "priority": "high",
-              "dependencies": [
-                "task_3_3_3"
-              ],
+              "dependencies": ["task_3_3_3"],
               "apis": [],
               "notes": ""
             }
@@ -854,9 +684,7 @@
               "type": "frontend",
               "status": "in_progress",
               "priority": "critical",
-              "dependencies": [
-                "task_2_1_1"
-              ],
+              "dependencies": ["task_2_1_1"],
               "apis": [],
               "notes": "Toggle with clear consent disclosure shown on enable"
             },
@@ -866,9 +694,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_4_1_1"
-              ],
+              "dependencies": ["task_4_1_1"],
               "apis": [],
               "notes": "Legal requirement. Cannot be dismissed without reading."
             },
@@ -878,12 +704,8 @@
               "type": "backend",
               "status": "in_progress",
               "priority": "critical",
-              "dependencies": [
-                "task_4_1_1"
-              ],
-              "apis": [
-                "meeting_bot_api"
-              ],
+              "dependencies": ["task_4_1_1"],
+              "apis": ["meeting_bot_api"],
               "notes": "Evaluate: Recall.ai or similar meeting bot infrastructure. Bot named 'Outround Notetaker'."
             },
             {
@@ -892,9 +714,7 @@
               "type": "frontend+backend",
               "status": "in_progress",
               "priority": "high",
-              "dependencies": [
-                "task_4_1_3"
-              ],
+              "dependencies": ["task_4_1_3"],
               "apis": [],
               "notes": ""
             },
@@ -904,9 +724,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "medium",
-              "dependencies": [
-                "task_4_1_1"
-              ],
+              "dependencies": ["task_4_1_1"],
               "apis": [],
               "notes": ""
             }
@@ -923,12 +741,8 @@
               "type": "backend",
               "status": "in_progress",
               "priority": "critical",
-              "dependencies": [
-                "task_4_1_3"
-              ],
-              "apis": [
-                "gladia_api"
-              ],
+              "dependencies": ["task_4_1_3"],
+              "apis": ["gladia_api"],
               "notes": "Gladia for transcription. Speaker diarisation to separate user and prospect lines."
             },
             {
@@ -937,9 +751,7 @@
               "type": "backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_4_2_1"
-              ],
+              "dependencies": ["task_4_2_1"],
               "apis": [],
               "notes": ""
             },
@@ -949,9 +761,7 @@
               "type": "backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_4_2_1"
-              ],
+              "dependencies": ["task_4_2_1"],
               "apis": [],
               "notes": "GDPR requirement. Scheduled deletion job. EU storage only."
             },
@@ -961,9 +771,7 @@
               "type": "backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_4_2_1"
-              ],
+              "dependencies": ["task_4_2_1"],
               "apis": [],
               "notes": "GDPR requirement. Scheduled deletion job."
             },
@@ -973,9 +781,7 @@
               "type": "backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_4_2_2"
-              ],
+              "dependencies": ["task_4_2_2"],
               "apis": [],
               "notes": ""
             }
@@ -992,12 +798,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_4_2_2"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_4_2_2"],
+              "apis": ["claude_api"],
               "notes": "Claude generates email from transcript. Clean, structured. Not a dashboard."
             },
             {
@@ -1006,12 +808,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_4_3_1"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_4_3_1"],
+              "apis": ["claude_api"],
               "notes": "Compare practice session scores to real call acoustic metrics"
             },
             {
@@ -1020,9 +818,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_4_3_1"
-              ],
+              "dependencies": ["task_4_3_1"],
               "apis": [],
               "notes": "Unique link per call analysis. Auth-gated."
             }
@@ -1049,13 +845,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_4_2_2"
-              ],
-              "apis": [
-                "pipedrive_api",
-                "claude_api"
-              ],
+              "dependencies": ["task_4_2_2"],
+              "apis": ["pipedrive_api", "claude_api"],
               "notes": "Fields pushed: last call summary, objections raised, decision signals, competitor mentions, agreed next steps, deal stage recommendation"
             },
             {
@@ -1064,12 +855,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_5_1_1"
-              ],
-              "apis": [
-                "pipedrive_api"
-              ],
+              "dependencies": ["task_5_1_1"],
+              "apis": ["pipedrive_api"],
               "notes": "Pipedrive activities API. Activity type: call. Duration from transcript."
             },
             {
@@ -1078,9 +865,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_5_1_1"
-              ],
+              "dependencies": ["task_5_1_1"],
               "apis": [],
               "notes": "One-click approve or edit flow. Auto-approve after 24 hours if no action."
             },
@@ -1090,9 +875,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "medium",
-              "dependencies": [
-                "task_5_1_1"
-              ],
+              "dependencies": ["task_5_1_1"],
               "apis": [],
               "notes": ""
             }
@@ -1109,12 +892,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_4_2_2"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_4_2_2"],
+              "apis": ["claude_api"],
               "notes": "Stored in Outround DB not Pipedrive. Used to build sharper personas for next session."
             },
             {
@@ -1123,13 +902,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_5_2_1",
-                "task_2_2_1"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_5_2_1", "task_2_2_1"],
+              "apis": ["claude_api"],
               "notes": "Persona assembly pulls from both Pipedrive data and Outround enrichment layer"
             },
             {
@@ -1138,9 +912,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_5_2_1"
-              ],
+              "dependencies": ["task_5_2_1"],
               "apis": [],
               "notes": ""
             }
@@ -1157,13 +929,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_4_2_2"
-              ],
-              "apis": [
-                "gladia_api",
-                "claude_api"
-              ],
+              "dependencies": ["task_4_2_2"],
+              "apis": ["gladia_api", "claude_api"],
               "notes": "Acoustic metrics from real calls feed into user profile alongside practice session data"
             },
             {
@@ -1172,12 +939,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_5_3_1"
-              ],
-              "apis": [
-                "claude_api"
-              ],
+              "dependencies": ["task_5_3_1"],
+              "apis": ["claude_api"],
               "notes": "Requires minimum 3 real calls to surface patterns"
             }
           ]
@@ -1203,9 +966,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_0_2_4"
-              ],
+              "dependencies": ["task_0_2_4"],
               "apis": [],
               "notes": "Coach personas in DB. Each has: id, name, photo, personality, coaching_style, voice_id, system_prompt_template"
             },
@@ -1215,9 +976,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "medium",
-              "dependencies": [
-                "task_6_1_1"
-              ],
+              "dependencies": ["task_6_1_1"],
               "apis": [],
               "notes": ""
             }
@@ -1234,13 +993,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_6_1_1"
-              ],
-              "apis": [
-                "slack_api",
-                "claude_api"
-              ],
+              "dependencies": ["task_6_1_1"],
+              "apis": ["slack_api", "claude_api"],
               "notes": "Scheduled job checks last activity. Claude generates personalised nudge in coach voice."
             },
             {
@@ -1249,9 +1003,7 @@
               "type": "backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_6_2_1"
-              ],
+              "dependencies": ["task_6_2_1"],
               "apis": [],
               "notes": ""
             },
@@ -1261,12 +1013,8 @@
               "type": "backend",
               "status": "not_started",
               "priority": "medium",
-              "dependencies": [
-                "task_6_2_1"
-              ],
-              "apis": [
-                "slack_api"
-              ],
+              "dependencies": ["task_6_2_1"],
+              "apis": ["slack_api"],
               "notes": "Slack interactive button. Deep link to session start."
             }
           ]
@@ -1292,9 +1040,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_1_1_1"
-              ],
+              "dependencies": ["task_1_1_1"],
               "apis": [],
               "notes": ""
             },
@@ -1304,9 +1050,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_7_1_1"
-              ],
+              "dependencies": ["task_7_1_1"],
               "apis": [],
               "notes": ""
             },
@@ -1316,9 +1060,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_7_1_1"
-              ],
+              "dependencies": ["task_7_1_1"],
               "apis": [],
               "notes": ""
             },
@@ -1328,9 +1070,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "medium",
-              "dependencies": [
-                "task_7_1_1"
-              ],
+              "dependencies": ["task_7_1_1"],
               "apis": [],
               "notes": ""
             }
@@ -1347,9 +1087,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "critical",
-              "dependencies": [
-                "task_0_1_2"
-              ],
+              "dependencies": ["task_0_1_2"],
               "apis": [],
               "notes": ""
             },
@@ -1359,9 +1097,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_7_2_1"
-              ],
+              "dependencies": ["task_7_2_1"],
               "apis": [],
               "notes": ""
             },
@@ -1371,9 +1107,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_7_2_1"
-              ],
+              "dependencies": ["task_7_2_1"],
               "apis": [],
               "notes": ""
             }
@@ -1400,12 +1134,8 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_0_2_2"
-              ],
-              "apis": [
-                "pipedrive_oauth"
-              ],
+              "dependencies": ["task_0_2_2"],
+              "apis": ["pipedrive_oauth"],
               "notes": ""
             },
             {
@@ -1414,12 +1144,8 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_0_2_3"
-              ],
-              "apis": [
-                "google_calendar_oauth"
-              ],
+              "dependencies": ["task_0_2_3"],
+              "apis": ["google_calendar_oauth"],
               "notes": ""
             },
             {
@@ -1429,9 +1155,7 @@
               "status": "not_started",
               "priority": "high",
               "dependencies": [],
-              "apis": [
-                "slack_oauth"
-              ],
+              "apis": ["slack_oauth"],
               "notes": ""
             },
             {
@@ -1440,9 +1164,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_8_1_1"
-              ],
+              "dependencies": ["task_8_1_1"],
               "apis": [],
               "notes": ""
             }
@@ -1506,9 +1228,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_3_3_3"
-              ],
+              "dependencies": ["task_3_3_3"],
               "apis": [],
               "notes": ""
             },
@@ -1518,9 +1238,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_0_1_2"
-              ],
+              "dependencies": ["task_0_1_2"],
               "apis": [],
               "notes": ""
             },
@@ -1530,9 +1248,7 @@
               "type": "frontend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_9_1_1"
-              ],
+              "dependencies": ["task_9_1_1"],
               "apis": [],
               "notes": ""
             },
@@ -1552,9 +1268,7 @@
               "type": "frontend+backend",
               "status": "not_started",
               "priority": "high",
-              "dependencies": [
-                "task_9_1_1"
-              ],
+              "dependencies": ["task_9_1_1"],
               "apis": [],
               "notes": ""
             }
@@ -1584,18 +1298,12 @@
     },
     "google_oauth": {
       "type": "oauth2",
-      "scopes": [
-        "openid",
-        "email",
-        "profile"
-      ],
+      "scopes": ["openid", "email", "profile"],
       "docs": "https://developers.google.com/identity/protocols/oauth2"
     },
     "google_calendar_oauth": {
       "type": "oauth2",
-      "scopes": [
-        "https://www.googleapis.com/auth/calendar.readonly"
-      ],
+      "scopes": ["https://www.googleapis.com/auth/calendar.readonly"],
       "docs": "https://developers.google.com/calendar/api/guides/auth"
     },
     "google_calendar_api": {
@@ -1631,11 +1339,7 @@
     },
     "slack_oauth": {
       "type": "oauth2",
-      "scopes": [
-        "incoming-webhook",
-        "chat:write",
-        "users:read"
-      ],
+      "scopes": ["incoming-webhook", "chat:write", "users:read"],
       "docs": "https://api.slack.com/authentication/oauth-v2"
     },
     "meeting_bot_api": {
@@ -1646,38 +1350,12 @@
     }
   },
   "meta": {
-    "task_statuses": [
-      "not_started",
-      "in_progress",
-      "review",
-      "done",
-      "blocked"
-    ],
-    "task_priorities": [
-      "critical",
-      "high",
-      "medium",
-      "low"
-    ],
-    "task_types": [
-      "frontend",
-      "backend",
-      "frontend+backend"
-    ],
-    "mvp_phases": [
-      "phase_0",
-      "phase_1",
-      "phase_2",
-      "phase_3"
-    ],
-    "phase_2_phases": [
-      "phase_4",
-      "phase_5"
-    ],
-    "phase_3_phases": [
-      "phase_6",
-      "phase_7"
-    ],
+    "task_statuses": ["not_started", "in_progress", "review", "done", "blocked"],
+    "task_priorities": ["critical", "high", "medium", "low"],
+    "task_types": ["frontend", "backend", "frontend+backend"],
+    "mvp_phases": ["phase_0", "phase_1", "phase_2", "phase_3"],
+    "phase_2_phases": ["phase_4", "phase_5"],
+    "phase_3_phases": ["phase_6", "phase_7"],
     "total_tasks": 91
   }
 }

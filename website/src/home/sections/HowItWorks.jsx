@@ -38,7 +38,16 @@ export default function HowItWorks() {
       }}
     >
       <div style={{ width: '100%', maxWidth: 600 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 52 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            marginBottom: 52,
+          }}
+        >
           Three layers
         </div>
 
@@ -59,27 +68,50 @@ export default function HowItWorks() {
               }}
             >
               {/* Number dot on line */}
-              <div style={{
-                position: 'absolute',
-                left: -5,
-                top: 4,
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: 'var(--coral)',
-                opacity: 0.7,
-                flexShrink: 0,
-              }} />
+              <div
+                style={{
+                  position: 'absolute',
+                  left: -5,
+                  top: 4,
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  background: 'var(--coral)',
+                  opacity: 0.7,
+                  flexShrink: 0,
+                }}
+              />
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 10 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--coral)', letterSpacing: '0.1em' }}>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 11,
+                      color: 'var(--coral)',
+                      letterSpacing: '0.1em',
+                    }}
+                  >
                     {layer.num}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(18px, 2.5vw, 22px)', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: 'clamp(18px, 2.5vw, 22px)',
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
                     {layer.title}
                   </span>
                 </div>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: 'clamp(14px, 1.7vw, 16px)', color: 'var(--text-sub)', lineHeight: 1.7 }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 'clamp(14px, 1.7vw, 16px)',
+                    color: 'var(--text-sub)',
+                    lineHeight: 1.7,
+                  }}
+                >
                   {layer.body}
                 </div>
               </div>
@@ -115,5 +147,3 @@ export default function HowItWorks() {
     </section>
   );
 }
-
-

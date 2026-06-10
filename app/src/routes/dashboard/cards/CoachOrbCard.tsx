@@ -10,7 +10,9 @@ export function CoachOrbCard() {
   const activate = () => {
     setPulsing(true);
     toast.push('Coach — coming soon. They’ll meet you here after every round.', 'info');
-    setTimeout(() => setPulsing(false), 900);
+    setTimeout(() => {
+      setPulsing(false);
+    }, 900);
   };
 
   return (
@@ -33,7 +35,10 @@ export function CoachOrbCard() {
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activate();
+        }
       }}
     >
       <div
@@ -50,8 +55,7 @@ export function CoachOrbCard() {
           width: 96,
           height: 96,
           borderRadius: R.pill,
-          background:
-            'radial-gradient(circle at 30% 30%, #ff7a52 0%, #f05a32 40%, #3d9fd4 100%)',
+          background: 'radial-gradient(circle at 30% 30%, #ff7a52 0%, #f05a32 40%, #3d9fd4 100%)',
           boxShadow: '0 12px 40px rgba(240,90,50,0.35)',
           animation: pulsing ? 'orb-pulse 700ms ease' : undefined,
           position: 'relative',

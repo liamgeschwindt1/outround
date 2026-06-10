@@ -70,17 +70,21 @@ async function extractIntelligence(transcript, context = {}, creds = {}) {
   const client = new Anthropic({ apiKey });
 
   const transcriptText = Array.isArray(transcript)
-    ? transcript.map(u => {
-        const ts = u.start != null ? ` [${formatTimestamp(u.start)}]` : '';
-        return `[${u.speaker}${ts}] ${u.text}`;
-      }).join('\n')
+    ? transcript
+        .map((u) => {
+          const ts = u.start != null ? ` [${formatTimestamp(u.start)}]` : '';
+          return `[${u.speaker}${ts}] ${u.text}`;
+        })
+        .join('\n')
     : String(transcript);
 
   const contextBlock = [
     context.meetingTitle && `Meeting: ${context.meetingTitle}`,
     context.date && `Date: ${context.date}`,
     context.attendees?.length && `Attendees: ${context.attendees.join(', ')}`,
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const userMessage = contextBlock
     ? `${contextBlock}\n\nTRANSCRIPT:\n${transcriptText}`
@@ -102,8 +106,12 @@ async function extractIntelligence(transcript, context = {}, creds = {}) {
 }
 
 function formatTimestamp(seconds) {
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+  const m = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const s = Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, '0');
   return `${m}:${s}`;
 }
 
@@ -217,11 +225,14 @@ async function pushToPipedrive(intel, meta = {}, creds = {}) {
 
   // Build note content
   const nextStepsText = (intel.next_steps || [])
-    .map(s => `- ${s.action}${s.owner ? ` (${s.owner})` : ''}${s.due_date ? ` — due ${s.due_date}` : ''}${s.citation ? `  _[${s.citation}]_` : ''}`)
+    .map(
+      (s) =>
+        `- ${s.action}${s.owner ? ` (${s.owner})` : ''}${s.due_date ? ` — due ${s.due_date}` : ''}${s.citation ? `  _[${s.citation}]_` : ''}`
+    )
     .join('\n');
 
   const objectionsText = (intel.objections || [])
-    .map(o => `- ${o.objection}${o.citation ? `  _[${o.citation}]_` : ''}`)
+    .map((o) => `- ${o.objection}${o.citation ? `  _[${o.citation}]_` : ''}`)
     .join('\n');
 
   const noteLines = [
@@ -233,7 +244,10 @@ async function pushToPipedrive(intel, meta = {}, creds = {}) {
     nextStepsText ? `**Next steps**\n${nextStepsText}` : '',
     objectionsText ? `**Objections raised**\n${objectionsText}` : '',
     meta.transcriptUrl ? `**Transcript:** ${meta.transcriptUrl}` : '',
-  ].filter(l => l !== undefined).join('\n').trim();
+  ]
+    .filter((l) => l !== undefined)
+    .join('\n')
+    .trim();
 
   let note = null;
   let dealUrl = null;
@@ -245,12 +259,13 @@ async function pushToPipedrive(intel, meta = {}, creds = {}) {
     const updates = {};
     if (intel.crm_fields?.close_date) updates.expected_close_date = intel.crm_fields.close_date;
     if (Object.keys(updates).length) {
-      await pdPut(`/deals/${deal.id}`, updates, apiKey).catch(err =>
+      await pdPut(`/deals/${deal.id}`, updates, apiKey).catch((err) =>
         console.warn('[meeting-intel] deal update failed:', err.message)
       );
     }
 
-    const domain = creds.pipedriveDomain || process.env.PIPEDRIVE_DOMAIN || process.env.COMPANY_DOMAIN;
+    const domain =
+      creds.pipedriveDomain || process.env.PIPEDRIVE_DOMAIN || process.env.COMPANY_DOMAIN;
     dealUrl = domain ? `https://${domain}.pipedrive.com/deal/${deal.id}` : null;
   } else {
     console.warn(`[meeting-intel] No open deal found for ${meta.prospectEmail} — note not added`);
@@ -279,11 +294,15 @@ async function runPipeline(transcript, meta = {}, creds = {}) {
   const slack = require('./slack');
 
   // Step 1: Claude extraction
-  const intel = await extractIntelligence(transcript, {
-    meetingTitle: meta.meetingTitle,
-    date: meta.date,
-    attendees: meta.attendees,
-  }, creds);
+  const intel = await extractIntelligence(
+    transcript,
+    {
+      meetingTitle: meta.meetingTitle,
+      date: meta.date,
+      attendees: meta.attendees,
+    },
+    creds
+  );
 
   // Step 2: Pipedrive push
   let pipedriveResult = null;
@@ -295,14 +314,15 @@ async function runPipeline(transcript, meta = {}, creds = {}) {
 
   // Step 3: Slack DM
   let slackResult = null;
-  const slackCreds = (creds.slackBotToken || creds.slackUserId)
-    ? { botToken: creds.slackBotToken, slackUserId: creds.slackUserId }
-    : null; // null lets sendCallBriefing fall back to env vars
+  const slackCreds =
+    creds.slackBotToken || creds.slackUserId
+      ? { botToken: creds.slackBotToken, slackUserId: creds.slackUserId }
+      : null; // null lets sendCallBriefing fall back to env vars
   try {
     slackResult = await slack.sendCallBriefing(slackCreds, {
       contactName: meta.prospectName || meta.prospectEmail || 'Unknown contact',
       summary: intel.summary,
-      nextSteps: (intel.next_steps || []).map(s => s.action),
+      nextSteps: (intel.next_steps || []).map((s) => s.action),
       dealUrl: pipedriveResult?.dealUrl,
       meetingTitle: meta.meetingTitle,
     });

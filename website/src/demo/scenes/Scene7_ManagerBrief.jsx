@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 import SlackCard from '../components/SlackCard';
 
 const CALLS = [
@@ -8,20 +9,24 @@ const CALLS = [
   { text: 'ABN AMRO: Decision maker not on call' },
 ];
 
-export default function Scene7_ManagerBrief({ isActive, sound }) {
+function Scene7_ManagerBrief({ isActive, sound }) {
   const [visibleCalls, setVisibleCalls] = useState(0);
   const [showSeparator, setShowSeparator] = useState(false);
   const [showFinale, setShowFinale] = useState(false);
 
   useEffect(() => {
-    if (!isActive) { setVisibleCalls(0); setShowSeparator(false); setShowFinale(false); return; }
+    if (!isActive) return;
 
+    let cancelled = false;
     let i = 0;
     function next() {
+      if (cancelled) return;
       if (i >= CALLS.length) {
         setTimeout(() => {
+          if (cancelled) return;
           setShowSeparator(true);
           setTimeout(() => {
+            if (cancelled) return;
             setShowFinale(true);
             sound.play('success');
           }, 300);
@@ -33,13 +38,26 @@ export default function Scene7_ManagerBrief({ isActive, sound }) {
       setTimeout(next, 150);
     }
     const t = setTimeout(next, 300);
-    return () => clearTimeout(t);
-  }, [isActive]);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+      setVisibleCalls(0);
+      setShowSeparator(false);
+      setShowFinale(false);
+    };
+  }, [isActive, sound]);
 
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: 24 }}
-      onClick={e => e.stopPropagation()}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        padding: 24,
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       <SlackCard timestamp="Before your 1:1" style={{ maxWidth: 460 }}>
         <div
@@ -54,7 +72,7 @@ export default function Scene7_ManagerBrief({ isActive, sound }) {
           Before your 1:1 with Daan — 3 calls this week
         </div>
 
-        {CALLS.map((call, i) => (
+        {CALLS.map((call, i) =>
           i < visibleCalls ? (
             <motion.div
               key={i}
@@ -69,7 +87,14 @@ export default function Scene7_ManagerBrief({ isActive, sound }) {
               }}
             >
               <span style={{ color: 'var(--coral)', flexShrink: 0 }}>→</span>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-primary)', flex: 1 }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 13,
+                  color: 'var(--text-primary)',
+                  flex: 1,
+                }}
+              >
                 {call.text}
               </span>
               <span
@@ -87,14 +112,14 @@ export default function Scene7_ManagerBrief({ isActive, sound }) {
                   display: 'inline-flex',
                   alignItems: 'center',
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               >
                 clip
               </span>
             </motion.div>
           ) : null
-        ))}
+        )}
 
         <AnimatePresence>
           {showSeparator && (
@@ -132,3 +157,10 @@ export default function Scene7_ManagerBrief({ isActive, sound }) {
     </div>
   );
 }
+
+Scene7_ManagerBrief.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  sound: PropTypes.object.isRequired,
+};
+
+export default Scene7_ManagerBrief;

@@ -1,8 +1,8 @@
 const FOOTER_LINKS = [
-  { label: 'What it is',       href: '#what'  },
-  { label: 'How it works',     href: '#how'   },
-  { label: 'Why it compounds', href: '#moat'  },
-  { label: 'Get started',      href: '#cta'   },
+  { label: 'What it is', href: '#what' },
+  { label: 'How it works', href: '#how' },
+  { label: 'Why it compounds', href: '#moat' },
+  { label: 'Get started', href: '#cta' },
 ];
 
 function scrollTo(href) {
@@ -42,41 +42,51 @@ export default function Footer() {
           {/* Brand */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: 'var(--coral)',
-                display: 'inline-block',
-                boxShadow: '0 0 10px rgba(242,107,69,0.5)',
-                flexShrink: 0,
-              }} />
-              <span style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 16,
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.02em',
-              }}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: 'var(--coral)',
+                  display: 'inline-block',
+                  boxShadow: '0 0 10px rgba(242,107,69,0.5)',
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
                 Outround
               </span>
             </div>
-            <p style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 13,
-              color: 'var(--text-muted)',
-              lineHeight: 1.6,
-              maxWidth: 260,
-              margin: 0,
-            }}>
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 13,
+                color: 'var(--text-muted)',
+                lineHeight: 1.6,
+                maxWidth: 260,
+                margin: 0,
+              }}
+            >
               The memory and coordination layer beneath every conversation your team has.
             </p>
-            <div style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              color: 'var(--text-muted)',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              opacity: 0.7,
-            }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                color: 'var(--text-muted)',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                opacity: 0.7,
+              }}
+            >
               EU hosted &middot; GDPR native
             </div>
           </div>
@@ -89,17 +99,19 @@ export default function Footer() {
               gap: 12,
             }}
           >
-            <div style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              color: 'var(--text-muted)',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              marginBottom: 4,
-            }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                color: 'var(--text-muted)',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                marginBottom: 4,
+              }}
+            >
               Product
             </div>
-            {FOOTER_LINKS.map(l => (
+            {FOOTER_LINKS.map((l) => (
               <button
                 key={l.href}
                 onClick={() => scrollTo(l.href)}
@@ -114,8 +126,12 @@ export default function Footer() {
                   color: 'var(--text-sub)',
                   transition: 'color 0.15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-sub)'; }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--text-sub)';
+                }}
               >
                 {l.label}
               </button>
@@ -136,20 +152,24 @@ export default function Footer() {
             gap: 12,
           }}
         >
-          <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            color: 'var(--text-muted)',
-            letterSpacing: '0.06em',
-          }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              color: 'var(--text-muted)',
+              letterSpacing: '0.06em',
+            }}
+          >
             &copy; 2026 Outround. All rights reserved.
           </span>
-          <div style={{
-            display: 'flex',
-            gap: 20,
-            alignItems: 'center',
-          }}>
-            {['Privacy', 'Terms', 'Security'].map(label => (
+          <div
+            style={{
+              display: 'flex',
+              gap: 20,
+              alignItems: 'center',
+            }}
+          >
+            {['Privacy', 'Terms', 'Security'].map((label) => (
               <span
                 key={label}
                 style={{

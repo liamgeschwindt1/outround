@@ -30,7 +30,7 @@ async function rcall(method, path, body, apiKey) {
   const resp = await fetch(`${baseUrl()}${path}`, {
     method,
     headers: {
-      'Authorization': `Token ${key}`,
+      Authorization: `Token ${key}`,
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -84,7 +84,7 @@ async function createTranscript(recordingId, opts = {}) {
   const resp = await fetch(`${baseUrl()}/recording/${recordingId}/create_transcript/`, {
     method: 'POST',
     headers: {
-      'Authorization': `Token ${apiKey}`,
+      Authorization: `Token ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
@@ -112,13 +112,23 @@ function normaliseTranscriptDownload(transcriptRows) {
   return transcriptRows
     .map((entry) => {
       const words = Array.isArray(entry?.words) ? entry.words : [];
-      const text = words.map((word) => word?.text || '').filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+      const text = words
+        .map((word) => word?.text || '')
+        .filter(Boolean)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
       if (!text) return null;
 
-      const start = words.find((word) => word?.start_timestamp?.relative != null)?.start_timestamp?.relative ?? 0;
-      const end = [...words].reverse().find((word) => word?.end_timestamp?.relative != null)?.end_timestamp?.relative ?? start;
+      const start =
+        words.find((word) => word?.start_timestamp?.relative != null)?.start_timestamp?.relative ??
+        0;
+      const end =
+        [...words].reverse().find((word) => word?.end_timestamp?.relative != null)?.end_timestamp
+          ?.relative ?? start;
       const participant = entry?.participant || {};
-      const speaker = participant.name || (participant.id != null ? `Speaker ${participant.id}` : 'unknown');
+      const speaker =
+        participant.name || (participant.id != null ? `Speaker ${participant.id}` : 'unknown');
 
       return { speaker, text, start, end };
     })
@@ -141,10 +151,7 @@ function verifyWebhook(rawBody, signatureHeader) {
   if (!secret || !signatureHeader) return false;
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(signatureHeader)
-    );
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader));
   } catch {
     return false;
   }
