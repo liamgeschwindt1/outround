@@ -31,7 +31,7 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   error: string | null;
-  refresh: () => Promise<void>;
+  refresh: (opts?: { timeout?: number }) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   signup: (
     email: string,
@@ -63,13 +63,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Only the most-recently-started refresh wins; stale ones are discarded.
   const refreshSeq = useRef(0);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (opts?: { timeout?: number }) => {
     const seq = ++refreshSeq.current;
     setError(null);
     setLoading(true);
+
+    // Abort the request after `timeout` ms so a cold-starting backend doesn't
+    // hold the loading spinner hostage. Default 6s for background checks.
+    const controller = new AbortController();
+    const timeoutMs = opts?.timeout ?? 6000;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
-      const u = await api.get<User>('/auth/me');
-      if (seq !== refreshSeq.current) return; // stale — a newer refresh is running
+      const u = await api.get<User>('/auth/me', { signal: controller.signal });
+      if (seq !== refreshSeq.current) return;
       setUser(u);
       writeCache(u);
     } catch (e: unknown) {
@@ -78,12 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         writeCache(null);
       } else {
-        const msg = e instanceof Error ? e.message : 'Failed to load session';
-        setError(msg);
+        // Timeout, network error, or 5xx — don't show an error banner on the
+        // initial check; just treat as logged-out so the login form appears.
         setUser(null);
         writeCache(null);
       }
     } finally {
+      clearTimeout(timer);
       if (seq === refreshSeq.current) setLoading(false);
     }
   }, []);
