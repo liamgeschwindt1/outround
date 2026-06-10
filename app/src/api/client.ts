@@ -16,16 +16,37 @@ let _refreshing: Promise<boolean> | null = null;
 async function tryRefresh(): Promise<boolean> {
   // Coalesce concurrent refresh attempts into one request.
   if (_refreshing) return _refreshing;
-  _refreshing = fetch('/auth/refresh', { method: 'POST', credentials: 'include' })
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000); // 10s max for a token refresh
+  _refreshing = fetch('/auth/refresh', {
+    method: 'POST',
+    credentials: 'include',
+    signal: ctrl.signal,
+  })
     .then((r) => r.ok)
     .catch(() => false)
     .finally(() => {
+      clearTimeout(timer);
       _refreshing = null;
     });
   return _refreshing;
 }
 
+// Default timeout for all requests. The caller can pass a shorter signal via init.
+const REQUEST_TIMEOUT_MS = 30_000;
+
 async function request<T>(path: string, init: RequestInit = {}, _retry = true): Promise<T> {
+  // Add a safety-net timeout unless the caller already supplied an abort signal.
+  // This prevents any fetch from hanging indefinitely (e.g. Railway proxy that accepts
+  // the TCP connection but never sends a response).
+  let ownCtrl: AbortController | null = null;
+  let ownTimer: ReturnType<typeof setTimeout> | null = null;
+  if (!init.signal) {
+    ownCtrl = new AbortController();
+    ownTimer = setTimeout(() => ownCtrl!.abort(), REQUEST_TIMEOUT_MS);
+    init = { ...init, signal: ownCtrl.signal };
+  }
+
   let res: Response;
   try {
     res = await fetch(path, {
@@ -40,6 +61,8 @@ async function request<T>(path: string, init: RequestInit = {}, _retry = true): 
     const msg = networkErr instanceof Error ? networkErr.message : 'Network error';
     captureError(`Network error — ${path}`, msg);
     throw networkErr;
+  } finally {
+    if (ownTimer) clearTimeout(ownTimer);
   }
 
   // On 401, try to silently refresh the session once then retry the original request.

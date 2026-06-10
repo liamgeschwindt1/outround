@@ -72,12 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // session check). Login/signup flows never pass a timeout — they must
     // complete fully or throw a real error.
     const controller = opts?.timeout ? new AbortController() : null;
-    const timer = controller
-      ? setTimeout(() => { controller.abort(); }, opts!.timeout)
-      : null;
+    const timer = controller ? setTimeout(() => controller.abort(), opts!.timeout) : null;
 
     try {
-      const u = await api.get<User>('/auth/me', controller ? { signal: controller.signal } : undefined);
+      const u = await api.get<User>(
+        '/auth/me',
+        controller ? { signal: controller.signal } : undefined
+      );
       if (seq !== refreshSeq.current) return;
       setUser(u);
       writeCache(u);
@@ -93,7 +94,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         writeCache(null);
       } else {
         // Real error on an explicit refresh (post-login) — surface it.
-        const msg = e instanceof Error ? e.message : 'Failed to load session';
+        // Treat AbortError (from the client-side safety-net timeout) as a
+        // friendly connection error rather than showing the raw browser message.
+        const isAbort = e instanceof DOMException && e.name === 'AbortError';
+        const msg = isAbort
+          ? 'Connection timed out. Please check your connection and try again.'
+          : e instanceof Error
+            ? e.message
+            : 'Failed to load session';
         setError(msg);
         setUser(null);
         writeCache(null);
