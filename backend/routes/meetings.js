@@ -367,6 +367,41 @@ router.get('/bots', requireAuth, async (req, res) => {
   res.json(rows);
 });
 
+// GET /api/bots/settings — return bot auto-join preferences for the current user
+router.get('/bots/settings', requireAuth, async (req, res) => {
+  const userId = req.user?.id || req.supabaseUser?.id;
+  const pool = getPool();
+  if (!pool) return res.json({ auto_join: true, join_type: 'all' });
+
+  const { rows } = await pool.query(
+    'SELECT bot_auto_join, bot_join_type FROM user_preferences WHERE user_id = $1',
+    [userId]
+  );
+  if (!rows.length) return res.json({ auto_join: true, join_type: 'all' });
+  res.json({ auto_join: rows[0].bot_auto_join, join_type: rows[0].bot_join_type || 'all' });
+});
+
+// PUT /api/bots/settings — save bot auto-join preferences
+router.put('/bots/settings', requireAuth, async (req, res) => {
+  const userId = req.user?.id || req.supabaseUser?.id;
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'DB not available' });
+
+  const auto_join = req.body.auto_join !== undefined ? !!req.body.auto_join : true;
+  const join_type = ['all', 'external'].includes(req.body.join_type) ? req.body.join_type : 'all';
+
+  await pool.query(
+    `INSERT INTO user_preferences (user_id, bot_auto_join, bot_join_type)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (user_id) DO UPDATE SET
+       bot_auto_join = EXCLUDED.bot_auto_join,
+       bot_join_type = EXCLUDED.bot_join_type,
+       updated_at = NOW()`,
+    [userId, auto_join, join_type]
+  );
+  res.json({ ok: true, auto_join, join_type });
+});
+
 // POST /api/bots/dispatch — send a bot to any meeting URL (no calendar meeting required)
 router.post('/bots/dispatch', requireAuth, async (req, res) => {
   const userId = req.user?.id || req.supabaseUser?.id;
