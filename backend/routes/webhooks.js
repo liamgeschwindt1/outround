@@ -1,6 +1,7 @@
 /**
  * Recall.ai webhook receiver.
- * Mounted at /api/bots — no auth, HMAC verified.
+ * Mounted at /api/bots  → /api/bots/webhook
+ * Mounted at /api       → /api/webhooks/recall  (matches Recall dashboard config)
  *
  * Events handled:
  *   bot.status_change     — status updates
@@ -64,10 +65,11 @@ async function hydrateMeetingContext(pool, botId) {
   return { meetingMeta, creds };
 }
 
-// raw body required for HMAC verification
+// raw body required for HMAC verification — applies to both path aliases
 router.use('/bots/webhook', express.raw({ type: '*/*' }));
+router.use('/webhooks/recall', express.raw({ type: '*/*' }));
 
-router.post('/bots/webhook', async (req, res) => {
+async function handleRecallWebhook(req, res) {
   const sig = req.headers['x-recall-signature'];
   const raw = req.body instanceof Buffer ? req.body.toString('utf8') : '';
 
@@ -231,7 +233,10 @@ router.post('/bots/webhook', async (req, res) => {
     console.error('[webhook] error:', err);
     res.status(500).end();
   }
-});
+}
+
+router.post('/bots/webhook', handleRecallWebhook);
+router.post('/webhooks/recall', handleRecallWebhook);
 
 function mapStatus(code) {
   const m = {
