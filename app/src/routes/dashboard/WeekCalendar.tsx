@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { T, R } from '../../design/tokens';
 import { Button } from '../../design/primitives/Button';
@@ -7,11 +7,13 @@ import type { MeetingsResponse, UpcomingMeeting } from '../../api/types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const START_HOUR = 8;
-const END_HOUR = 20;
-const HOUR_PX = 64;
+const START_HOUR = 0;
+const END_HOUR = 24;
+const HOUR_PX = 52;
 const TOTAL_H = (END_HOUR - START_HOUR) * HOUR_PX;
 const GUTTER_W = 48;
+const HEADER_H = 40;
+const VIEWPORT_H = 560;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -152,15 +154,37 @@ function MeetingBlock({
 
 // ─── Side panel ───────────────────────────────────────────────────────────────
 
+function botLabel(status: string): { text: string; color: string } {
+  switch (status) {
+    case 'scheduled':
+      return { text: 'Notetaker scheduled', color: T.sky };
+    case 'joining':
+    case 'in_call':
+    case 'recording':
+      return { text: 'Notetaker in call', color: T.green };
+    case 'done':
+      return { text: 'Recording ready', color: T.green };
+    case 'cancelled':
+      return { text: 'Notetaker cancelled', color: T.t3 };
+    case 'error':
+      return { text: 'Notetaker failed', color: T.red };
+    default:
+      return { text: `Notetaker · ${status}`, color: T.t2 };
+  }
+}
+
 function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) {
   const nav = useNavigate();
   const isPast = new Date(m.starts_at) < new Date();
   const label = displayName(m);
+  const p = m.prospect;
+  const inCrm = !!p.pipedrive_person_id;
+  const hasDeal = !!m.deal;
 
   return (
     <div
       style={{
-        width: 260,
+        width: 300,
         flexShrink: 0,
         background: T.bgCard,
         border: `1px solid ${T.borderMd}`,
@@ -179,7 +203,7 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
         <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
           <div
             style={{
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: 700,
               color: T.t1,
               lineHeight: 1.3,
@@ -191,7 +215,12 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
             {label}
           </div>
           <div style={{ fontSize: 11, color: T.t3, fontFamily: T.mono, marginTop: 3 }}>
-            {fmtTime(m.starts_at)} · {fmtDuration(m.starts_at, m.ends_at)}
+            {new Date(m.starts_at).toLocaleDateString([], {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+            })}{' '}
+            · {fmtTime(m.starts_at)} · {fmtDuration(m.starts_at, m.ends_at)}
           </div>
         </div>
         <button
@@ -213,36 +242,113 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
 
       <div style={{ height: 1, background: T.border }} />
 
-      {/* Past — round taken */}
+      {/* ── CRM sync block ─────────────────────────────────────────────── */}
+      <div>
+        <div
+          style={{
+            fontSize: 9,
+            fontFamily: T.mono,
+            letterSpacing: 0.7,
+            color: T.t3,
+            marginBottom: 8,
+            textTransform: 'uppercase',
+          }}
+        >
+          Who you’re meeting
+        </div>
+        {inCrm ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.t1 }}>{p.name ?? 'Unknown'}</div>
+            {p.company && <div style={{ fontSize: 12, color: T.t2 }}>{p.company}</div>}
+            {p.email && (
+              <div
+                style={{ fontSize: 11, color: T.t3, fontFamily: T.mono, wordBreak: 'break-all' }}
+              >
+                {p.email}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontSize: 9,
+                  fontFamily: T.mono,
+                  letterSpacing: 0.5,
+                  color: T.sky,
+                  background: 'rgba(61,159,212,0.1)',
+                  border: '1px solid rgba(61,159,212,0.25)',
+                  borderRadius: R.pill,
+                  padding: '2px 8px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                In CRM
+              </span>
+              {hasDeal && (
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontFamily: T.mono,
+                    letterSpacing: 0.5,
+                    color: T.green,
+                    background: 'rgba(22,163,74,0.1)',
+                    border: '1px solid rgba(22,163,74,0.25)',
+                    borderRadius: R.pill,
+                    padding: '2px 8px',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Open deal
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {(p.name ?? p.email) && (
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.t1 }}>{p.name ?? p.email}</div>
+            )}
+            <div
+              style={{
+                fontSize: 12,
+                color: T.t3,
+                lineHeight: 1.5,
+                background: T.bgSub,
+                border: `1px solid ${T.border}`,
+                borderRadius: R.sm,
+                padding: '8px 10px',
+              }}
+            >
+              This person is not in your CRM.
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Notetaker status ───────────────────────────────────────────── */}
+      {m.bot && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: botLabel(m.bot.status).color,
+              flexShrink: 0,
+            }}
+          />
+          <span style={{ fontSize: 11, color: T.t2, fontFamily: T.mono }}>
+            {botLabel(m.bot.status).text}
+          </span>
+        </div>
+      )}
+
+      <div style={{ height: 1, background: T.border }} />
+
+      {/* ── Past — round taken ─────────────────────────────────────────── */}
       {isPast && m.outround_done && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <div
-              style={{
-                fontSize: 9,
-                fontFamily: T.mono,
-                letterSpacing: 0.7,
-                color: T.t3,
-                marginBottom: 6,
-                textTransform: 'uppercase',
-              }}
-            >
-              Last round
-            </div>
-            <div
-              style={{
-                fontSize: 30,
-                fontWeight: 700,
-                color: T.coral,
-                lineHeight: 1,
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              —
-              <span style={{ fontSize: 12, color: T.t3, fontWeight: 400, marginLeft: 3 }}>
-                /100
-              </span>
-            </div>
+          <div style={{ fontSize: 12, color: T.t3, lineHeight: 1.5 }}>
+            You ran a round before this meeting.
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <Button
@@ -267,31 +373,27 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
         </div>
       )}
 
-      {/* Past — no round */}
+      {/* ── Past — no round ────────────────────────────────────────────── */}
       {isPast && !m.outround_done && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: 12, color: T.t3, lineHeight: 1.5 }}>
-            No round before this meeting.
-          </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              nav('/round');
-            }}
-          >
-            Run a round now
-          </Button>
+        <div style={{ fontSize: 12, color: T.t3, lineHeight: 1.5 }}>
+          No round before this meeting.
         </div>
       )}
 
-      {/* Upcoming */}
+      {/* ── Upcoming ───────────────────────────────────────────────────── */}
       {!isPast && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: 12, color: T.t3, lineHeight: 1.5 }}>
-            {m.prospect.company ? `Prospect at ${m.prospect.company}.` : 'Upcoming meeting.'} Get a
-            round in before it starts.
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Button
+            variant="secondary"
+            size="sm"
+            style={{ width: '100%' }}
+            onClick={() => {
+              if (m.id) nav(`/meeting/${m.id}`);
+            }}
+            disabled={!m.id}
+          >
+            View details
+          </Button>
           <Button
             variant="primary"
             size="md"
@@ -314,6 +416,7 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
 export function WeekCalendar({ data, loading }: Props) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [selected, setSelected] = useState<UpcomingMeeting | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
   const weekStart = startOfWeek(today, weekOffset);
@@ -331,6 +434,15 @@ export function WeekCalendar({ data, loading }: Props) {
 
   const nowTop = topForTime(today.toISOString());
   const todayIdx = days.findIndex((d) => isSameDay(d, today));
+
+  // Auto-scroll to ~1h before the current time (or the work-day start) on mount.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const focusHour = todayIdx >= 0 ? Math.max(START_HOUR, today.getHours() - 1) : 8;
+    el.scrollTop = (focusHour - START_HOUR) * HOUR_PX;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.connected, weekOffset]);
 
   return (
     <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
@@ -402,9 +514,37 @@ export function WeekCalendar({ data, loading }: Props) {
 
         {/* Time grid */}
         {(!data || data.connected) && (
-          <div style={{ display: 'flex' }}>
+          <div
+            ref={scrollRef}
+            style={{
+              display: 'flex',
+              maxHeight: VIEWPORT_H,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              border: `1px solid ${T.border}`,
+              borderRadius: R.lg,
+              position: 'relative',
+            }}
+          >
             {/* Time gutter */}
-            <div style={{ width: GUTTER_W, flexShrink: 0, paddingTop: 40 }}>
+            <div
+              style={{
+                width: GUTTER_W,
+                flexShrink: 0,
+                background: T.bgSub,
+                borderRight: `1px solid ${T.border}`,
+              }}
+            >
+              <div
+                style={{
+                  height: HEADER_H,
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 6,
+                  background: T.bgSub,
+                  borderBottom: `1px solid ${T.border}`,
+                }}
+              />
               {hours.map((h) => (
                 <div
                   key={h}
@@ -438,7 +578,6 @@ export function WeekCalendar({ data, loading }: Props) {
                 display: 'flex',
                 gap: 1,
                 minWidth: 0,
-                borderLeft: `1px solid ${T.border}`,
               }}
             >
               {days.map((date, i) => {
@@ -460,7 +599,11 @@ export function WeekCalendar({ data, loading }: Props) {
                     {/* Day header */}
                     <div
                       style={{
-                        height: 40,
+                        height: HEADER_H,
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 5,
+                        background: T.bgCard,
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',

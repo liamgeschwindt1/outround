@@ -170,11 +170,14 @@ router.get('/logs', requireAuth, async (req, res) => {
         });
       }
 
-      // 3. DB: recent meetings
+      // 3. DB: recent meetings (only those starting in the last 24h or upcoming,
+      //    so the log isn't flooded with long-past calendar events)
       try {
         const { rows: mtgs } = await pool.query(
           `SELECT id, title, starts_at, created_at AS ts, updated_at, outround_done, source
-           FROM meetings ORDER BY updated_at DESC LIMIT 30`
+           FROM meetings
+           WHERE starts_at >= NOW() - INTERVAL '1 day'
+           ORDER BY starts_at ASC LIMIT 15`
         );
         for (const m of mtgs) {
           entries.push({

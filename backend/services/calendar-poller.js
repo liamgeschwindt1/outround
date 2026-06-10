@@ -32,6 +32,7 @@ const STATE_FILE = path.join(__dirname, '../data/processed-events.json');
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 let _timer = null;
+let _listOrgsWarned = false;
 
 // -- Processed-event dedup store ------------------------------------------------
 
@@ -217,8 +218,15 @@ async function poll() {
     let orgs;
     try {
       orgs = await tokenManager.listOrgs();
+      _listOrgsWarned = false;
     } catch (err) {
-      console.error('[calendar-poller] listOrgs failed:', err.message);
+      // Suppress repeat noise: the most common cause is the `organisations`
+      // table not yet existing in Supabase. Warn once, then go quiet until it
+      // starts succeeding again.
+      if (!_listOrgsWarned) {
+        console.error('[calendar-poller] listOrgs failed (will retry silently):', err.message);
+        _listOrgsWarned = true;
+      }
       return;
     }
 

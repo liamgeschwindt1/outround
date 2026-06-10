@@ -150,6 +150,14 @@ export default function App() {
                 }
               />
               <Route
+                path="/meetings"
+                element={
+                  <Guarded>
+                    <CalendarPage />
+                  </Guarded>
+                }
+              />
+              <Route
                 path="/calendar"
                 element={
                   <Guarded>

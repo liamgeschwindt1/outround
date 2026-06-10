@@ -129,6 +129,13 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, '::', () => {
   console.log(`Outround backend running on port ${PORT} (binding ::)`);
 
+  // Apply the database schema on boot (idempotent — safe to run every start).
+  try {
+    require('./db/client').applySchema();
+  } catch (err) {
+    console.error('[server] schema apply failed to start:', err.message);
+  }
+
   // Start the calendar poller if Google credentials or Supabase multi-tenant is configured
   const pollerReady = process.env.GOOGLE_REFRESH_TOKEN || process.env.SUPABASE_URL;
   if (pollerReady) {

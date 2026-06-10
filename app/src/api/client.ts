@@ -11,7 +11,21 @@ class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+// Attempt a silent token refresh. Returns true if the refresh succeeded.
+let _refreshing: Promise<boolean> | null = null;
+async function tryRefresh(): Promise<boolean> {
+  // Coalesce concurrent refresh attempts into one request.
+  if (_refreshing) return _refreshing;
+  _refreshing = fetch('/auth/refresh', { method: 'POST', credentials: 'include' })
+    .then((r) => r.ok)
+    .catch(() => false)
+    .finally(() => {
+      _refreshing = null;
+    });
+  return _refreshing;
+}
+
+async function request<T>(path: string, init: RequestInit = {}, _retry = true): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path, {
@@ -26,6 +40,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const msg = networkErr instanceof Error ? networkErr.message : 'Network error';
     captureError(`Network error — ${path}`, msg);
     throw networkErr;
+  }
+
+  // On 401, try to silently refresh the session once then retry the original request.
+  if (res.status === 401 && _retry && path !== '/auth/refresh' && path !== '/auth/login') {
+    const refreshed = await tryRefresh();
+    if (refreshed) return request<T>(path, init, false);
   }
 
   const text = await res.text();

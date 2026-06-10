@@ -186,7 +186,7 @@ type NavEntry = NavItem | 'divider';
 
 const NAV: NavEntry[] = [
   { to: '/', label: 'Dashboard', Icon: IconMeetings },
-  { to: '/calendar', label: 'Calendar', Icon: IconCalendar },
+  { to: '/meetings', label: 'Meetings', Icon: IconCalendar },
   { to: '/crm', label: 'CRM', Icon: IconCRM },
   { to: '/transcripts', label: 'Transcripts', Icon: IconTranscripts },
   'divider',

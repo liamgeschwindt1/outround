@@ -11,6 +11,7 @@ export interface User {
   integrations: {
     pipedrive: boolean;
     gcal: boolean;
+    slack: boolean;
   };
 }
 
@@ -75,6 +76,7 @@ export interface MeetingsResponse {
 export interface SessionHistoryItem {
   id: string;
   created_at: string;
+  started_at?: string;
   persona_id: string | null;
   mode: string | null;
   score: number | null;

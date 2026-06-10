@@ -53,6 +53,16 @@ function getAppUrl() {
   return process.env.APP_URL || 'http://localhost:3000';
 }
 
+// Set both the access token cookie and the refresh token cookie.
+function setAuthCookies(res, req, accessToken, refreshToken) {
+  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  const opts = { httpOnly: true, secure: isSecure, sameSite: 'lax' };
+  res.cookie('sb_token', accessToken, { ...opts, maxAge: 7 * 24 * 60 * 60 * 1000 });
+  if (refreshToken) {
+    res.cookie('sb_refresh', refreshToken, { ...opts, maxAge: 30 * 24 * 60 * 60 * 1000 });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Email / password sign-in and sign-up
 // These proxy to the Supabase Auth REST API so the frontend never needs
@@ -90,13 +100,7 @@ router.post('/confirm', async (req, res) => {
     return res.status(400).json({ error: 'Invalid token format' });
   }
 
-  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-  res.cookie('sb_token', access_token, {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  setAuthCookies(res, req, access_token, null);
 
   // Ensure the local users row exists immediately so /auth/me works right away.
   // Without this, the first /auth/me after email confirmation returns 401 because
@@ -151,13 +155,7 @@ router.post(
         return res.status(401).json({ error: data.error_description || 'Invalid credentials' });
       }
 
-      const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-      res.cookie('sb_token', data.access_token, {
-        httpOnly: true,
-        secure: isSecure,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      setAuthCookies(res, req, data.access_token, data.refresh_token);
 
       pushEvent('success', 'auth', `Login success — ${email}`, { email });
       res.json({ ok: true });
@@ -197,13 +195,7 @@ router.post(
         return res.json({ ok: true, email_confirmation: true });
       }
 
-      const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-      res.cookie('sb_token', data.access_token, {
-        httpOnly: true,
-        secure: isSecure,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      setAuthCookies(res, req, data.access_token, data.refresh_token);
 
       res.json({ ok: true, user_id: data.user?.id });
     } catch (err) {
@@ -255,14 +247,9 @@ router.get('/google/callback', async (req, res) => {
   }
 
   const token = data.session.access_token;
-  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  const refreshToken = data.session.refresh_token;
 
-  res.cookie('sb_token', token, {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  });
+  setAuthCookies(res, req, token, refreshToken);
 
   // Check onboarding status via DB
   const pool = getPool();
@@ -287,7 +274,35 @@ router.get('/google/callback', async (req, res) => {
 // ---------------------------------------------------------------------------
 router.post('/logout', (req, res) => {
   res.clearCookie('sb_token');
+  res.clearCookie('sb_refresh');
   res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// Token refresh — exchange sb_refresh cookie for a new access token.
+// Called automatically by the frontend when a 401 is received.
+// ---------------------------------------------------------------------------
+router.post('/refresh', async (req, res) => {
+  const refreshToken = req.cookies?.sb_refresh;
+  if (!refreshToken) {
+    return res.status(401).json({ error: 'No refresh token' });
+  }
+  try {
+    const { status, data } = await supabaseAuthRequest('/token?grant_type=refresh_token', {
+      refresh_token: refreshToken,
+    });
+    if (status !== 200 || !data.access_token) {
+      res.clearCookie('sb_token');
+      res.clearCookie('sb_refresh');
+      return res.status(401).json({ error: data.error_description || 'Refresh failed' });
+    }
+    setAuthCookies(res, req, data.access_token, data.refresh_token || refreshToken);
+    pushEvent('success', 'auth', 'Token refreshed silently');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[auth] refresh error:', err.message);
+    res.status(503).json({ error: 'Auth service unavailable' });
+  }
 });
 
 // ---------------------------------------------------------------------------

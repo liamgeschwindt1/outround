@@ -41,9 +41,7 @@ router.get('/transcripts', requireAuth, async (req, res) => {
          m.starts_at
        FROM meeting_bots b
        LEFT JOIN meetings m ON m.id = b.meeting_id
-       WHERE (b.user_id = $1 OR b.org_id IN (
-         SELECT org_id FROM users WHERE id = $1 AND org_id IS NOT NULL
-       ))
+       WHERE b.user_id = $1
        AND b.status IN ('done', 'in_call', 'joining')
        ORDER BY b.created_at DESC
        LIMIT 100`,
@@ -85,9 +83,7 @@ router.get('/transcripts/:botId', requireAuth, async (req, res) => {
       `SELECT b.*, m.title AS meeting_title, m.prospect_name, m.prospect_company, m.starts_at
        FROM meeting_bots b
        LEFT JOIN meetings m ON m.id = b.meeting_id
-       WHERE b.id = $1 AND (b.user_id = $2 OR b.org_id IN (
-         SELECT org_id FROM users WHERE id = $2 AND org_id IS NOT NULL
-       ))`,
+       WHERE b.id = $1 AND b.user_id = $2`,
       [req.params.botId, userId]
     );
     if (!rows.length) return res.status(404).json({ error: 'Not found' });

@@ -230,19 +230,12 @@ function StepSlack({ onSkip, busy }: { onSkip: () => void; busy: boolean }) {
         body="We'll deliver your pre-meeting brief 15 minutes before every call. No dashboard. No searching. It arrives before you need it."
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <Button
-          variant="primary"
-          size="lg"
-          fullWidth
-          onClick={() => {
-            window.location.href = '/auth/slack?return_to=/onboarding';
-          }}
-        >
-          Connect Slack
+        <Button variant="primary" size="lg" fullWidth disabled={busy} onClick={onSkip}>
+          {busy ? 'Finishing…' : 'Enter the round →'}
         </Button>
-        <Button variant="ghost" size="md" fullWidth disabled={busy} onClick={onSkip}>
-          {busy ? 'Finishing…' : 'Skip for now — enter the round →'}
-        </Button>
+        <p style={{ fontSize: 12, color: T.t3, textAlign: 'center', margin: 0 }}>
+          You can connect Slack later from Settings.
+        </p>
       </div>
     </>
   );
