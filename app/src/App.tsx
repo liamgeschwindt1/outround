@@ -1,4 +1,4 @@
-import { Component, type ReactNode } from 'react';
+import { Component, lazy, Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { RequireAuth, RequireOnboarded } from './auth/RequireAuth';
@@ -78,33 +78,48 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { err: Error | nu
 import Welcome from './routes/Welcome';
 import Login from './routes/Login';
 import Onboarding from './routes/Onboarding';
-import Dashboard from './routes/dashboard/Dashboard';
-import Settings from './routes/settings/Settings';
-import MeetingPrep from './routes/MeetingPrep';
-import CalendarPage from './routes/Calendar';
-import CRMPage from './routes/CRM';
-import TranscriptsPage from './routes/Transcripts';
-import IntelligencePage from './routes/Intelligence';
-import TeamPage from './routes/Team';
-import MeetingBotPage from './routes/MeetingBot';
-import LogsPage from './routes/Logs';
+
+// Lazy-load all authenticated routes so the login/welcome bundle stays small
+const Dashboard = lazy(() => import('./routes/dashboard/Dashboard'));
+const Settings = lazy(() => import('./routes/settings/Settings'));
+const MeetingPrep = lazy(() => import('./routes/MeetingPrep'));
+const CalendarPage = lazy(() => import('./routes/Calendar'));
+const CRMPage = lazy(() => import('./routes/CRM'));
+const TranscriptsPage = lazy(() => import('./routes/Transcripts'));
+const IntelligencePage = lazy(() => import('./routes/Intelligence'));
+const TeamPage = lazy(() => import('./routes/Team'));
+const MeetingBotPage = lazy(() => import('./routes/MeetingBot'));
+const LogsPage = lazy(() => import('./routes/Logs'));
+
+function AppLoader() {
+  return (
+    <div
+      style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: T.bg,
+      }}
+    >
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          border: `2px solid ${T.borderMd}`,
+          borderTopColor: T.coral,
+          animation: 'spin 700ms linear infinite',
+        }}
+      />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
 
 function LoginGate() {
   const { user, loading } = useAuth();
-  if (loading)
-    return (
-      <div
-        style={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#09090a',
-        }}
-      >
-        <div className="skel" style={{ width: 120, height: 4, borderRadius: 2 }} />
-      </div>
-    );
+  if (loading) return <AppLoader />;
   if (user) {
     return <Navigate to={user.onboarding_complete ? '/' : '/onboarding'} replace />;
   }
@@ -129,7 +144,8 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <ToastProvider>
-            <Routes>
+            <Suspense fallback={<AppLoader />}>
+              <Routes>
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/login" element={<LoginGate />} />
               <Route
@@ -233,6 +249,7 @@ export default function App() {
 
               <Route path="*" element={<RootRedirect />} />
             </Routes>
+            </Suspense>
           </ToastProvider>
         </AuthProvider>
       </BrowserRouter>

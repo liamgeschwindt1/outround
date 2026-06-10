@@ -20,5 +20,12 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     target: 'es2022',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
   },
 });
