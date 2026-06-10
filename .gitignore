@@ -17,6 +17,11 @@ npm-debug.log*
 dist/
 build/
 
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
 # OS
 .DS_Store
 Thumbs.db

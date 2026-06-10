@@ -61,7 +61,9 @@ export default function Onboarding() {
   // Auto-complete when slack is connected and user is at step 3
   const completedRef = useRef(false);
   const completeRef = useRef(complete);
-  useEffect(() => { completeRef.current = complete; });
+  useEffect(() => {
+    completeRef.current = complete;
+  });
   useEffect(() => {
     if (!completedRef.current && user?.integrations.slack && effectiveStep === 3) {
       completedRef.current = true;

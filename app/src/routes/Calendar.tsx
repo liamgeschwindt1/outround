@@ -13,7 +13,8 @@ const END_HOUR = 22; // 22:00
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_HOUR);
 
 function fmt(h: number) {
-  const label = h === 0 ? '12 AM' : h < 12 ? `${String(h)} AM` : h === 12 ? '12 PM' : `${String(h - 12)} PM`;
+  const label =
+    h === 0 ? '12 AM' : h < 12 ? `${String(h)} AM` : h === 12 ? '12 PM' : `${String(h - 12)} PM`;
   return label;
 }
 

@@ -15,57 +15,54 @@ export function useTypewriter({
   onDone,
   enabled = true,
 }: UseTypewriterOpts) {
-  const [out, setOut] = useState('');
-  const [done, setDone] = useState(false);
+  const [typedOut, setTypedOut] = useState('');
+  const [typedDone, setTypedDone] = useState(false);
   const onDoneRef = useRef(onDone);
 
   useEffect(() => {
     onDoneRef.current = onDone;
   });
 
+  const reduced =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const shouldAnimate = enabled && !reduced;
+
   useEffect(() => {
-    if (!enabled) {
-       
-      setOut(text);
-       
-      setDone(true);
-      onDoneRef.current?.();
+    if (!shouldAnimate) {
       return;
     }
 
-    const reduced =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
-      setOut(text);
-      setDone(true);
-      onDoneRef.current?.();
-      return;
-    }
-
-    setOut('');
-    setDone(false);
     let i = 0;
-    const timer: number | undefined;
-    let interval: number | undefined;
+    let intervalId: number | undefined;
 
-    timer = window.setTimeout(() => {
-      interval = window.setInterval(() => {
+    // Defer state reset so setState isn't called synchronously in the effect body
+    const resetTimerId = window.setTimeout(() => {
+      setTypedOut('');
+      setTypedDone(false);
+    }, 0);
+
+    const animTimerId = window.setTimeout(() => {
+      intervalId = window.setInterval(() => {
         i += 1;
-        setOut(text.slice(0, i));
+        setTypedOut(text.slice(0, i));
         if (i >= text.length) {
-          if (interval) window.clearInterval(interval);
-          setDone(true);
+          window.clearInterval(intervalId);
+          setTypedDone(true);
           onDoneRef.current?.();
         }
       }, speedMs);
     }, startDelayMs);
 
     return () => {
-      if (timer) window.clearTimeout(timer);
-      if (interval) window.clearInterval(interval);
+      window.clearTimeout(resetTimerId);
+      window.clearTimeout(animTimerId);
+      if (intervalId !== undefined) window.clearInterval(intervalId);
     };
-  }, [text, speedMs, startDelayMs, enabled]);
+  }, [text, speedMs, startDelayMs, shouldAnimate]);
+
+  const out = shouldAnimate ? typedOut : text;
+  const done = shouldAnimate ? typedDone : true;
 
   return { out, done };
 }

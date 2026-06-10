@@ -193,7 +193,9 @@ function PersonaCard({ persona, onSelect }: { persona: Persona; onSelect: () => 
         cursor: persona.locked ? 'default' : 'pointer',
         position: 'relative',
       }}
-      onClick={() => { if (!persona.locked) onSelect(); }}
+      onClick={() => {
+        if (!persona.locked) onSelect();
+      }}
       onMouseEnter={(e) => {
         if (!persona.locked) {
           e.currentTarget.style.borderColor = T.borderStr;

@@ -127,7 +127,9 @@ function Sparkline({ data }: { data: number[] }) {
   const max = Math.max(...data);
   const range = max - min || 1;
   const w = 100 / (data.length - 1);
-  const points = data.map((v, i) => `${String(i * w)},${String(100 - ((v - min) / range) * 80 - 10)}`).join(' ');
+  const points = data
+    .map((v, i) => `${String(i * w)},${String(100 - ((v - min) / range) * 80 - 10)}`)
+    .join(' ');
   return (
     <svg viewBox={`0 0 100 100`} preserveAspectRatio="none" style={{ width: '100%', height: 80 }}>
       <polyline

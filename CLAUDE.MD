@@ -110,6 +110,77 @@ Structurally unreplicable by Hyperbound/Second Nature without burning their ente
 - Pre-seed €300–500k when: viral demo works organically + 5 paying teams converted without sales calls
 - Trigger: first €50k MRR with retention data
 
+## Development Workflow
+
+### Formatter + Linter (always run before marking work complete)
+
+Prettier and ESLint are configured at the monorepo root. Every change that touches source files **must** pass both before being considered done.
+
+| Step              | Command                | Notes                                          |
+| ----------------- | ---------------------- | ---------------------------------------------- |
+| Format            | `npm run format`       | Prettier — auto-fixes whitespace, quotes, etc. |
+| Lint              | `npm run lint`         | ESLint — reports violations                    |
+| Lint + auto-fix   | `npm run lint:fix`     | ESLint — applies auto-fixable rules            |
+| Check format only | `npm run check-format` | CI-friendly, no writes                         |
+
+**Config files:**
+
+- Prettier: [`.prettierrc`](.prettierrc) — single quotes, semicolons, 100 char width, trailing commas (ES5), LF line endings
+- ESLint: [`eslint.config.mjs`](eslint.config.mjs) — per-directory configs:
+  - `app/src/**/*.{ts,tsx}` — strict + stylistic TypeScript with React/React Hooks/React Refresh plugins
+  - `**/*.js` / `**/*.mjs` (server, backend, demo, internal) — CommonJS + Node globals
+  - `app/public/js/**` — browser scripts loaded via HTML `<script>` tags (no-unused-vars off because functions are called from HTML)
+  - `website/src/**/*.jsx` — JSX without TypeScript
+  - Prettier config is merged last to disable conflicting ESLint rules
+
+**Typical post-change checklist:**
+
+```bash
+npm run format        # auto-fix formatting
+npm run lint:fix      # auto-fix lint issues
+npm run lint          # confirm clean
+```
+
+### TypeScript type-checking (frontend)
+
+From the `app/` workspace:
+
+```bash
+cd app && npm run typecheck   # tsc --noEmit
+```
+
+This checks all of `app/src/**/*.{ts,tsx}` and `app/vite.config.ts`. The `tsconfig.json` uses `projectService: true` (referenced by ESLint as well).
+
+### E2E tests (Playwright)
+
+The E2E suite lives in [`app/e2e/`](app/e2e/). It uses Playwright with a single Chromium project and runs against the Vite dev server (`localhost:3000`).
+
+**Running tests:**
+
+| Command                  | Where  | What it does                             |
+| ------------------------ | ------ | ---------------------------------------- |
+| `npm run test:e2e`       | `app/` | Headless run (CI / terminal)             |
+| `npm run test:e2e:ui`    | `app/` | Interactive UI mode                      |
+| `npm run test:e2e:debug` | `app/` | Debug mode, headed browser, step-through |
+
+**Test architecture:**
+
+- **Custom fixture** — [`helpers/index.ts`](app/e2e/helpers/index.ts) exports a `test` fixture with a `mockAuth(page, state)` helper. Import from `'../helpers'` instead of `@playwright/test`.
+- **Auth mocks** — [`mocks/auth.ts`](app/e2e/mocks/auth.ts) intercepts `/api/auth/*` calls (login, signup, session). States: `'unauthenticated'`, `'new-user'` (authenticated but not onboarded), `'onboarded'`.
+- **API mocks** — [`mocks/api.ts`](app/e2e/mocks/api.ts) sets up default mock responses for backend API routes (dashboard, etc).
+- **Convenience navigators** — `goTo(page, path)`, `goToLoggedOut(page, path)`, `goToNewUser(page, path)` set up mocks + navigate in one call.
+- **Tests** — located in `app/e2e/tests/`. Current coverage: login, navigation, routing, onboarding.
+
+**When to run E2E tests:**
+
+- After any change to `app/src/` components, routes, or auth logic
+- After any change to `app/server.js` (Express server, proxies, middleware)
+- After any change that touches routing or navigation
+
+**Key config:** [`playwright.config.ts`](app/e2e/playwright.config.ts) — 30s test timeout, 10s expect timeout, `fullyParallel: true`, server reuse on (`!CI`), 1 retry in CI, HTML reporter.
+
+**Note:** There are no backend unit tests currently. Backend changes must be verified manually or by running the E2E suite (which exercises the full stack through the browser).
+
 ## Files in This Project
 
 - `Outround_overview_` — business overview narrative

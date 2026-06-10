@@ -202,7 +202,8 @@ export default function IntelligencePage() {
                   style={{
                     maxWidth: '80%',
                     padding: '10px 14px',
-                    borderRadius: m.role === 'user'
+                    borderRadius:
+                      m.role === 'user'
                         ? `${String(R.xl)}px ${String(R.xl)}px 4px ${String(R.xl)}px`
                         : `${String(R.xl)}px ${String(R.xl)}px ${String(R.xl)}px 4px`,
                     background: m.role === 'user' ? 'rgba(240,90,50,0.12)' : T.bgCard,
@@ -254,7 +255,9 @@ export default function IntelligencePage() {
           onChange={(e) => {
             setInput(e.target.value);
           }}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) void send(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) void send();
+          }}
           placeholder="Ask anything about your deals, contacts, or calls…"
           style={{
             flex: 1,
@@ -269,7 +272,9 @@ export default function IntelligencePage() {
           }}
         />
         <button
-          onClick={() => { void send(); }}
+          onClick={() => {
+            void send();
+          }}
           disabled={!input.trim() || thinking}
           style={{
             height: 44,

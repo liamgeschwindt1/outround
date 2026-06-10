@@ -359,7 +359,10 @@ function Sidebar() {
       {NAV.map((item, i) => {
         if (item === 'divider') {
           return (
-            <div key={`div-${String(i)}`} style={{ height: 1, background: T.border, margin: '4px 0' }} />
+            <div
+              key={`div-${String(i)}`}
+              style={{ height: 1, background: T.border, margin: '4px 0' }}
+            />
           );
         }
         const { to, label, Icon } = item;

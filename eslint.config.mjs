@@ -9,12 +9,7 @@ import globals from 'globals';
 export default tseslint.config(
   // === Global ignores ===
   {
-    ignores: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/build/**',
-      'eslint.config.mjs',
-    ],
+    ignores: ['**/node_modules/**', '**/dist/**', '**/build/**', 'eslint.config.mjs'],
   },
 
   // === Public JS (loaded via <script> tags — ESLint can't trace HTML usage) ===

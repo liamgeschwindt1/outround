@@ -202,7 +202,7 @@ function LogRow({
     <div
       onClick={hasMeta ? onToggle : undefined}
       style={{
-        background: expanded ? T.bgElevate : LEVEL_BG[entry.level] ?? 'transparent',
+        background: expanded ? T.bgElevate : (LEVEL_BG[entry.level] ?? 'transparent'),
         borderBottom: `1px solid ${T.border}`,
         padding: '5px 12px',
         cursor: hasMeta ? 'pointer' : 'default',
@@ -295,16 +295,18 @@ function LogRow({
             lineHeight: 1.8,
           }}
         >
-          {(entry.meta ? Object.entries(entry.meta)
-            .filter(([, v]) => v != null)
-            .map(([k, v]) => (
-              <div key={k} style={{ display: 'flex', gap: 8 }}>
-                <span style={{ color: T.t4, minWidth: 120 }}>{k}</span>
-                <span style={{ color: T.t1, wordBreak: 'break-all' }}>
-                  {typeof v === 'object' && v != null ? JSON.stringify(v) : String(v)}
-                </span>
-              </div>
-            )) : null)}
+          {entry.meta
+            ? Object.entries(entry.meta)
+                .filter(([, v]) => v != null)
+                .map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ color: T.t4, minWidth: 120 }}>{k}</span>
+                    <span style={{ color: T.t1, wordBreak: 'break-all' }}>
+                      {typeof v === 'object' && v != null ? JSON.stringify(v) : String(v)}
+                    </span>
+                  </div>
+                ))
+            : null}
         </div>
       )}
     </div>
@@ -343,7 +345,9 @@ export default function LogBook() {
   }, [limit]);
 
   const fetchLogsRef = useRef(fetchLogs);
-  useEffect(() => { fetchLogsRef.current = fetchLogs; });
+  useEffect(() => {
+    fetchLogsRef.current = fetchLogs;
+  });
 
   useEffect(() => {
     void fetchLogsRef.current();
@@ -351,7 +355,9 @@ export default function LogBook() {
 
   useEffect(() => {
     if (!autoRefresh) return;
-    const id = setInterval(() => { void fetchLogs(); }, 4000);
+    const id = setInterval(() => {
+      void fetchLogs();
+    }, 4000);
     return () => {
       clearInterval(id);
     };
@@ -360,7 +366,11 @@ export default function LogBook() {
   const toggleRow = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
@@ -480,7 +490,13 @@ export default function LogBook() {
           >
             {autoRefresh ? '● live' : '○ live'}
           </button>
-          <Button variant="ghost" size="sm" onClick={() => { void fetchLogs(); }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              void fetchLogs();
+            }}
+          >
             Refresh
           </Button>
         </div>
@@ -512,7 +528,7 @@ export default function LogBook() {
                 background: levelFilter === l ? T.bgElevate : 'transparent',
                 border: `1px solid ${levelFilter === l ? T.borderStr : T.border}`,
                 borderRadius: R.pill,
-                color: l === 'all' ? T.t2 : LEVEL_DOT[l] ?? T.t2,
+                color: l === 'all' ? T.t2 : (LEVEL_DOT[l] ?? T.t2),
                 fontSize: 11,
                 fontFamily: T.mono,
                 cursor: 'pointer',

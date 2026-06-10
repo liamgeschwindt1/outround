@@ -390,8 +390,8 @@ export default function Home() {
               Beat your last score against Hendrik
             </div>
             <div style={{ fontSize: 12, color: T.t3 }}>
-              Current best:{' '}
-              <span style={{ color: T.t1, fontWeight: 600 }}>{lastRound.score}</span> / 100
+              Current best: <span style={{ color: T.t1, fontWeight: 600 }}>{lastRound.score}</span>{' '}
+              / 100
             </div>
           </div>
           <GetReadyBtn

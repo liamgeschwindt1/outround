@@ -90,7 +90,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Keep a mutable ref to refresh so the init effect can call it without listing refresh as a dep
   const refreshRef = useRef(refresh);
-  useEffect(() => { refreshRef.current = refresh; });
+  useEffect(() => {
+    refreshRef.current = refresh;
+  });
 
   useEffect(() => {
     const hash = window.location.hash;

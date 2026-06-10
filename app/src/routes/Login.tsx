@@ -92,7 +92,9 @@ export default function Login() {
       }}
     >
       <form
-        onSubmit={(e) => { void submit(e); }}
+        onSubmit={(e) => {
+          void submit(e);
+        }}
         style={{
           width: '100%',
           maxWidth: 380,

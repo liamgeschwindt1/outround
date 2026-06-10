@@ -10,7 +10,10 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "start": "node server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
+    "test:e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "test:e2e:debug": "playwright test --config e2e/playwright.config.ts --debug --headed"
   },
   "dependencies": {
     "@11labs/client": "^0.1.0",
@@ -22,6 +25,7 @@
     "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

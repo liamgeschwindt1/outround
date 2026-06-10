@@ -209,7 +209,9 @@ export function ErrorLog() {
         }}
       >
         <span style={{ fontSize: 10 }}>✕</span>
-        {unseen > 0 ? `${String(unseen)} error${unseen > 1 ? 's' : ''}` : `${String(errors.length)} errors (seen)`}
+        {unseen > 0
+          ? `${String(unseen)} error${unseen > 1 ? 's' : ''}`
+          : `${String(errors.length)} errors (seen)`}
       </button>
     </div>
   );
