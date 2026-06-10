@@ -198,18 +198,7 @@ function NextMeetingCard({ meeting }: { meeting: UpcomingMeeting }) {
               nav(`/meeting/${meeting.id}`);
             }}
           >
-            {isPast ? 'View details' : 'Get ready →'}
-          </Button>
-        )}
-        {!isPast && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              nav('/round');
-            }}
-          >
-            Go a round
+            View details
           </Button>
         )}
       </div>
@@ -333,15 +322,6 @@ export default function Dashboard() {
             Ready for today?
           </h1>
         </div>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => {
-            nav('/round');
-          }}
-        >
-          Go a round →
-        </Button>
       </div>
 
       {/* Stats row */}

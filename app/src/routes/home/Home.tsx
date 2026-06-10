@@ -23,28 +23,6 @@ function Kicker({ children }: { children: string }) {
   );
 }
 
-function GetReadyBtn({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        marginTop: 10,
-        padding: '7px 14px',
-        background: T.grad,
-        border: 'none',
-        borderRadius: R.md,
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: 600,
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      Get ready →
-    </button>
-  );
-}
-
 function MiniBar({ value, color }: { value: number; color?: string }) {
   return (
     <div style={{ height: 3, width: '100%', background: T.bgHover, borderRadius: 2 }}>
@@ -166,11 +144,6 @@ export default function Home() {
               )}
             </div>
           </div>
-          <GetReadyBtn
-            onClick={() => {
-              nav('/round');
-            }}
-          />
         </Card>
 
         {/* READINESS SCORE */}
@@ -243,11 +216,6 @@ export default function Home() {
                     {fmtRelative(m.starts_at)}
                   </div>
                 </div>
-                <GetReadyBtn
-                  onClick={() => {
-                    nav('/round');
-                  }}
-                />
               </div>
             ))}
           </div>
@@ -396,11 +364,6 @@ export default function Home() {
               / 100
             </div>
           </div>
-          <GetReadyBtn
-            onClick={() => {
-              nav('/round');
-            }}
-          />
         </Card>
       </div>
     </div>
