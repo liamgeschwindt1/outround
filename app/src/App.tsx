@@ -119,13 +119,12 @@ function AppLoader() {
 
 function LoginGate() {
   const { user, loading } = useAuth();
-  // If auth has resolved and we have a user, redirect immediately.
-  // Otherwise render the login form right away — don't make the user stare at a
-  // spinner. If `loading` is still true, we're doing a background revalidation;
-  // the redirect will happen once it resolves.
-  if (!loading && user) {
-    return <Navigate to={user.onboarding_complete ? '/' : '/onboarding'} replace />;
-  }
+  // Wait for auth to resolve before rendering anything — prevents a race where
+  // the background session check (401) fires after the user has just logged in
+  // and wipes the newly-set user state. With session cache, logged-in users
+  // have loading=false immediately so they never see this spinner.
+  if (loading) return <AppLoader />;
+  if (user) return <Navigate to={user.onboarding_complete ? '/' : '/onboarding'} replace />;
   return <Login />;
 }
 

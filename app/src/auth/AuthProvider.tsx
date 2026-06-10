@@ -59,18 +59,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
 
+  // refreshing ref prevents concurrent /auth/me calls from racing each other.
+  // Only the most-recently-started refresh wins; stale ones are discarded.
+  const refreshSeq = useRef(0);
+
   const refresh = useCallback(async () => {
+    const seq = ++refreshSeq.current;
     setError(null);
-    // Only show loading spinner if we have no cached user to display
-    setLoading((prev) => {
-      if (prev) return true; // already loading
-      return false; // silent background revalidation
-    });
+    setLoading(true);
     try {
       const u = await api.get<User>('/auth/me');
+      if (seq !== refreshSeq.current) return; // stale — a newer refresh is running
       setUser(u);
       writeCache(u);
     } catch (e: unknown) {
+      if (seq !== refreshSeq.current) return;
       if (e instanceof ApiError && e.status === 401) {
         setUser(null);
         writeCache(null);
@@ -81,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         writeCache(null);
       }
     } finally {
-      setLoading(false);
+      if (seq === refreshSeq.current) setLoading(false);
     }
   }, []);
 
