@@ -42,17 +42,17 @@ export default function Leaderboard() {
   const youRow = rows.find((r) => r.isYou);
 
   // Map API data if available
-  const displayRows =
-    (data?.entries.length ?? 0) > 0
-      ? data.entries.map((e, i) => ({
-          rank: i + 1,
-          name: e.name,
-          role: e.role ?? '',
-          elo: e.score,
-          rounds: 0,
-          isYou: e.is_you ?? false,
-        }))
-      : rows;
+  const apiRows = data && data.entries.length > 0 ? data.entries : null;
+  const displayRows = apiRows
+    ? apiRows.map((e, i) => ({
+        rank: i + 1,
+        name: e.name,
+        role: e.role ?? '',
+        elo: e.score,
+        rounds: 0,
+        isYou: e.is_you ?? false,
+      }))
+    : rows;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>

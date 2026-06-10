@@ -45,6 +45,7 @@ function OrbCanvas({ size }: { size: number }) {
     let startTime: number | null = null;
 
     function draw(ts: number) {
+      if (!ctx) return;
       startTime ??= ts;
       const elapsed = ts - startTime;
       ctx.clearRect(0, 0, size, size);

@@ -367,7 +367,8 @@ function IntegrationsTab() {
   const { data: user, refetch } = useApi<User>('/auth/me');
   const pipedrive = user?.integrations.pipedrive ?? false;
   const gcal = user?.integrations.gcal ?? false;
-  const slack = (user.integrations as Partial<Record<string, boolean>>).slack ?? false;
+  const slack =
+    (user?.integrations as Partial<Record<string, boolean>> | undefined)?.slack ?? false;
 
   const disconnectPipedrive = async () => {
     await fetch('/auth/pipedrive', { method: 'DELETE', credentials: 'include' });
