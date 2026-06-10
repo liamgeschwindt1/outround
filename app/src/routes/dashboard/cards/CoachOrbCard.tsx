@@ -9,7 +9,7 @@ export function CoachOrbCard() {
 
   const activate = () => {
     setPulsing(true);
-    toast.push('Coach — coming soon. They’ll meet you here after every round.', 'info');
+    toast.push('Intelligence — pre-meeting brief and CRM sync coming soon.', 'info');
     setTimeout(() => {
       setPulsing(false);
     }, 900);
@@ -72,9 +72,9 @@ export function CoachOrbCard() {
             marginBottom: 4,
           }}
         >
-          Coach
+          Intelligence
         </div>
-        <div style={{ fontSize: 12, color: T.t2 }}>Tap to summon. Coming soon.</div>
+        <div style={{ fontSize: 12, color: T.t2 }}>Pre-meeting brief. Coming soon.</div>
       </div>
     </Card>
   );

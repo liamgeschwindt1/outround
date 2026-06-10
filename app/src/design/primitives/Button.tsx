@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { T, R } from '../tokens';
 
@@ -25,6 +26,7 @@ export function Button({
   style,
   ...rest
 }: ButtonProps) {
+  const [hovered, setHovered] = useState(false);
   const s = sizes[size];
   const base = {
     height: s.h,
@@ -44,16 +46,26 @@ export function Button({
     cursor: 'pointer',
   } as const;
 
+  const hoverOverrides: Record<Exclude<Variant, 'outline-gradient'>, React.CSSProperties> = {
+    primary:   { filter: 'brightness(1.08)' },
+    secondary: { background: T.bgHover },
+    ghost:     { background: T.bgSub, color: T.t1 },
+    danger:    { background: 'rgba(220,38,38,0.18)' },
+  };
+
   if (variant === 'outline-gradient') {
     return (
       <button
         {...rest}
+        onMouseEnter={e => { setHovered(true); rest.onMouseEnter?.(e); }}
+        onMouseLeave={e => { setHovered(false); rest.onMouseLeave?.(e); }}
         style={{
           ...base,
           border: 'none',
           padding: undefined,
           background: `linear-gradient(135deg, ${T.coral}, ${T.sky})`,
           borderRadius: R.md,
+          opacity: hovered ? 0.88 : 1,
           ...style,
         }}
       >
@@ -92,7 +104,12 @@ export function Button({
   };
 
   return (
-    <button {...rest} style={{ ...base, ...variants[variant], ...style }}>
+    <button
+      {...rest}
+      onMouseEnter={e => { setHovered(true); rest.onMouseEnter?.(e); }}
+      onMouseLeave={e => { setHovered(false); rest.onMouseLeave?.(e); }}
+      style={{ ...base, ...variants[variant], ...(hovered ? hoverOverrides[variant] : {}), ...style }}
+    >
       {children}
     </button>
   );

@@ -254,7 +254,7 @@ function RecentRounds({ history }: { history: SessionHistoryItem[] }) {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, color: T.t1, fontWeight: 500 }}>
-              {s.persona_id ? s.persona_id.replace(/_/g, ' ') : 'Round'}
+              {s.persona_id ? s.persona_id.replace(/_/g, ' ') : 'Session'}
             </div>
             <div style={{ fontSize: 11, color: T.t3, fontFamily: T.mono }}>
               {new Date(s.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
@@ -265,7 +265,7 @@ function RecentRounds({ history }: { history: SessionHistoryItem[] }) {
         </div>
       ))}
       {recent.length === 0 && (
-        <div style={{ fontSize: 13, color: T.t3, padding: '12px 0' }}>No rounds yet.</div>
+        <div style={{ fontSize: 13, color: T.t3, padding: '12px 0' }}>No meetings yet.</div>
       )}
     </div>
   );
@@ -333,7 +333,7 @@ export default function Dashboard() {
           marginBottom: 24,
         }}
       >
-        <StatCard label="Rounds" value={s?.total_sessions ?? '—'} sub="all time" />
+        <StatCard label="Meetings" value={s?.total_sessions ?? '—'} sub="all time" />
         <StatCard
           label="Avg score"
           value={s?.avg_score != null ? String(s.avg_score) : '—'}
@@ -368,16 +368,16 @@ export default function Dashboard() {
                 textTransform: 'uppercase',
               }}
             >
-              Recent rounds
+              Recent sessions
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                nav('/round');
+                nav('/bot');
               }}
             >
-              New round
+              Log meeting
             </Button>
           </div>
           {history.loading ? <SkeletonLines count={4} /> : <RecentRounds history={recentHistory} />}

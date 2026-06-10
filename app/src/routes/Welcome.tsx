@@ -7,16 +7,16 @@ import { useTypewriter } from '../hooks/useTypewriter';
 const WELCOMED_KEY = 'outround_welcomed';
 
 const lines = [
-  { text: 'They train.', delay: 200, speed: 60 },
-  { text: 'You ready.', delay: 400, speed: 60 },
+  { text: 'Context lost.', delay: 200, speed: 60 },
+  { text: 'Memory begins.', delay: 400, speed: 60 },
 ];
 
-const tagline = 'The round before it counts.';
+const tagline = 'Be fully present. Outround remembers the rest.';
 
 const beats = [
-  { kicker: '01', title: 'Brief in 30s', body: 'Persona, stakes, posture. Then it disappears.' },
-  { kicker: '02', title: 'One round', body: 'Live call. They push back. You hold the line.' },
-  { kicker: '03', title: 'Go again', body: 'Score, beats, the one thing to change. Reload.' },
+  { kicker: '01', title: 'Brief before the call', body: 'Account history, stakeholder context, prior objections. Delivered before you speak.' },
+  { kicker: '02', title: 'CRM, done.', body: 'Fields populated. Follow-up drafted. Every entry linked to the transcript line that generated it.' },
+  { kicker: '03', title: 'Nothing lost.', body: 'Every signal stored. Every relationship searchable. The record that never resets.' },
 ];
 
 export default function Welcome() {
@@ -211,7 +211,7 @@ export default function Welcome() {
           }}
         >
           <Button variant="primary" size="lg" onClick={proceed}>
-            Enter the round →
+            Get started →
           </Button>
         </div>
       </div>

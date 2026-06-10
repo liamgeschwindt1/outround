@@ -31,7 +31,7 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
     <Card span={6}>
       <CardHead
         kicker="RECENT"
-        title="Your rounds"
+        title="Recent meetings"
         right={
           <Button
             variant="ghost"
@@ -49,17 +49,17 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
       {!loading && error && <EmptyState title="Couldn’t load" body={error} />}
       {!loading && !error && data?.length === 0 && (
         <EmptyState
-          title="No rounds yet"
-          body="One round and the history starts."
+          title="No meetings yet"
+          body="Record your first meeting to start building memory."
           cta={
             <Button
               variant="primary"
               size="md"
               onClick={() => {
-                nav('/practice');
+                nav('/bot');
               }}
             >
-              Start a round
+              Add a meeting
             </Button>
           }
         />
@@ -96,7 +96,7 @@ export function RecentSessionsCard({ data, loading, error }: Props) {
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, color: T.t1, fontWeight: 500 }}>
-                    {s.persona_id ? capitalize(s.persona_id) : 'Practice round'}
+                    {s.persona_id ? capitalize(s.persona_id) : 'Meeting'}
                   </div>
                   <div style={{ fontSize: 11, color: T.t3, marginTop: 2 }}>
                     {fmtDate(s.created_at)} · {s.mode ?? 'cold_call'}
