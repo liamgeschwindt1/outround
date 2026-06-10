@@ -49,9 +49,6 @@ async function rcall(method, path, body, apiKey) {
  * @param {string} [apiKey] — Recall API key; falls back to RECALL_API_KEY env var
  */
 async function createBot({ meetingUrl, joinAt, botName = 'Outround Notetaker' }, apiKey) {
-  // Build the payload. Gladia is connected via the Recall dashboard integration,
-  // so Recall handles transcription automatically — no extra fields needed for EU region.
-  // We just need the webhook to fire when the bot is done so we can fetch the transcript.
   const payload = {
     meeting_url: meetingUrl,
     bot_name: botName,
@@ -61,8 +58,81 @@ async function createBot({ meetingUrl, joinAt, botName = 'Outround Notetaker' },
   return rcall('POST', '/bot/', payload, apiKey);
 }
 
+/**
+ * Start a post-meeting transcription job for a completed recording.
+ *
+ * @param {string} recordingId
+ * @param {object} [opts]
+ * @param {string} [opts.language] - defaults to auto detection
+ * @returns {Promise<object>}
+ */
+async function createTranscript(recordingId, opts = {}) {
+  const apiKey = opts.apiKey || process.env.RECALL_API_KEY;
+  if (!apiKey) throw new Error('RECALL_API_KEY not provided');
+
+  const body = {
+    provider: {
+      recallai_async: {
+        language_code: opts.language || 'auto',
+      },
+    },
+    diarization: {
+      use_separate_streams_when_available: opts.useSeparateStreams !== false,
+    },
+  };
+
+  const resp = await fetch(`${baseUrl()}/recording/${recordingId}/create_transcript/`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Token ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!resp.ok) {
+    const txt = await resp.text();
+    throw new Error(`Recall create transcript error: ${resp.status}: ${txt}`);
+  }
+
+  return resp.json();
+}
+
 async function getBot(botId, apiKey) {
   return rcall('GET', `/bot/${botId}/`, undefined, apiKey);
+}
+
+async function getTranscriptArtifact(transcriptId, apiKey) {
+  return rcall('GET', `/transcript/${transcriptId}/`, undefined, apiKey);
+}
+
+function normaliseTranscriptDownload(transcriptRows) {
+  if (!Array.isArray(transcriptRows)) return [];
+
+  return transcriptRows
+    .map((entry) => {
+      const words = Array.isArray(entry?.words) ? entry.words : [];
+      const text = words
+        .map((word) => word?.text || '')
+        .filter(Boolean)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!text) return null;
+
+      const start =
+        words.find((word) => word?.start_timestamp?.relative != null)?.start_timestamp?.relative ??
+        0;
+      const end =
+        [...words].reverse().find((word) => word?.end_timestamp?.relative != null)?.end_timestamp
+          ?.relative ?? start;
+      const participant = entry?.participant || {};
+      const speaker =
+        participant.name || (participant.id != null ? `Speaker ${participant.id}` : 'unknown');
+
+      return { speaker, text, start, end };
+    })
+    .filter(Boolean);
 }
 
 async function deleteBot(botId, apiKey) {
@@ -87,4 +157,14 @@ function verifyWebhook(rawBody, signatureHeader) {
   }
 }
 
-module.exports = { isConfigured, createBot, getBot, deleteBot, getTranscript, verifyWebhook };
+module.exports = {
+  isConfigured,
+  createBot,
+  createTranscript,
+  getBot,
+  deleteBot,
+  getTranscript,
+  getTranscriptArtifact,
+  normaliseTranscriptDownload,
+  verifyWebhook,
+};

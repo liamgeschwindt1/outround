@@ -193,14 +193,14 @@ async function ensureOrgForUser(userId, userEmail) {
 
 /**
  * Return all credentials needed to run the post-call pipeline for an org.
- * Shared service keys (Gladia, Anthropic, Recall) still come from env vars
+ * Shared service keys (Anthropic, Recall) still come from env vars
  * per spec — only per-org tokens are fetched from Supabase.
  *
  * @returns {Promise<{
  *   googleAccessToken,
  *   pipedriveApiKey, pipedriveDomain,
  *   slackBotToken, slackUserId,
- *   gladiaApiKey, anthropicApiKey, recallApiKey
+ *   anthropicApiKey, recallApiKey
  * }>}
  */
 async function getOrgCredentials(orgId) {
@@ -217,7 +217,6 @@ async function getOrgCredentials(orgId) {
     slackBotToken: slack?.accessToken || null,
     slackUserId: slack?.metadata?.slack_user_id || null,
     // Shared service credentials — remain in Railway env vars
-    gladiaApiKey: process.env.GLADIA_API_KEY || null,
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || null,
     recallApiKey: process.env.RECALL_API_KEY || null,
   };

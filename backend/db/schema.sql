@@ -172,3 +172,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organisations(
 ALTER TABLE meeting_bots ADD COLUMN IF NOT EXISTS org_id UUID REFERENCES organisations(id);
 -- make user_id nullable so org-dispatched bots don't require a users row
 ALTER TABLE meeting_bots ALTER COLUMN user_id DROP NOT NULL;
+
+-- Bot auto-join preferences
+ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS bot_auto_join BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS bot_join_type TEXT NOT NULL DEFAULT 'all';

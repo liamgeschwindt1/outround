@@ -17,7 +17,7 @@
  *
  *   POST /api/intel/test-pipeline      -- Step 1: prove Pipedrive + Slack
  *   POST /api/intel/extract            -- Step 2: Claude extraction only
- *   POST /api/intel/transcribe         -- Step 3: Gladia transcription
+ *   POST /api/intel/transcribe         -- Step 3: Recall async transcription
  *   POST /api/intel/poll-calendar      -- Step 5: manual calendar poll
  *   GET  /api/intel/processed-events   -- show dedup state
  */
@@ -25,10 +25,8 @@
 const express = require('express');
 const router = express.Router();
 const meetingIntel = require('../services/meeting-intel');
-const gladia = require('../services/gladia');
+const recall = require('../services/recall');
 const calendarPoller = require('../services/calendar-poller');
-const { requireAuth } = require('../middleware/auth');
-
 // ── Internal auth guard ─────────────────────────────────────────────────────
 // Two layers:
 //   1. requireAuth (primary) — standard user authentication
@@ -157,18 +155,17 @@ router.post('/extract', guard, async (req, res) => {
 
 /**
  * POST /api/intel/transcribe
- * Step 3: Gladia transcription — submit audio URL and get back a transcript.
+ * Step 3: Recall async transcription — submit a recording ID and start a transcript job.
  */
 router.post('/transcribe', guard, async (req, res) => {
-  const { audioUrl, language, numSpeakers } = req.body;
-  if (!audioUrl) return res.status(400).json({ error: '`audioUrl` is required' });
+  const { recordingId, language } = req.body;
+  if (!recordingId) return res.status(400).json({ error: '`recordingId` is required' });
 
-  const creds = await resolveCreds(req);
-  const apiKey = creds.gladiaApiKey || process.env.GLADIA_API_KEY;
-  if (!apiKey) return res.status(503).json({ error: 'GLADIA_API_KEY not set' });
+  const apiKey = process.env.RECALL_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'RECALL_API_KEY not set' });
 
   try {
-    const result = await gladia.transcribe(audioUrl, { language, numSpeakers, apiKey });
+    const result = await recall.createTranscript(recordingId, { language, apiKey });
     res.json({ ok: true, ...result });
   } catch (err) {
     console.error('[intel/transcribe]', err);

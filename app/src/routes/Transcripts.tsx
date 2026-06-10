@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { T, R } from '../design/tokens';
 import { useApi } from '../api/hooks';
+import { api } from '../api/client';
 
 interface TranscriptEntry {
   id: string;
@@ -34,7 +35,15 @@ function fmtDuration(s: number | null) {
   return `${String(m)}:${sec.toString().padStart(2, '0')}`;
 }
 
-function TranscriptCard({ t, onOpen }: { t: TranscriptEntry; onOpen: () => void }) {
+function TranscriptCard({
+  t,
+  onOpen,
+  onDelete,
+}: {
+  t: TranscriptEntry;
+  onOpen: () => void;
+  onDelete: () => void;
+}) {
   const statusColor: Record<string, string> = {
     done: T.green,
     in_call: T.sky,
@@ -71,20 +80,41 @@ function TranscriptCard({ t, onOpen }: { t: TranscriptEntry; onOpen: () => void 
             </div>
           )}
         </div>
-        <span
-          style={{
-            fontSize: 10,
-            fontFamily: "'JetBrains Mono', monospace",
-            color: statusColor[t.status] || T.t3,
-            background: `${statusColor[t.status] || T.t3}18`,
-            padding: '3px 8px',
-            borderRadius: R.sm,
-            border: `1px solid ${statusColor[t.status] || T.t3}33`,
-            flexShrink: 0,
-          }}
-        >
-          {t.status}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <span
+            style={{
+              fontSize: 10,
+              fontFamily: "'JetBrains Mono', monospace",
+              color: statusColor[t.status] || T.t3,
+              background: `${statusColor[t.status] || T.t3}18`,
+              padding: '3px 8px',
+              borderRadius: R.sm,
+              border: `1px solid ${statusColor[t.status] || T.t3}33`,
+            }}
+          >
+            {t.status}
+          </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            title="Delete transcript"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: T.t4,
+              fontSize: 14,
+              padding: '2px 4px',
+              lineHeight: 1,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = T.red)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = T.t4)}
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <div
@@ -377,10 +407,267 @@ function TranscriptDrawer({ id, onClose }: { id: string; onClose: () => void }) 
   );
 }
 
+// ─── Upload modal ─────────────────────────────────────────────────────────────
+
+function UploadModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const [title, setTitle] = useState('');
+  const [mode, setMode] = useState<'paste' | 'file'>('paste');
+  const [text, setText] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [ok, setOk] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setText((ev.target?.result as string) || '');
+    };
+    reader.readAsText(file);
+  };
+
+  const submit = async () => {
+    if (!title.trim() || !text.trim()) return;
+    setSaving(true);
+    setErr(null);
+    try {
+      await api.post('/api/transcripts/upload', { title: title.trim(), text: text.trim() });
+      setOk(true);
+      setTimeout(onDone, 1200);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: T.bgSub,
+    border: `1px solid ${T.borderMd}`,
+    borderRadius: R.md,
+    padding: '0 12px',
+    color: T.t1,
+    fontSize: 13,
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 400,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)' }}
+        onClick={onClose}
+      />
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: 520,
+          background: T.bgCard,
+          border: `1px solid ${T.border}`,
+          borderRadius: R.xl,
+          padding: 28,
+          boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 600, color: T.t1 }}>Upload transcript</div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: T.t3,
+              cursor: 'pointer',
+              fontSize: 18,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Title */}
+        <div style={{ marginBottom: 16 }}>
+          <label
+            style={{
+              fontSize: 11,
+              color: T.t3,
+              letterSpacing: 0.4,
+              display: 'block',
+              marginBottom: 6,
+            }}
+          >
+            MEETING TITLE
+          </label>
+          <input
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+            }}
+            placeholder="e.g. Discovery call with Acme"
+            style={{ ...inputStyle, height: 40 }}
+          />
+        </div>
+
+        {/* Mode toggle */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+          {(['paste', 'file'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => {
+                setMode(m);
+              }}
+              style={{
+                padding: '6px 16px',
+                borderRadius: R.md,
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'pointer',
+                border: `1px solid ${mode === m ? T.borderMd : T.border}`,
+                background: mode === m ? T.bgElevate : 'transparent',
+                color: mode === m ? T.t1 : T.t3,
+              }}
+            >
+              {m === 'paste' ? 'Paste text' : 'Upload file'}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'paste' ? (
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                fontSize: 11,
+                color: T.t3,
+                letterSpacing: 0.4,
+                display: 'block',
+                marginBottom: 6,
+              }}
+            >
+              TRANSCRIPT TEXT
+            </label>
+            <textarea
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+              }}
+              placeholder={
+                'Speaker A: Hello...\nSpeaker B: Hi there...\n\n— or paste any plain text —'
+              }
+              rows={10}
+              style={{ ...inputStyle, padding: '10px 12px', resize: 'vertical', lineHeight: 1.6 }}
+            />
+          </div>
+        ) : (
+          <div
+            onClick={() => fileRef.current?.click()}
+            style={{
+              marginBottom: 16,
+              border: `1px dashed ${T.borderMd}`,
+              borderRadius: R.xl,
+              padding: '28px 20px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              background: T.bgSub,
+            }}
+          >
+            <div style={{ fontSize: 13, color: T.t2 }}>
+              {text ? '✓ File loaded' : 'Click to choose a .txt file'}
+            </div>
+            {text && (
+              <div style={{ fontSize: 11, color: T.t3, marginTop: 4 }}>{text.slice(0, 80)}…</div>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".txt,.md,.json"
+              onChange={handleFile}
+              style={{ display: 'none' }}
+            />
+          </div>
+        )}
+
+        {err && <div style={{ fontSize: 12, color: T.red, marginBottom: 12 }}>{err}</div>}
+        {ok && <div style={{ fontSize: 12, color: T.green, marginBottom: 12 }}>Saved ✓</div>}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '9px 18px',
+              background: 'transparent',
+              border: `1px solid ${T.border}`,
+              borderRadius: R.md,
+              color: T.t3,
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              void submit();
+            }}
+            disabled={!title.trim() || !text.trim() || saving}
+            style={{
+              padding: '9px 22px',
+              background: title.trim() && text.trim() ? T.grad : T.bgElevate,
+              border: 'none',
+              borderRadius: R.md,
+              color: title.trim() && text.trim() ? '#fff' : T.t3,
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: title.trim() && text.trim() && !saving ? 'pointer' : 'default',
+              opacity: saving ? 0.7 : 1,
+            }}
+          >
+            {saving ? 'Saving…' : 'Save transcript'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function TranscriptsPage() {
-  const { data, loading } = useApi<{ transcripts: TranscriptEntry[] }>('/api/transcripts');
+  const { data, loading, refetch } = useApi<{ transcripts: TranscriptEntry[] }>('/api/transcripts');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [showUpload, setShowUpload] = useState(false);
   const transcripts = data?.transcripts ?? [];
+
+  const deleteTranscript = async (id: string) => {
+    try {
+      await api.del(`/api/transcripts/${id}`);
+      refetch();
+    } catch {
+      /* ignore */
+    }
+  };
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -415,11 +702,30 @@ export default function TranscriptsPage() {
         >
           Call transcripts
         </h1>
-        {!loading && (
-          <div style={{ fontSize: 12, color: T.t3 }}>
-            {transcripts.length} recording{transcripts.length !== 1 ? 's' : ''}
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {!loading && (
+            <div style={{ fontSize: 12, color: T.t3 }}>
+              {transcripts.length} recording{transcripts.length !== 1 ? 's' : ''}
+            </div>
+          )}
+          <button
+            onClick={() => {
+              setShowUpload(true);
+            }}
+            style={{
+              padding: '8px 16px',
+              background: T.bgCard,
+              border: `1px solid ${T.borderMd}`,
+              borderRadius: R.md,
+              color: T.t1,
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            + Upload transcript
+          </button>
+        </div>
       </div>
 
       {loading && (
@@ -455,6 +761,9 @@ export default function TranscriptsPage() {
             onOpen={() => {
               setOpenId(t.id);
             }}
+            onDelete={() => {
+              void deleteTranscript(t.id);
+            }}
           />
         ))}
       </div>
@@ -464,6 +773,17 @@ export default function TranscriptsPage() {
           id={openId}
           onClose={() => {
             setOpenId(null);
+          }}
+        />
+      )}
+      {showUpload && (
+        <UploadModal
+          onClose={() => {
+            setShowUpload(false);
+          }}
+          onDone={() => {
+            setShowUpload(false);
+            refetch();
           }}
         />
       )}

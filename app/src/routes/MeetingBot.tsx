@@ -16,6 +16,11 @@ interface BotRow {
   created_at: string;
 }
 
+interface BotSettings {
+  auto_join: boolean;
+  join_type: 'all' | 'external';
+}
+
 const STATUS_COLOR: Record<string, string> = {
   scheduled: T.amber,
   joining: T.sky,
@@ -34,11 +39,43 @@ function fmtDuration(s: number | null) {
 
 export default function MeetingBotPage() {
   const { data: bots, loading, refetch } = useApi<BotRow[]>('/api/bots');
+  const { data: savedSettings } = useApi<BotSettings>('/api/bots/settings');
+
   const [url, setUrl] = useState('');
   const [joinAt, setJoinAt] = useState('');
   const [sending, setSending] = useState(false);
   const [dispatchErr, setDispatchErr] = useState<string | null>(null);
   const [dispatchOk, setDispatchOk] = useState(false);
+
+  // Settings state — initialised from server once loaded
+  const [autoJoin, setAutoJoin] = useState<boolean | null>(null);
+  const [joinType, setJoinType] = useState<'all' | 'external'>('all');
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsOk, setSettingsOk] = useState(false);
+
+  // Sync local state when server data arrives (only once)
+  const resolvedAutoJoin = autoJoin ?? savedSettings?.auto_join ?? true;
+  const resolvedJoinType =
+    joinType !== (savedSettings?.join_type ?? 'all')
+      ? joinType
+      : (savedSettings?.join_type ?? 'all');
+
+  const saveSettings = async () => {
+    setSettingsSaving(true);
+    setSettingsOk(false);
+    try {
+      await api.put('/api/bots/settings', {
+        auto_join: resolvedAutoJoin,
+        join_type: resolvedJoinType,
+      });
+      setSettingsOk(true);
+      setTimeout(() => {
+        setSettingsOk(false);
+      }, 3000);
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
 
   const dispatch = async () => {
     const meetingUrl = url.trim();
@@ -90,6 +127,138 @@ export default function MeetingBotPage() {
       >
         Outround Notetaker
       </h1>
+
+      {/* Auto-join settings */}
+      <div
+        style={{
+          background: T.bgCard,
+          border: `1px solid ${T.border}`,
+          borderRadius: R.xl,
+          padding: 20,
+          marginBottom: 20,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 600, color: T.t1, marginBottom: 16 }}>
+          Auto-join settings
+        </div>
+
+        {/* Auto-join toggle */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 13, color: T.t1, fontWeight: 500 }}>
+              Automatically join calendar meetings
+            </div>
+            <div style={{ fontSize: 12, color: T.t3, marginTop: 2 }}>
+              The bot joins upcoming Google Calendar events with a video link
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setAutoJoin(!resolvedAutoJoin);
+            }}
+            style={{
+              width: 44,
+              height: 24,
+              borderRadius: 12,
+              border: 'none',
+              background: resolvedAutoJoin ? T.green : T.bgHover,
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'background 150ms',
+              flexShrink: 0,
+            }}
+          >
+            <span
+              style={{
+                position: 'absolute',
+                top: 3,
+                left: resolvedAutoJoin ? 23 : 3,
+                width: 18,
+                height: 18,
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 150ms',
+                display: 'block',
+              }}
+            />
+          </button>
+        </div>
+
+        {/* Meeting type selector — only shown when auto-join is on */}
+        {resolvedAutoJoin && (
+          <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 14 }}>
+            <div style={{ fontSize: 12, color: T.t3, marginBottom: 10, letterSpacing: 0.3 }}>
+              WHICH MEETINGS
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(
+                [
+                  {
+                    value: 'all',
+                    label: 'All meetings',
+                    desc: 'Every calendar event with a video link',
+                  },
+                  {
+                    value: 'external',
+                    label: 'External meetings only',
+                    desc: 'Skip internal-only events (no outside attendees)',
+                  },
+                ] as const
+              ).map((opt) => (
+                <label
+                  key={opt.value}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}
+                >
+                  <input
+                    type="radio"
+                    name="join_type"
+                    value={opt.value}
+                    checked={resolvedJoinType === opt.value}
+                    onChange={() => {
+                      setJoinType(opt.value);
+                    }}
+                    style={{ marginTop: 2, accentColor: T.green, flexShrink: 0 }}
+                  />
+                  <div>
+                    <div style={{ fontSize: 13, color: T.t1 }}>{opt.label}</div>
+                    <div style={{ fontSize: 11, color: T.t3 }}>{opt.desc}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={() => {
+              void saveSettings();
+            }}
+            disabled={settingsSaving}
+            style={{
+              padding: '8px 20px',
+              background: T.grad,
+              border: 'none',
+              borderRadius: R.md,
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: settingsSaving ? 'default' : 'pointer',
+              opacity: settingsSaving ? 0.7 : 1,
+            }}
+          >
+            {settingsSaving ? 'Saving…' : 'Save settings'}
+          </button>
+          {settingsOk && <span style={{ fontSize: 12, color: T.green }}>Saved ✓</span>}
+        </div>
+      </div>
 
       {/* Dispatch form */}
       <div

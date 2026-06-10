@@ -148,12 +148,36 @@ async function _pollOrg(org, recallApiKey) {
     return;
   }
 
-  const companyDomain = org.company_domain || '';
+  // Look up bot settings for this org (default to auto_join=true, join_type='all')
+  let botAutoJoin = true;
+  let botJoinType = 'all';
+  try {
+    const { getPool } = require('../db/client');
+    const pool = getPool();
+    if (pool) {
+      const { rows: prefRows } = await pool.query(
+        `SELECT up.bot_auto_join, up.bot_join_type
+           FROM user_preferences up
+           JOIN users u ON u.id = up.user_id
+          WHERE u.org_id = $1
+          LIMIT 1`,
+        [org.id]
+      );
+      if (prefRows.length) {
+        botAutoJoin = prefRows[0].bot_auto_join;
+        botJoinType = prefRows[0].bot_join_type || 'all';
+      }
+    }
+  } catch {
+    /* use defaults */
+  }
+
+  if (!botAutoJoin) return;
 
   for (const ev of events) {
     if (ev.status === 'cancelled') continue;
     if (isProcessed(ev.id)) continue;
-    if (!hasExternalAttendee(ev, companyDomain)) continue;
+    if (botJoinType === 'external' && !hasExternalAttendee(ev, org.company_domain || '')) continue;
 
     const meetingUrl = getConferenceUrl(ev);
     if (!meetingUrl) {
@@ -244,12 +268,9 @@ async function poll() {
         days: Math.max(1, Math.ceil(LOOK_AHEAD_MINUTES / (24 * 60))),
         maxResults: 20,
       });
-      const companyDomain = process.env.COMPANY_DOMAIN || '';
-
       for (const ev of events) {
         if (ev.status === 'cancelled') continue;
         if (isProcessed(ev.id)) continue;
-        if (!hasExternalAttendee(ev, companyDomain)) continue;
 
         const meetingUrl = getConferenceUrl(ev);
         if (!meetingUrl) {
