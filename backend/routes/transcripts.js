@@ -3,8 +3,9 @@
 /**
  * Transcripts routes
  *
- *   GET /api/transcripts           — list completed bot transcripts (with summary)
- *   GET /api/transcripts/:botId    — full transcript + intelligence for one bot
+ *   GET  /api/transcripts           — list completed bot transcripts (with summary)
+ *   GET  /api/transcripts/:botId    — full transcript + intelligence for one bot
+ *   POST /api/transcripts/upload    — manually upload/paste a transcript
  */
 
 const express = require('express');
@@ -110,6 +111,141 @@ router.get('/transcripts/:botId', requireAuth, async (req, res) => {
     console.error('[transcripts] get error:', err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/transcripts/upload
+// Accept a manually-pasted or uploaded transcript (plain text).
+// Parses speaker turns, stores in meeting_bots, fires intel pipeline async.
+// ---------------------------------------------------------------------------
+
+function parseRawTranscript(raw) {
+  // Accept JSON array of utterances directly
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed[0]?.speaker && parsed[0]?.text) return parsed;
+  } catch { /* not JSON */ }
+
+  // Parse "[Speaker X] text" or "Speaker X: text" line-by-line
+  const utterances = [];
+  let currentSpeaker = null;
+  let currentLines = [];
+
+  const flush = () => {
+    if (currentSpeaker && currentLines.length) {
+      utterances.push({ speaker: currentSpeaker, text: currentLines.join(' ').trim(), start: null });
+    }
+    currentLines = [];
+  };
+
+  for (const rawLine of raw.split('\n')) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    const bracketMatch = line.match(/^\[([^\]]+)\]\s+(.+)/);
+    const colonMatch   = line.match(/^([A-Za-z0-9 _-]{1,40}):\s+(.+)/);
+
+    if (bracketMatch) {
+      flush();
+      currentSpeaker = bracketMatch[1].trim();
+      currentLines   = [bracketMatch[2].trim()];
+    } else if (colonMatch) {
+      flush();
+      currentSpeaker = colonMatch[1].trim();
+      currentLines   = [colonMatch[2].trim()];
+    } else if (currentSpeaker) {
+      currentLines.push(line);
+    } else {
+      // No speaker detected yet — treat as unknown speaker
+      currentSpeaker = 'unknown';
+      currentLines   = [line];
+    }
+  }
+  flush();
+
+  // Fall back: whole text as single utterance
+  if (!utterances.length) {
+    utterances.push({ speaker: 'unknown', text: raw.trim(), start: null });
+  }
+
+  return utterances;
+}
+
+router.post('/transcripts/upload', requireAuth, async (req, res) => {
+  const userId = req.user?.id || req.supabaseUser?.id;
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' });
+
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'DB not available' });
+
+  const { title, text } = req.body;
+  if (!title || typeof title !== 'string' || !title.trim()) {
+    return res.status(400).json({ error: 'title is required' });
+  }
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'text is required' });
+  }
+
+  const utterances = parseRawTranscript(text.trim());
+  const transcriptJson = { utterances };
+
+  let botRow;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO meeting_bots
+         (user_id, conference_url, status, transcript, summary)
+       VALUES ($1, $2, 'done', $3, $4)
+       RETURNING *`,
+      [userId, 'manual-upload', JSON.stringify(transcriptJson), null]
+    );
+    botRow = rows[0];
+  } catch (err) {
+    console.error('[transcripts/upload] insert error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+
+  // Respond immediately; run intel pipeline in the background
+  res.json({ ok: true, id: botRow.id });
+
+  setImmediate(async () => {
+    try {
+      const meetingIntel = require('../services/meeting-intel');
+      const tokenManager = require('../services/token-manager');
+
+      // Try to find org_id for the user
+      let creds = {};
+      try {
+        const { rows: userRows } = await pool.query('SELECT org_id FROM users WHERE id = $1', [userId]);
+        const orgId = userRows[0]?.org_id || null;
+        if (orgId && tokenManager.isConfigured()) {
+          creds = await tokenManager.getOrgCredentials(orgId).catch(() => ({}));
+        }
+      } catch { /* use empty creds — intel will fall back to env vars */ }
+
+      const intel = await meetingIntel.runPipeline(utterances, {
+        meetingTitle: title.trim(),
+        date: new Date().toISOString().slice(0, 10),
+      }, creds);
+
+      // Persist intel back to the meeting_bots row
+      await pool.query(
+        `UPDATE meeting_bots
+            SET summary    = $1,
+                next_steps = $2,
+                objections = $3,
+                updated_at = NOW()
+          WHERE id = $4`,
+        [
+          intel?.summary       || null,
+          JSON.stringify(intel?.next_steps    || []),
+          JSON.stringify(intel?.objections    || []),
+          botRow.id,
+        ]
+      );
+    } catch (err) {
+      console.error('[transcripts/upload] intel pipeline error:', err.message);
+    }
+  });
 });
 
 module.exports = router;
