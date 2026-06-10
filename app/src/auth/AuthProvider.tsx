@@ -87,6 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (e instanceof ApiError && e.status === 401) {
         setUser(null);
         writeCache(null);
+        // 401 on an explicit post-login refresh means the session cookie wasn't set.
+        // Throw so login() surfaces this as an error rather than silently redirecting.
+        if (!opts?.timeout) throw new Error('Sign-in failed. Please try again.');
       } else if (opts?.timeout) {
         // Timeout/network error on the passive check — just show login form,
         // don't surface an error banner.
@@ -105,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(msg);
         setUser(null);
         writeCache(null);
+        throw new Error(msg); // propagate so login()/signup() can surface this to the form
       }
     } finally {
       if (timer) clearTimeout(timer);
