@@ -1,15 +1,141 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { T, R, scoreColor } from '../design/tokens';
+import { T, R } from '../design/tokens';
 import { useApi } from '../api/hooks';
 import type { SessionStats, MeetingsResponse } from '../api/types';
 
-const pulse = `
-@keyframes orb-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(240,90,50,0.4), 0 0 12px rgba(240,90,50,0.3); }
-  50%       { box-shadow: 0 0 0 6px rgba(240,90,50,0), 0 0 20px rgba(240,90,50,0.5); }
+// ─── Canvas orb (matches website OrbCanvas exactly) ──────────────────────────
+
+function OrbCanvas({ size }: { size: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+    ctx.scale(dpr, dpr);
+
+    const cx = size / 2;
+    const cy = size / 2;
+    const sphereR = size / 2 - 14;
+    const DOT_COUNT = 560;
+
+    const dots = Array.from({ length: DOT_COUNT }, (_, i) => {
+      const golden = Math.PI * (3 - Math.sqrt(5));
+      const y = 1 - (i / (DOT_COUNT - 1)) * 2;
+      const radius = Math.sqrt(1 - y * y);
+      const theta = golden * i;
+      return {
+        nx: Math.cos(theta) * radius,
+        ny: y,
+        nz: Math.sin(theta) * radius,
+        phase: Math.random() * Math.PI * 2,
+        driftSpeed: 0.0003 + Math.random() * 0.0004,
+        driftAmp: 0.008 + Math.random() * 0.012,
+      };
+    });
+
+    let startTime: number | null = null;
+
+    function draw(ts: number) {
+      if (!startTime) startTime = ts;
+      const elapsed = ts - startTime;
+      ctx.clearRect(0, 0, size, size);
+
+      const gradT = (Math.sin((elapsed / 8000) * Math.PI * 2) + 1) / 2;
+      const cr = Math.round(242 - (242 - 75) * gradT);
+      const cg = Math.round(107 - (107 - 163) * gradT);
+      const cb = Math.round(69 - (69 - 227) * gradT);
+
+      const rotY = elapsed * 0.00022;
+      const rotX = elapsed * 0.00009;
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+      // Inner radial glow
+      const glow = ctx.createRadialGradient(cx, cy, sphereR * 0.15, cx, cy, sphereR * 1.05);
+      glow.addColorStop(0,    `rgba(${cr},${cg},${cb},0.22)`);
+      glow.addColorStop(0.55, `rgba(${cr},${cg},${cb},0.06)`);
+      glow.addColorStop(1,    `rgba(${cr},${cg},${cb},0)`);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, sphereR * 1.15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Outer pulse rings
+      const pulseT  = (Math.sin((elapsed / 3000) * Math.PI * 2) + 1) / 2;
+      const pulseT2 = (Math.sin((elapsed / 3000) * Math.PI * 2 + Math.PI) + 1) / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1 + 0.05 * pulseT, 1 + 0.05 * pulseT);
+      ctx.beginPath(); ctx.arc(0, 0, sphereR + 10, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.18 - 0.10 * pulseT})`;
+      ctx.lineWidth = 1; ctx.stroke();
+      ctx.restore();
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1 + 0.10 * pulseT2, 1 + 0.10 * pulseT2);
+      ctx.beginPath(); ctx.arc(0, 0, sphereR + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.10 - 0.07 * pulseT2})`;
+      ctx.lineWidth = 1; ctx.stroke();
+      ctx.restore();
+
+      // Project and sort dots by depth
+      const projected = dots.map(d => {
+        const drift = Math.sin(elapsed * d.driftSpeed + d.phase) * d.driftAmp;
+        let nx = d.nx + drift;
+        let ny = d.ny + Math.cos(elapsed * d.driftSpeed + d.phase) * d.driftAmp * 0.5;
+        let nz = d.nz;
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+        nx /= len; ny /= len; nz /= len;
+
+        const x1 = nx * cosY + nz * sinY;
+        const z1 = -nx * sinY + nz * cosY;
+        const y2 = ny * cosX - z1 * sinX;
+        const z2 = ny * sinX + z1 * cosX;
+
+        return { sx: cx + x1 * sphereR, sy: cy + y2 * sphereR, depth: (z2 + 1) / 2 };
+      });
+
+      projected.sort((a, b) => a.depth - b.depth);
+      projected.forEach(({ sx, sy, depth }) => {
+        const r = 0.5 + Math.pow(depth, 1.6) * 2.2;
+        const alpha = 0.05 + Math.pow(depth, 1.4) * 0.85;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
+        ctx.fill();
+        if (depth > 0.82) {
+          ctx.beginPath();
+          ctx.arc(sx, sy, r * 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,238,228,${(depth - 0.82) * 2.2})`;
+          ctx.fill();
+        }
+      });
+
+      rafRef.current = requestAnimationFrame(draw);
+    }
+
+    rafRef.current = requestAnimationFrame(draw);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [size]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        display: 'block',
+        filter: 'drop-shadow(0 0 28px rgba(242,107,69,0.35)) drop-shadow(0 0 60px rgba(75,163,227,0.18))',
+      }}
+    />
+  );
 }
-`;
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -110,43 +236,27 @@ export function CoachOrb() {
   const nextUp = meetings?.meetings ? nextMeetingLabel(meetings.meetings) : null;
   const weakspot = weakSpot(stats);
 
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = pulse;
-    document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
-  }, []);
-
   return (
     <>
       {/* Orb button */}
       <button
         onClick={() => setOpen(o => !o)}
+        title="Intelligence"
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
-          padding: '6px 12px 6px 8px',
-          background: open ? T.bgElevate : 'rgba(240,90,50,0.08)',
-          border: `1px solid ${open ? T.borderMd : 'rgba(240,90,50,0.3)'}`,
-          borderRadius: R.pill,
+          justifyContent: 'center',
+          width: 40,
+          height: 40,
+          padding: 0,
+          background: 'transparent',
+          border: 'none',
+          borderRadius: '50%',
           cursor: 'pointer',
-          color: T.t1,
-          transition: 'all 150ms',
+          flexShrink: 0,
         }}
       >
-        <div
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            background: T.coral,
-            animation: open ? 'none' : 'orb-pulse 2.4s ease-in-out infinite',
-            flexShrink: 0,
-          }}
-        />
-        <span style={{ fontSize: 13, fontWeight: 500 }}>Coach</span>
-        {open && <span style={{ fontSize: 12, color: T.t3, marginLeft: 2 }}>✕</span>}
+        <OrbCanvas size={40} />
       </button>
 
       {/* Slide-in panel */}
@@ -169,10 +279,10 @@ export function CoachOrb() {
             }}
           >
             {/* Header */}
-            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: T.coral, animation: 'orb-pulse 2.4s ease-in-out infinite' }} />
-                <span style={{ fontSize: 14, fontWeight: 600 }}>Coach</span>
+            <div style={{ padding: '16px 16px 14px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <OrbCanvas size={48} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: T.t1 }}>Intelligence</span>
               </div>
               <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: T.t3, cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>✕</button>
             </div>
