@@ -68,14 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     setLoading(true);
 
-    // Abort the request after `timeout` ms so a cold-starting backend doesn't
-    // hold the loading spinner hostage. Default 6s for background checks.
-    const controller = new AbortController();
-    const timeoutMs = opts?.timeout ?? 6000;
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    // Only set up an abort timeout when explicitly requested (initial passive
+    // session check). Login/signup flows never pass a timeout — they must
+    // complete fully or throw a real error.
+    const controller = opts?.timeout ? new AbortController() : null;
+    const timer = controller
+      ? setTimeout(() => controller.abort(), opts!.timeout)
+      : null;
 
     try {
-      const u = await api.get<User>('/auth/me', { signal: controller.signal });
+      const u = await api.get<User>('/auth/me', controller ? { signal: controller.signal } : undefined);
       if (seq !== refreshSeq.current) return;
       setUser(u);
       writeCache(u);
@@ -84,14 +86,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (e instanceof ApiError && e.status === 401) {
         setUser(null);
         writeCache(null);
+      } else if (opts?.timeout) {
+        // Timeout/network error on the passive check — just show login form,
+        // don't surface an error banner.
+        setUser(null);
+        writeCache(null);
       } else {
-        // Timeout, network error, or 5xx — don't show an error banner on the
-        // initial check; just treat as logged-out so the login form appears.
+        // Real error on an explicit refresh (post-login) — surface it.
+        const msg = e instanceof Error ? e.message : 'Failed to load session';
+        setError(msg);
         setUser(null);
         writeCache(null);
       }
     } finally {
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
       if (seq === refreshSeq.current) setLoading(false);
     }
   }, []);
@@ -186,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    void refreshRef.current();
+    void refreshRef.current({ timeout: 6000 });
   }, []);
 
   return (
