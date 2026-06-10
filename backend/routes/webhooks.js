@@ -72,23 +72,38 @@ async function hydrateMeetingContext(pool, botId) {
   return { meetingMeta, creds };
 }
 
-// raw body required for HMAC verification — applies to both path aliases
+// raw body required for HMAC verification — applies to both path aliases.
+// express.json() in server.js runs globally and will have already consumed the
+// body before express.raw() sees it, so we accept both cases:
+//   - Buffer:   body was captured raw (express.raw won, or no json middleware)
+//   - object:   body was parsed by express.json; we re-serialise for HMAC
 router.use('/bots/webhook', express.raw({ type: '*/*' }));
 router.use('/webhooks/recall', express.raw({ type: '*/*' }));
 
 async function handleRecallWebhook(req, res) {
   const sig = req.headers['x-recall-signature'];
-  const raw = req.body instanceof Buffer ? req.body.toString('utf8') : '';
+
+  // Normalise body: express.json() may have already parsed it into an object,
+  // or express.raw() captured it as a Buffer. Handle both.
+  let raw = '';
+  let event;
+  if (req.body instanceof Buffer) {
+    raw = req.body.toString('utf8');
+    try {
+      event = JSON.parse(raw);
+    } catch {
+      return res.status(400).end();
+    }
+  } else if (req.body && typeof req.body === 'object') {
+    // Already parsed — re-serialise for HMAC check
+    event = req.body;
+    raw = JSON.stringify(req.body);
+  } else {
+    return res.status(400).end();
+  }
 
   if (process.env.RECALL_SECRET && !recall.verifyWebhook(raw, sig)) {
     return res.status(401).json({ error: 'invalid signature' });
-  }
-
-  let event;
-  try {
-    event = JSON.parse(raw);
-  } catch {
-    return res.status(400).end();
   }
 
   const botId = event?.data?.bot_id || event?.bot_id || event?.data?.bot?.id;
