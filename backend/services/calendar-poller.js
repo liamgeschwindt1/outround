@@ -142,12 +142,9 @@ async function _pollOrg(org, recallApiKey) {
     return;
   }
 
-  const companyDomain = org.company_domain || '';
-
   for (const ev of events) {
     if (ev.status === 'cancelled') continue;
     if (isProcessed(ev.id))       continue;
-    if (!hasExternalAttendee(ev, companyDomain)) continue;
 
     const meetingUrl = getConferenceUrl(ev);
     if (!meetingUrl) { markProcessed(ev.id); continue; }
@@ -217,12 +214,9 @@ async function poll() {
         days: Math.max(1, Math.ceil(LOOK_AHEAD_MINUTES / (24 * 60))),
         maxResults: 20,
       });
-      const companyDomain = process.env.COMPANY_DOMAIN || '';
-
       for (const ev of events) {
         if (ev.status === 'cancelled') continue;
         if (isProcessed(ev.id))       continue;
-        if (!hasExternalAttendee(ev, companyDomain)) continue;
 
         const meetingUrl = getConferenceUrl(ev);
         if (!meetingUrl) { markProcessed(ev.id); continue; }
