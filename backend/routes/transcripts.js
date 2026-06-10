@@ -204,48 +204,28 @@ router.post('/transcripts/upload', requireAuth, async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 
-  // Respond immediately; run intel pipeline in the background
+  // Respond immediately — no background analysis
   res.json({ ok: true, id: botRow.id });
+});
 
-  setImmediate(async () => {
-    try {
-      const meetingIntel = require('../services/meeting-intel');
-      const tokenManager = require('../services/token-manager');
+router.delete('/transcripts/:botId', requireAuth, async (req, res) => {
+  const userId = req.user?.id || req.supabaseUser?.id;
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' });
 
-      // Try to find org_id for the user
-      let creds = {};
-      try {
-        const { rows: userRows } = await pool.query('SELECT org_id FROM users WHERE id = $1', [userId]);
-        const orgId = userRows[0]?.org_id || null;
-        if (orgId && tokenManager.isConfigured()) {
-          creds = await tokenManager.getOrgCredentials(orgId).catch(() => ({}));
-        }
-      } catch { /* use empty creds — intel will fall back to env vars */ }
+  const pool = getPool();
+  if (!pool) return res.status(503).json({ error: 'DB not available' });
 
-      const intel = await meetingIntel.runPipeline(utterances, {
-        meetingTitle: title.trim(),
-        date: new Date().toISOString().slice(0, 10),
-      }, creds);
-
-      // Persist intel back to the meeting_bots row
-      await pool.query(
-        `UPDATE meeting_bots
-            SET summary    = $1,
-                next_steps = $2,
-                objections = $3,
-                updated_at = NOW()
-          WHERE id = $4`,
-        [
-          intel?.summary       || null,
-          JSON.stringify(intel?.next_steps    || []),
-          JSON.stringify(intel?.objections    || []),
-          botRow.id,
-        ]
-      );
-    } catch (err) {
-      console.error('[transcripts/upload] intel pipeline error:', err.message);
-    }
-  });
+  try {
+    const { rowCount } = await pool.query(
+      'DELETE FROM meeting_bots WHERE id = $1 AND user_id = $2',
+      [req.params.botId, userId]
+    );
+    if (!rowCount) return res.status(404).json({ error: 'Not found' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[transcripts] delete error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

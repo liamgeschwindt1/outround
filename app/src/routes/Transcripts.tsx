@@ -31,7 +31,7 @@ function fmtDuration(s: number | null) {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-function TranscriptCard({ t, onOpen }: { t: TranscriptEntry; onOpen: () => void }) {
+function TranscriptCard({ t, onOpen, onDelete }: { t: TranscriptEntry; onOpen: () => void; onDelete: () => void }) {
   const statusColor: Record<string, string> = { done: T.green, in_call: T.sky, joining: T.amber, failed: T.red };
   return (
     <div
@@ -56,16 +56,29 @@ function TranscriptCard({ t, onOpen }: { t: TranscriptEntry; onOpen: () => void 
             </div>
           )}
         </div>
-        <span style={{
-          fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
-          color: statusColor[t.status] || T.t3,
-          background: `${statusColor[t.status] || T.t3}18`,
-          padding: '3px 8px', borderRadius: R.sm,
-          border: `1px solid ${statusColor[t.status] || T.t3}33`,
-          flexShrink: 0,
-        }}>
-          {t.status}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <span style={{
+            fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
+            color: statusColor[t.status] || T.t3,
+            background: `${statusColor[t.status] || T.t3}18`,
+            padding: '3px 8px', borderRadius: R.sm,
+            border: `1px solid ${statusColor[t.status] || T.t3}33`,
+          }}>
+            {t.status}
+          </span>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(); }}
+            title="Delete transcript"
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: T.t4, fontSize: 14, padding: '2px 4px', lineHeight: 1,
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = T.red)}
+            onMouseLeave={e => (e.currentTarget.style.color = T.t4)}
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 16, fontSize: 11, color: T.t3, fontFamily: "'JetBrains Mono', monospace", marginBottom: t.summary ? 12 : 0 }}>
@@ -231,11 +244,14 @@ function UploadModal({ onClose, onDone }: { onClose: () => void; onDone: () => v
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)' }} onClick={onClose} />
-      <div style={{
-        position: 'relative', width: '100%', maxWidth: 520,
-        background: T.bgCard, border: `1px solid ${T.border}`,
-        borderRadius: R.xl, padding: 28, boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
-      }}>
+      <div
+        style={{
+          position: 'relative', width: '100%', maxWidth: 520,
+          background: T.bgCard, border: `1px solid ${T.border}`,
+          borderRadius: R.xl, padding: 28, boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 600, color: T.t1 }}>Upload transcript</div>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: T.t3, cursor: 'pointer', fontSize: 18 }}>✕</button>
@@ -297,7 +313,7 @@ function UploadModal({ onClose, onDone }: { onClose: () => void; onDone: () => v
         )}
 
         {err && <div style={{ fontSize: 12, color: T.red, marginBottom: 12 }}>{err}</div>}
-        {ok  && <div style={{ fontSize: 12, color: T.green, marginBottom: 12 }}>Uploaded ✓ — running analysis…</div>}
+        {ok  && <div style={{ fontSize: 12, color: T.green, marginBottom: 12 }}>Saved ✓</div>}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <button onClick={onClose} style={{ padding: '9px 18px', background: 'transparent', border: `1px solid ${T.border}`, borderRadius: R.md, color: T.t3, fontSize: 13, cursor: 'pointer' }}>
@@ -313,7 +329,7 @@ function UploadModal({ onClose, onDone }: { onClose: () => void; onDone: () => v
               opacity: saving ? 0.7 : 1,
             }}
           >
-            {saving ? 'Uploading…' : 'Upload & analyse'}
+            {saving ? 'Saving…' : 'Save transcript'}
           </button>
         </div>
       </div>
@@ -328,6 +344,13 @@ export default function TranscriptsPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const transcripts = data?.transcripts || [];
+
+  const deleteTranscript = async (id: string) => {
+    try {
+      await api.del(`/api/transcripts/${id}`);
+      refetch?.();
+    } catch { /* ignore */ }
+  };
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -365,7 +388,7 @@ export default function TranscriptsPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {transcripts.map(t => (
-          <TranscriptCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} />
+          <TranscriptCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} onDelete={() => deleteTranscript(t.id)} />
         ))}
       </div>
 
