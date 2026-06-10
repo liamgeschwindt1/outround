@@ -36,6 +36,7 @@ export default tseslint.config(
       'website/src/**', // website frontend is JSX, handled below
       'app/public/js/**', // handled above
       'demo/public/js/**', // handled above
+      '**/.github/skills/impeccable/**', // ES modules, handled below
     ],
     ...js.configs.recommended,
     languageOptions: {
@@ -133,6 +134,22 @@ export default tseslint.config(
     },
     settings: {
       react: { version: 'detect' },
+    },
+  },
+
+  // === Impeccable skill scripts (ES modules, Node) ===
+  {
+    files: ['**/.github/skills/impeccable/**/*.mjs'],
+    ...js.configs.recommended,
+    languageOptions: {
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        ...globals.es2022,
+      },
+    },
+    rules: {
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
     },
   },
 

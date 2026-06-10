@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // complete fully or throw a real error.
     const controller = opts?.timeout ? new AbortController() : null;
     const timer = controller
-      ? setTimeout(() => controller.abort(), opts!.timeout)
+      ? setTimeout(() => { controller.abort(); }, opts!.timeout)
       : null;
 
     try {
