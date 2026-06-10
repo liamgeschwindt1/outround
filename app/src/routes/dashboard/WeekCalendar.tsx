@@ -376,14 +376,7 @@ function SidePanel({ m, onClose }: { m: UpcomingMeeting; onClose: () => void }) 
           >
             View details
           </Button>
-          <Button
-            variant="primary"
-            size="md"
-            style={{ width: '100%' }}
-            onClick={() => (m.id ? nav(`/meeting/${m.id}`) : nav('/round'))}
-          >
-            Get ready →
-          </Button>
+
         </div>
       )}
     </div>
