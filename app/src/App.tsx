@@ -119,8 +119,11 @@ function AppLoader() {
 
 function LoginGate() {
   const { user, loading } = useAuth();
-  if (loading) return <AppLoader />;
-  if (user) {
+  // If auth has resolved and we have a user, redirect immediately.
+  // Otherwise render the login form right away — don't make the user stare at a
+  // spinner. If `loading` is still true, we're doing a background revalidation;
+  // the redirect will happen once it resolves.
+  if (!loading && user) {
     return <Navigate to={user.onboarding_complete ? '/' : '/onboarding'} replace />;
   }
   return <Login />;
