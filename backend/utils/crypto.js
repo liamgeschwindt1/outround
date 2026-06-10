@@ -111,15 +111,27 @@ function getStateSecret() {
   }
   // Fall back to encryption key
   const hex = process.env.ENCRYPTION_KEY;
-  if (!hex || hex.length < 32) {
-    // Last resort: use a hardcoded secret (better than no signing)
-    // Override this in production by setting STATE_SECRET or ENCRYPTION_KEY
-    console.warn(
-      '[crypto] No STATE_SECRET or ENCRYPTION_KEY set — OAuth state is not securely signed'
-    );
-    return Buffer.from('outround-oauth-state-fallback-2024');
+  if (hex && hex.length >= 32) {
+    return Buffer.from(hex.slice(0, 64), 'hex');
   }
-  return Buffer.from(hex.slice(0, 64), 'hex');
+
+  // No secret configured
+  if (process.env.NODE_ENV === 'production') {
+    // Fatal: refusing to run in production without a signing secret
+    throw new Error(
+      '[crypto] FATAL: STATE_SECRET or ENCRYPTION_KEY must be set in production. ' +
+        'OAuth state signing requires a persistent secret to prevent CSRF attacks.'
+    );
+  }
+
+  // Non-production: generate a random secret at startup so OAuth works,
+  // but state will not survive server restarts.
+  const randomSecret = crypto.randomBytes(32);
+  console.warn(
+    '[crypto] ⚠️  No STATE_SECRET or ENCRYPTION_KEY set — using a random OAuth state secret. ' +
+      'OAuth flows WILL break on server restart. Set STATE_SECRET in production.'
+  );
+  return randomSecret;
 }
 
 module.exports = { encrypt, decrypt, signState, verifyState };

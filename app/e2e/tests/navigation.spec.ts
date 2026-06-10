@@ -9,7 +9,7 @@ test.describe('AppShell sidebar navigation', () => {
 
   const navItems = [
     { label: 'Dashboard', to: '/' },
-    { label: 'Calendar', to: '/calendar' },
+    { label: 'Meetings', to: '/meetings' },
     { label: 'CRM', to: '/crm' },
     { label: 'Transcripts', to: '/transcripts' },
     { label: 'Intelligence', to: '/intelligence' },

@@ -68,8 +68,9 @@ test.describe('Route guards — new user (not onboarded)', () => {
 test.describe('Route guards — onboarded user', () => {
   test('/ shows dashboard content', async ({ page }) => {
     await goTo(page, '/');
-    // The dashboard renders a "MEETINGS" section header
-    await expect(page.getByText('MEETINGS')).toBeVisible({ timeout: 10000 });
+    // The dashboard renders a section with meeting-related content.
+    // Use a heading or section text that is unique to the dashboard.
+    await expect(page.getByText('No upcoming meetings.')).toBeVisible({ timeout: 10000 });
   });
 
   test('/login redirects to /', async ({ page }) => {

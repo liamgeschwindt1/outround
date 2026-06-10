@@ -74,7 +74,7 @@ test.describe('Onboarding', () => {
     await page.getByText('Skip for now').nth(0).click(); // step 2
     await expect(page.getByText('Get briefed in Slack.')).toBeVisible();
 
-    // Before clicking skip, re-mock /auth/me to return an onboarded user
+    // Before clicking, re-mock /auth/me to return an onboarded user
     // so that after complete() calls refresh(), the user appears onboarded
     // and the redirect to / sticks.
     await page.route('**/auth/me', (route) => {
@@ -85,8 +85,8 @@ test.describe('Onboarding', () => {
       });
     });
 
-    // Click "Skip for now — enter the round →"
-    await page.getByText(/Skip for now/).click();
+    // Step 3 button says "Enter the round →" (not "Skip for now")
+    await page.getByText('Enter the round →').click();
 
     // Should redirect to /
     await page.waitForURL('**/');
