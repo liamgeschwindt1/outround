@@ -71,13 +71,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Only set up an abort timeout when explicitly requested (initial passive
     // session check). Login/signup flows never pass a timeout — they must
     // complete fully or throw a real error.
-    const controller = opts?.timeout ? new AbortController() : null;
+    const timeoutMs = opts?.timeout;
+    const controller = timeoutMs ? new AbortController() : null;
     const timer = controller
-      ? setTimeout(() => { controller.abort(); }, opts!.timeout)
+      ? setTimeout(() => {
+          controller.abort();
+        }, timeoutMs)
       : null;
 
     try {
-      const u = await api.get<User>('/auth/me', controller ? { signal: controller.signal } : undefined);
+      const u = await api.get<User>(
+        '/auth/me',
+        controller ? { signal: controller.signal } : undefined
+      );
       if (seq !== refreshSeq.current) return;
       setUser(u);
       writeCache(u);

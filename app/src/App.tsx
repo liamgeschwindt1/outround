@@ -148,109 +148,109 @@ export default function App() {
           <ToastProvider>
             <Suspense fallback={<AppLoader />}>
               <Routes>
-              <Route path="/welcome" element={<Welcome />} />
-              <Route path="/login" element={<LoginGate />} />
-              <Route
-                path="/onboarding"
-                element={
-                  <RequireAuth>
-                    <Onboarding />
-                  </RequireAuth>
-                }
-              />
+                <Route path="/welcome" element={<Welcome />} />
+                <Route path="/login" element={<LoginGate />} />
+                <Route
+                  path="/onboarding"
+                  element={
+                    <RequireAuth>
+                      <Onboarding />
+                    </RequireAuth>
+                  }
+                />
 
-              <Route
-                path="/"
-                element={
-                  <Guarded>
-                    <Dashboard />
-                  </Guarded>
-                }
-              />
-              <Route
-                path="/meetings"
-                element={
-                  <Guarded>
-                    <CalendarPage />
-                  </Guarded>
-                }
-              />
-              <Route
-                path="/calendar"
-                element={
-                  <Guarded>
-                    <CalendarPage />
-                  </Guarded>
-                }
-              />
-              <Route
-                path="/crm"
-                element={
-                  <Guarded>
-                    <CRMPage />
-                  </Guarded>
-                }
-              />
-              <Route
-                path="/transcripts"
-                element={
-                  <Guarded>
-                    <TranscriptsPage />
-                  </Guarded>
-                }
-              />
-              <Route
-                path="/intelligence"
-                element={
-                  <Guarded>
-                    <IntelligencePage />
-                  </Guarded>
-                }
-              />
-              <Route
-                path="/team"
-                element={
-                  <Guarded>
-                    <TeamPage />
-                  </Guarded>
-                }
-              />
-              <Route
-                path="/bot"
-                element={
-                  <Guarded>
-                    <MeetingBotPage />
-                  </Guarded>
-                }
-              />
-              <Route
-                path="/logs"
-                element={
-                  <Guarded>
-                    <LogsPage />
-                  </Guarded>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <Guarded>
-                    <Settings />
-                  </Guarded>
-                }
-              />
+                <Route
+                  path="/"
+                  element={
+                    <Guarded>
+                      <Dashboard />
+                    </Guarded>
+                  }
+                />
+                <Route
+                  path="/meetings"
+                  element={
+                    <Guarded>
+                      <CalendarPage />
+                    </Guarded>
+                  }
+                />
+                <Route
+                  path="/calendar"
+                  element={
+                    <Guarded>
+                      <CalendarPage />
+                    </Guarded>
+                  }
+                />
+                <Route
+                  path="/crm"
+                  element={
+                    <Guarded>
+                      <CRMPage />
+                    </Guarded>
+                  }
+                />
+                <Route
+                  path="/transcripts"
+                  element={
+                    <Guarded>
+                      <TranscriptsPage />
+                    </Guarded>
+                  }
+                />
+                <Route
+                  path="/intelligence"
+                  element={
+                    <Guarded>
+                      <IntelligencePage />
+                    </Guarded>
+                  }
+                />
+                <Route
+                  path="/team"
+                  element={
+                    <Guarded>
+                      <TeamPage />
+                    </Guarded>
+                  }
+                />
+                <Route
+                  path="/bot"
+                  element={
+                    <Guarded>
+                      <MeetingBotPage />
+                    </Guarded>
+                  }
+                />
+                <Route
+                  path="/logs"
+                  element={
+                    <Guarded>
+                      <LogsPage />
+                    </Guarded>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <Guarded>
+                      <Settings />
+                    </Guarded>
+                  }
+                />
 
-              <Route
-                path="/meeting/:id"
-                element={
-                  <Guarded>
-                    <MeetingPrep />
-                  </Guarded>
-                }
-              />
+                <Route
+                  path="/meeting/:id"
+                  element={
+                    <Guarded>
+                      <MeetingPrep />
+                    </Guarded>
+                  }
+                />
 
-              <Route path="*" element={<RootRedirect />} />
-            </Routes>
+                <Route path="*" element={<RootRedirect />} />
+              </Routes>
             </Suspense>
           </ToastProvider>
         </AuthProvider>

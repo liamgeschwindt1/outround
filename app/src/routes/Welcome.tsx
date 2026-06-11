@@ -14,9 +14,21 @@ const lines = [
 const tagline = 'Be fully present. Outround remembers the rest.';
 
 const beats = [
-  { kicker: '01', title: 'Brief before the call', body: 'Account history, stakeholder context, prior objections. Delivered before you speak.' },
-  { kicker: '02', title: 'CRM, done.', body: 'Fields populated. Follow-up drafted. Every entry linked to the transcript line that generated it.' },
-  { kicker: '03', title: 'Nothing lost.', body: 'Every signal stored. Every relationship searchable. The record that never resets.' },
+  {
+    kicker: '01',
+    title: 'Brief before the call',
+    body: 'Account history, stakeholder context, prior objections. Delivered before you speak.',
+  },
+  {
+    kicker: '02',
+    title: 'CRM, done.',
+    body: 'Fields populated. Follow-up drafted. Every entry linked to the transcript line that generated it.',
+  },
+  {
+    kicker: '03',
+    title: 'Nothing lost.',
+    body: 'Every signal stored. Every relationship searchable. The record that never resets.',
+  },
 ];
 
 export default function Welcome() {
