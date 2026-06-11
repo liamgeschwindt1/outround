@@ -1,5 +1,5 @@
 // Thin fetch wrapper. Cookies are sent automatically (httpOnly sb_token from backend).
-import { captureError } from '../utils/errorCapture';
+import { captureError, captureWarn } from '../utils/errorCapture';
 
 class ApiError extends Error {
   status: number;
@@ -58,8 +58,14 @@ async function request<T>(path: string, init: RequestInit = {}, _retry = true): 
       ...init,
     });
   } catch (networkErr) {
-    const msg = networkErr instanceof Error ? networkErr.message : 'Network error';
-    captureError(`Network error — ${path}`, msg);
+    // Don't log AbortErrors — these come from our own expected timeouts/cancellations
+    // (the 6s passive check, the 10s login check, the 30s safety-net). Logging them
+    // as red errors creates false alarms in the debug widget.
+    const isAbort = networkErr instanceof DOMException && networkErr.name === 'AbortError';
+    if (!isAbort) {
+      const msg = networkErr instanceof Error ? networkErr.message : 'Network error';
+      captureError(`Network error — ${path}`, msg);
+    }
     throw networkErr;
   } finally {
     if (ownTimer) clearTimeout(ownTimer);

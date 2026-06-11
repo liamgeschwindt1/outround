@@ -123,7 +123,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       captureLog(`auth: POST /auth/login — ${email}`);
       await api.post('/auth/login', { email, password });
       captureSuccess('auth: login POST ok — fetching session');
-      await refresh({ timeout: 10000 });
+      // Retry /auth/me up to 3 times — the login POST only hits Supabase directly,
+      // but /auth/me hits the local Postgres DB which may still be warming up on Railway.
+      const MAX_ATTEMPTS = 3;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          await refresh({ timeout: 12000 });
+          return; // success — stop retrying
+        } catch (e) {
+          const isTimeout = e instanceof Error && e.message.includes('Taking longer');
+          const isNetwork = e instanceof Error && e.message.toLowerCase().includes('network');
+          if ((isTimeout || isNetwork) && attempt < MAX_ATTEMPTS) {
+            captureLog(`auth: /auth/me attempt ${String(attempt)} timed out, retrying (${String(MAX_ATTEMPTS - attempt)} left)...`);
+            continue;
+          }
+          throw e; // 401, final attempt, or non-retriable error
+        }
+      }
     },
     [refresh]
   );
