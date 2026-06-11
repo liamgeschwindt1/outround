@@ -31,7 +31,7 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   error: string | null;
-  refresh: (opts?: { timeout?: number }) => Promise<void>;
+  refresh: (opts?: { timeout?: number; silent?: boolean }) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   signup: (
     email: string,
@@ -63,15 +63,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Only the most-recently-started refresh wins; stale ones are discarded.
   const refreshSeq = useRef(0);
 
-  const refresh = useCallback(async (opts?: { timeout?: number }) => {
+  const refresh = useCallback(async (opts?: { timeout?: number; silent?: boolean }) => {
     const seq = ++refreshSeq.current;
     setError(null);
 
-    // Only set the global loading flag during the initial passive session check
-    // AND only if we have no cached user. If we have a cached user, the dashboard
-    // renders immediately and the check runs silently in the background.
-    const isPassiveCheck = opts?.timeout !== undefined;
-    if (isPassiveCheck && !cached) setLoading(true);
+    // silent=true: passive background check — timeout fails silently, no error thrown
+    // silent=false/undefined with timeout: active call with deadline — throw on timeout
+    const isSilent = opts?.silent === true;
+
+    // Only block the UI with the loading flag during a silent passive check when
+    // there is no cached user. Post-login calls and cached-user revalidations
+    // must NOT set loading=true.
+    if (isSilent && !cached) setLoading(true);
 
     const controller = opts?.timeout ? new AbortController() : null;
     const timer = controller ? setTimeout(() => controller.abort(), opts!.timeout) : null;
@@ -89,39 +92,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (e instanceof ApiError && e.status === 401) {
         setUser(null);
         writeCache(null);
-        // 401 on an explicit post-login refresh means the session cookie wasn't set.
-        // Throw so login() surfaces this as an error rather than silently redirecting.
-        if (!opts?.timeout) throw new Error('Sign-in failed. Please try again.');
-      } else if (opts?.timeout) {
-        // Timeout/network error on the passive check — just show login form,
-        // don't surface an error banner.
+        // On a silent passive check a 401 just means logged out — no error.
+        // On an active call (post-login) it means the cookie wasn't set — throw.
+        if (!isSilent) throw new Error('Sign-in failed. Please try again.');
+      } else if (isSilent) {
+        // Timeout/network error on a silent check — just fall through to login form.
         setUser(null);
         writeCache(null);
       } else {
-        // Real error on an explicit refresh (post-login) — surface it.
-        // Treat AbortError (from the client-side safety-net timeout) as a
-        // friendly connection error rather than showing the raw browser message.
+        // Active call error — surface it on the form.
         const isAbort = e instanceof DOMException && e.name === 'AbortError';
         const msg = isAbort
-          ? 'Connection timed out. Please check your connection and try again.'
+          ? 'Taking longer than expected. Please try again.'
           : e instanceof Error
             ? e.message
             : 'Failed to load session';
         setError(msg);
         setUser(null);
         writeCache(null);
-        throw new Error(msg); // propagate so login()/signup() can surface this to the form
+        throw new Error(msg);
       }
     } finally {
       if (timer) clearTimeout(timer);
-      if (isPassiveCheck && seq === refreshSeq.current) setLoading(false);
+      if (isSilent && seq === refreshSeq.current) setLoading(false);
     }
   }, []);
 
   const login = useCallback(
     async (email: string, password: string) => {
       await api.post('/auth/login', { email, password });
-      await refresh();
+      // 10s deadline on the post-login /auth/me — prevents the Sign In button
+      // from being stuck for 30s on a cold Railway backend. Throws on timeout
+      // so the error shows on the form.
+      await refresh({ timeout: 10000 });
     },
     [refresh]
   );
@@ -208,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    void refreshRef.current({ timeout: 6000 });
+    void refreshRef.current({ timeout: 6000, silent: true });
   }, []);
 
   return (
