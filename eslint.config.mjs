@@ -9,7 +9,13 @@ import globals from 'globals';
 export default tseslint.config(
   // === Global ignores ===
   {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/build/**', 'eslint.config.mjs'],
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.github/skills/**',
+      'eslint.config.mjs',
+    ],
   },
 
   // === Public JS (loaded via <script> tags — ESLint can't trace HTML usage) ===
@@ -134,22 +140,6 @@ export default tseslint.config(
     },
     settings: {
       react: { version: 'detect' },
-    },
-  },
-
-  // === Impeccable skill scripts (ES modules, Node) ===
-  {
-    files: ['**/.github/skills/impeccable/**/*.mjs'],
-    ...js.configs.recommended,
-    languageOptions: {
-      sourceType: 'module',
-      globals: {
-        ...globals.node,
-        ...globals.es2022,
-      },
-    },
-    rules: {
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
     },
   },
 
