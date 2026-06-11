@@ -66,11 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async (opts?: { timeout?: number }) => {
     const seq = ++refreshSeq.current;
     setError(null);
-    setLoading(true);
 
-    // Only set up an abort timeout when explicitly requested (initial passive
-    // session check). Login/signup flows never pass a timeout — they must
-    // complete fully or throw a real error.
+    // Only set the global loading flag for the initial passive session check
+    // (identified by opts.timeout being present). Post-login and explicit refresh
+    // calls must NOT set loading=true — it unmounts <Login /> and swaps in
+    // <AppLoader />, so if the call then fails the form remounts with no error shown.
+    const isPassiveCheck = opts?.timeout !== undefined;
+    if (isPassiveCheck) setLoading(true);
+
     const controller = opts?.timeout ? new AbortController() : null;
     const timer = controller ? setTimeout(() => controller.abort(), opts!.timeout) : null;
 
@@ -112,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       if (timer) clearTimeout(timer);
-      if (seq === refreshSeq.current) setLoading(false);
+      if (isPassiveCheck && seq === refreshSeq.current) setLoading(false);
     }
   }, []);
 

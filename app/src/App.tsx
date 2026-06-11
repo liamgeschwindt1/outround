@@ -118,12 +118,11 @@ function AppLoader() {
 }
 
 function LoginGate() {
-  const { user, loading } = useAuth();
-  // Wait for auth to resolve before rendering anything — prevents a race where
-  // the background session check (401) fires after the user has just logged in
-  // and wipes the newly-set user state. With session cache, logged-in users
-  // have loading=false immediately so they never see this spinner.
-  if (loading) return <AppLoader />;
+  const { user } = useAuth();
+  // Show the login form immediately — no spinner wait.
+  // The session cache means logged-in users redirect instantly.
+  // The background /auth/me check updates user state reactively;
+  // if a session is discovered while the form is visible, the redirect below fires.
   if (user) return <Navigate to={user.onboarding_complete ? '/' : '/onboarding'} replace />;
   return <Login />;
 }
