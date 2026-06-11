@@ -484,7 +484,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
-      <ErrorLog />
     </div>
   );
 }

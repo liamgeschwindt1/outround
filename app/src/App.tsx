@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { RequireAuth, RequireOnboarded } from './auth/RequireAuth';
 import { ToastProvider } from './design/primitives/Toast';
 import { AppShell } from './shell/AppShell';
+import { ErrorLog } from './shell/ErrorLog';
 import { T } from './design/tokens';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { err: Error | null }> {
@@ -145,6 +146,7 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <ToastProvider>
+            <ErrorLog />
             <Suspense fallback={<AppLoader />}>
               <Routes>
               <Route path="/welcome" element={<Welcome />} />

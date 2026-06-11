@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { api, ApiError } from '../api/client';
 import type { User } from '../api/types';
 import { storeAuthError } from './authErrors';
+import { captureLog, captureSuccess, captureError as captureErr } from '../utils/errorCapture';
 
 // ── Session cache ──────────────────────────────────────────────────────────
 // Persist the last known user to sessionStorage so subsequent page loads
@@ -67,13 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const seq = ++refreshSeq.current;
     setError(null);
 
-    // silent=true: passive background check — timeout fails silently, no error thrown
-    // silent=false/undefined with timeout: active call with deadline — throw on timeout
     const isSilent = opts?.silent === true;
+    if (!isSilent) captureLog(`auth: /auth/me — ${opts?.timeout ? `timeout ${String(opts.timeout)}ms` : 'no timeout'}`);
 
-    // Only block the UI with the loading flag during a silent passive check when
-    // there is no cached user. Post-login calls and cached-user revalidations
-    // must NOT set loading=true.
     if (isSilent && !cached) setLoading(true);
 
     const controller = opts?.timeout ? new AbortController() : null;
@@ -87,26 +84,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (seq !== refreshSeq.current) return;
       setUser(u);
       writeCache(u);
+      if (!isSilent) captureSuccess(`auth: session confirmed — ${u.email}`);
     } catch (e: unknown) {
       if (seq !== refreshSeq.current) return;
       if (e instanceof ApiError && e.status === 401) {
         setUser(null);
         writeCache(null);
-        // On a silent passive check a 401 just means logged out — no error.
-        // On an active call (post-login) it means the cookie wasn't set — throw.
-        if (!isSilent) throw new Error('Sign-in failed. Please try again.');
+        if (!isSilent) {
+          captureErr('auth: /auth/me → 401 (cookie not set after login)');
+          throw new Error('Sign-in failed. Please try again.');
+        }
       } else if (isSilent) {
-        // Timeout/network error on a silent check — just fall through to login form.
+        const msg = e instanceof Error ? e.message : 'unknown';
+        captureLog(`auth: passive check failed silently — ${msg}`);
         setUser(null);
         writeCache(null);
       } else {
-        // Active call error — surface it on the form.
         const isAbort = e instanceof DOMException && e.name === 'AbortError';
         const msg = isAbort
           ? 'Taking longer than expected. Please try again.'
           : e instanceof Error
             ? e.message
             : 'Failed to load session';
+        captureErr(`auth: /auth/me failed — ${msg}`);
         setError(msg);
         setUser(null);
         writeCache(null);
@@ -120,10 +120,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
+      captureLog(`auth: POST /auth/login — ${email}`);
       await api.post('/auth/login', { email, password });
-      // 10s deadline on the post-login /auth/me — prevents the Sign In button
-      // from being stuck for 30s on a cold Railway backend. Throws on timeout
-      // so the error shows on the form.
+      captureSuccess('auth: login POST ok — fetching session');
       await refresh({ timeout: 10000 });
     },
     [refresh]
@@ -149,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    captureLog('auth: logout');
     try {
       await api.post('/auth/logout');
     } catch {
