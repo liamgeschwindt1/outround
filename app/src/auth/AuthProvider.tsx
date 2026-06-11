@@ -121,23 +121,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (email: string, password: string) => {
       captureLog(`auth: POST /auth/login — ${email}`);
-      await api.post('/auth/login', { email, password });
+      const result = await api.post<{ ok: boolean; user?: User }>('/auth/login', {
+        email,
+        password,
+      });
       captureSuccess('auth: login POST ok — fetching session');
-      // Retry /auth/me up to 3 times — the login POST only hits Supabase directly,
-      // but /auth/me hits the local Postgres DB which may still be warming up on Railway.
+
+      // Backend returns the user inline (upserted during login) — use it directly
+      // to skip the separate /auth/me round trip which hits a cold Postgres DB.
+      if (result.user) {
+        captureSuccess(`auth: session confirmed (inline) — ${result.user.email}`);
+        setUser(result.user);
+        writeCache(result.user);
+        return;
+      }
+
+      // Fallback: backend DB was unavailable at login time — retry /auth/me.
       const MAX_ATTEMPTS = 3;
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
           await refresh({ timeout: 12000 });
-          return; // success — stop retrying
+          return;
         } catch (e) {
           const isTimeout = e instanceof Error && e.message.includes('Taking longer');
           const isNetwork = e instanceof Error && e.message.toLowerCase().includes('network');
           if ((isTimeout || isNetwork) && attempt < MAX_ATTEMPTS) {
-            captureLog(`auth: /auth/me attempt ${String(attempt)} timed out, retrying (${String(MAX_ATTEMPTS - attempt)} left)...`);
+            captureLog(
+              `auth: /auth/me attempt ${String(attempt)} timed out, retrying (${String(MAX_ATTEMPTS - attempt)} left)...`
+            );
             continue;
           }
-          throw e; // 401, final attempt, or non-retriable error
+          throw e;
         }
       }
     },

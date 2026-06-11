@@ -157,8 +157,39 @@ router.post(
 
       setAuthCookies(res, req, data.access_token, data.refresh_token);
 
+      // Eagerly upsert the local user row and return it inline so the
+      // frontend can skip the separate /auth/me call after login.
+      let inlineUser = null;
+      const pool = getPool();
+      if (pool) {
+        try {
+          const supabaseUser = await getUserFromToken(data.access_token);
+          if (supabaseUser) {
+            const localUser = await getOrCreateLocalUser(pool, supabaseUser);
+            if (localUser) {
+              inlineUser = {
+                id: localUser.id,
+                email: localUser.email,
+                name: localUser.name || supabaseUser.user_metadata?.full_name || null,
+                role: localUser.role || null,
+                avatar_url: localUser.avatar_url || supabaseUser.user_metadata?.avatar_url || null,
+                coach_id: localUser.coach_id || null,
+                onboarding_complete: localUser.onboarding_complete || false,
+                integrations: { pipedrive: false, gcal: false, slack: false },
+              };
+            }
+          }
+        } catch (err) {
+          // Non-fatal: frontend falls back to /auth/me
+          pushEvent('warn', 'auth', `Login: inline user fetch failed (non-fatal): ${err.message}`, {
+            email,
+            error: err.message,
+          });
+        }
+      }
+
       pushEvent('success', 'auth', `Login success — ${email}`, { email });
-      res.json({ ok: true });
+      res.json({ ok: true, user: inlineUser });
     } catch (err) {
       pushEvent('error', 'auth', `Login error — ${email}: ${err.message}`, {
         email,
