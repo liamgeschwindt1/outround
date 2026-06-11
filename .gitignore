@@ -4,10 +4,19 @@
 node_modules/
 .npm
 
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+
 # Environment
 .env
 .env.local
 .env.*.local
+.env.example
 
 # Logs
 *.log
@@ -16,6 +25,13 @@ npm-debug.log*
 # Build output
 dist/
 build/
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # Playwright
 test-results/
