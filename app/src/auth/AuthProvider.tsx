@@ -67,12 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const seq = ++refreshSeq.current;
     setError(null);
 
-    // Only set the global loading flag for the initial passive session check
-    // (identified by opts.timeout being present). Post-login and explicit refresh
-    // calls must NOT set loading=true — it unmounts <Login /> and swaps in
-    // <AppLoader />, so if the call then fails the form remounts with no error shown.
+    // Only set the global loading flag during the initial passive session check
+    // AND only if we have no cached user. If we have a cached user, the dashboard
+    // renders immediately and the check runs silently in the background.
     const isPassiveCheck = opts?.timeout !== undefined;
-    if (isPassiveCheck) setLoading(true);
+    if (isPassiveCheck && !cached) setLoading(true);
 
     const controller = opts?.timeout ? new AbortController() : null;
     const timer = controller ? setTimeout(() => controller.abort(), opts!.timeout) : null;

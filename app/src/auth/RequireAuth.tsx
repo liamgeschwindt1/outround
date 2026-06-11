@@ -14,7 +14,17 @@ function FullScreenSpinner() {
         background: T.bg,
       }}
     >
-      <div className="skel" style={{ width: 120, height: 4, borderRadius: 2 }} />
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          border: `2px solid ${T.borderMd}`,
+          borderTopColor: T.coral,
+          animation: 'spin 700ms linear infinite',
+        }}
+      />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -23,7 +33,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const loc = useLocation();
 
-  if (loading) return <FullScreenSpinner />;
+  // Only block if we genuinely don't know yet (no cache, check in flight).
+  // If we have a cached user, render content immediately — background revalidation
+  // will redirect if the session turns out to be invalid.
+  if (loading && !user) return <FullScreenSpinner />;
   if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   return <>{children}</>;
 }
@@ -31,7 +44,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 export function RequireOnboarded({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <FullScreenSpinner />;
+  if (loading && !user) return <FullScreenSpinner />;
   if (!user) return <Navigate to="/login" replace />;
   if (!user.onboarding_complete) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
