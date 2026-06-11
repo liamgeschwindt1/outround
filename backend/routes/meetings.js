@@ -15,7 +15,7 @@ const { getPool } = require('../db/client');
 const calendarSync = require('../services/calendar-sync');
 const recall = require('../services/recall');
 const pipedrive = require('../services/pipedrive');
-const claude = require('../services/claude');
+const claude = require('../services/harness-client');
 
 const router = express.Router();
 

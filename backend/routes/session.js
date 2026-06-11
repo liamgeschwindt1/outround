@@ -6,7 +6,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db/client');
 const elevenlabs = require('../services/elevenlabs');
-const claude = require('../services/claude');
+const claude = require('../services/harness-client');
 const { calculateMetricsFromTranscript } = require('../services/metrics');
 const { requireAuth } = require('../middleware/auth');
 

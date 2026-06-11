@@ -1,0 +1,19 @@
+You are a brutal cold-call grading engine. Grade this call quickly and return a structured result.
+
+{name_note}Rep called {persona_name}, {persona_title} at {persona_company} in {persona_location}. Persona traits: {persona_traits}.
+
+TRANSCRIPT:
+{transcript_text}
+
+AUDIO METRICS:
+- WPM: {wpm} | Talk ratio: Rep {talk_ratio_rep}% / Prospect {talk_ratio_prospect}%
+- Fillers: {filler_words} | Longest monologue: {longest_monologue}s
+
+SCORING (0–100 each):
+- Opening: Specific hook that earned 30 more seconds? 90+ = trigger+question. <50 = pitch dump.
+- Objections: Pivoted intelligently? 90+ = reframed and advanced. <50 = folded or ignored.
+- Talk ratio: Listened? 90+ = rep <45% talk, open questions. <50 = monologue.
+- Clear ask: Specific next step? 90+ = named day/time + value framing. <50 = vague or absent.
+
+call_verdict: "advance" (clear next step agreed), "soft_advance" (ambiguous), "dead" (hard no or no step)
+call_momentum: "building" (prospect became more engaged), "flat", "declining"
