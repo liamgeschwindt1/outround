@@ -12,10 +12,18 @@
 const { getUserFromToken, getOrCreateLocalUser } = require('../services/auth');
 const { getPool } = require('../db/client');
 
-let pushEvent = () => {};
-try {
-  pushEvent = require('../routes/debug').pushEvent;
-} catch {}
+// Resolve pushEvent lazily at call time. Capturing it at load time hit a
+// circular dependency (debug.js requires this middleware), which left
+// pushEvent === undefined and made requireAuth throw a TypeError mid-request —
+// no response was ever sent, so every authed request hung until timeout.
+function pushEvent(...args) {
+  try {
+    const fn = require('../routes/debug').pushEvent;
+    if (typeof fn === 'function') fn(...args);
+  } catch {
+    /* debug module unavailable — ignore */
+  }
+}
 
 const DEV_USER_ID = '00000000-0000-0000-0000-000000000001';
 const DEV_TOKEN_PREFIX = 'dev:';

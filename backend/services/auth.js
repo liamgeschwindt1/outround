@@ -8,10 +8,16 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-let pushEvent = () => {};
-try {
-  pushEvent = require('../routes/debug').pushEvent;
-} catch {}
+// Resolve pushEvent lazily at call time to avoid a circular-dependency trap
+// (debug.js requires the auth middleware) that left pushEvent undefined.
+function pushEvent(...args) {
+  try {
+    const fn = require('../routes/debug').pushEvent;
+    if (typeof fn === 'function') fn(...args);
+  } catch {
+    /* debug module unavailable — ignore */
+  }
+}
 
 let _client = null;
 

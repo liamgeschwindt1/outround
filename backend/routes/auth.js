@@ -27,10 +27,16 @@ const tokenManager = require('../services/token-manager');
 const { getUserFromToken, getOrCreateLocalUser } = require('../services/auth');
 const { verifyState, signState } = require('../utils/crypto');
 
-let pushEvent = () => {};
-try {
-  pushEvent = require('./debug').pushEvent;
-} catch {}
+// Resolve pushEvent lazily at call time to avoid a circular-dependency trap
+// (debug.js requires the auth middleware) that left pushEvent undefined.
+function pushEvent(...args) {
+  try {
+    const fn = require('./debug').pushEvent;
+    if (typeof fn === 'function') fn(...args);
+  } catch {
+    /* debug module unavailable — ignore */
+  }
+}
 
 const router = express.Router();
 
