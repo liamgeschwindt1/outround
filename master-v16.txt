@@ -1,0 +1,24 @@
+| Meeting capture | Recall.ai bot. Bot-free desktop capture available as alternative. |
+| --- | --- |
+| Transcription | Gladia (EU-hosted). Dutch and German accuracy validated before DACH launch. |
+| Intelligence extraction | Claude API. Structured output with source citations. |
+| CRM enrichment | HubSpot first. Pipedrive second. Every field linked to transcript evidence. |
+| Delivery | Slack DM to rep. Pre-meeting brief 15 minutes before. Post-call summary immediately after. |
+| Data layer | Supabase multi-tenant, EU-hosted. Per-org OAuth tokens. pgvector for memory retrieval. |
+| Auth | Google OAuth. |
+| Payments | Stripe. |
+| Deployment | Railway. |
+ 
+**The two signals that matter**
+ 
+***Signal 1: A rep reads the post-call analysis and it names exactly why the deal stalled. They change their approach on the next call and win it.***
+ 
+***Signal 2: A VP Sales renews without a check-in call because their team is hitting quota and Outround is telling them everything they need to know.***
+ 
+**Everything else is noise until both are real.**
+ 
+***Be fully present.***
+ 
+*Outround remembers the rest.*
+ 
+outround.io  ·  OUTROUND INTERNAL  ·  V16  ·  JUNE 2026

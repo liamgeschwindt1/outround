@@ -84,9 +84,7 @@ export default function Hero() {
               margin: '0 0 24px',
             }}
           >
-            CRMs store records.
-            <br />
-            <span style={{ color: 'var(--text-sub)' }}>Outround stores reality.</span>
+            Your team&rsquo;s calls are full of signals nobody&rsquo;s tracking.
           </motion.h1>
 
           <motion.div
@@ -102,9 +100,8 @@ export default function Hero() {
               lineHeight: 1.7,
             }}
           >
-            Revenue teams don&rsquo;t lose because they lack data. They lose because context
-            disappears between conversations. Outround is the commercial memory and coordination
-            layer beneath every call your team makes.
+            Outround captures every conversation, finds the patterns that predict wins and losses,
+            and puts the answer in front of you before your next pipeline review.
           </motion.div>
 
           <motion.div

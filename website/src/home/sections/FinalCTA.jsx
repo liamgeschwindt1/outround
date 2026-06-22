@@ -476,7 +476,7 @@ export default function FinalCTA() {
                   'Your data is never used to train our models or shared with third parties.',
                   'Every conversation is end-to-end encrypted in transit and at rest.',
                   'You can export or delete your data at any time, immediately and completely.',
-                  'No data is retained after account deletion — 30 days maximum.',
+                  'No data is retained after account deletion. 30 days maximum.',
                   'GDPR-compliant by architecture, not by policy addendum.',
                 ].map((point, i) => (
                   <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
